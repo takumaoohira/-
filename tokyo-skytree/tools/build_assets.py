@@ -17,6 +17,11 @@ def sample(x,z):
     return None
 plat=json.load(open('plat.json'))
 far=json.load(open('far.json'))['b']
+_cov=prep(unary_union([Polygon(c) for c in json.load(open('p25_cov.json'))]))
+_n0=len(plat)
+plat=[b for b in plat if b['id']=='13107-bldg-19558' or not _cov.contains(Polygon(b['p']).representative_point() if len(b['p'])>2 else Point(0,0))]
+print('2020 kept',len(plat),'of',_n0)
+plat+= [{'id':'p25','p':b['p'],'h':b['h']} for b in json.load(open('p25_lod1.json'))['lod1'] if b['h'] and b['h']>0 and len(b['p'])>2]
 TOWN=[b for b in plat if b['id']=='13107-bldg-19558'][0]
 TOWNP=Polygon(TOWN['p']).buffer(0)
 NEAR_R=1550
@@ -57,13 +62,13 @@ for pts,h,col in near:
         if v==0: v=1
     arr.append(v)
     for x,z in pts: arr.append(int(round(x*10))); arr.append(int(round(z*10)))
-import base64;open(OUT+'bldg.b64.txt','w').write(base64.b64encode(arr.tobytes()).decode())
+open(OUT+'bldg.bin','wb').write(arr.tobytes())
 arr=array.array('h')
 for pts,h in farb:
     if len(pts)<3: continue
     arr.append(len(pts)); arr.append(int(round(h)))
     for x,z in pts: arr.append(int(round(x))); arr.append(int(round(z)))
-open(OUT+'far.b64.txt','w').write(base64.b64encode(arr.tobytes()).decode())
+open(OUT+'far.bin','wb').write(arr.tobytes())
 print('near',len(near),'far',len(farb))
 # ---- water
 g16=json.load(open('gsi.json')); g14=json.load(open('gsi14.json'))
