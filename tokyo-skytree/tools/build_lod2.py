@@ -31,7 +31,11 @@ for b in d:
         if b['h'] and len(b['p'])>=3: lod1.append(b)
         continue
     town=b['name']=='東京スカイツリー'
-    if b['name']=='とうきょうスカイツリー駅': continue  # 駅舎はゲーム側の駅モデルで表現（LOD2 と二重にしない）
+    if b['name']=='とうきょうスカイツリー駅': continue
+    if not b['name'] and abs(b['c'][0]-36.0)<1 and abs(b['c'][1]+62.6)<1:   # 線路南側の細長い構造物（新しいホームと推定）→ ゲーム側でホームとして作る
+        gy=min(p[1] for P in b['s']['GroundSurface'] for p in P)
+        STN25={'k':'stn_ground','h':round(max(p[1] for P in b['s']['RoofSurface'] for p in P)-gy,2),'p':[[round(p[0],2),round(p[2],2)] for p in b['s']['GroundSurface'][0]]}
+        continue  # 駅舎はゲーム側の駅モデルで表現（LOD2 と二重にしない）
     S=b['s']; g=[p[1] for P in S.get('GroundSurface',[]) for p in P]
     allp=[p for k in S for P in S[k] for p in P]
     y0=min(g) if g else min(p[1] for p in allp)
@@ -54,12 +58,13 @@ for b in d:
             if k in ('pav','curve','bridge'): EXC.append((pg.buffer(0.6),h+0.3))
             if k=='canopy': CAN.append((pg.buffer(0.6),h+0.3))
             TR.append({'h':h,'k':k,'p':[[round(p[0],2),round(p[2],2)] for p in P]})
-        json.dump(TR,open('out/town.json','w'))
+        TOWN_TR=TR
     for k,L in (('RoofSurface',roofs),('WallSurface',walls)):
         for P in S.get(k,[]):
             if town:
                 rmax=max(math.hypot(p[0],p[2]) for p in P)
                 if rmax<40 or min(p[1] for p in P)>170: continue
+                if any(math.hypot(p[0],p[2])<32 and p[1]-y0>34 for p in P): continue  # タワー本体の壁（基部の外側まで伸びた面）
                 if any(max(p[1] for p in P)-y0<=hh and all(G.contains(Point(p[0],p[2])) for p in P) for G,hh in EXC): continue
                 if k=='WallSurface' and any(max(p[1] for p in P)-y0<=hh and all(G.contains(Point(p[0],p[2])) for p in P) for G,hh in CAN): continue
             P=[[p[0],p[1]-y0,p[2]] for p in P]
@@ -108,7 +113,7 @@ for b in d:
     for t in walls:
         for p in t: l2.extend([int(round(p[0]*10)),int(round(p[1]*10)),int(round(p[2]*10))])
     nl2+=1; ntri+=len(roofs)+len(walls)
-open('out/l2.b64.txt','w').write(base64.b64encode(l2.tobytes()).decode())
+json.dump(TOWN_TR+[STN25],open('out/town.json','w'));open('out/l2.b64.txt','w').write(base64.b64encode(l2.tobytes()).decode())
 json.dump({'lod1':[{'p':b['p'],'h':b['h']} for b in lod1]},open('p25_lod1.json','w'))
 # 2020 データを置き換える範囲（2025年度データを取得したメッシュ）
 json.dump([list(mesh_poly(c).intersection(Point(0,0).buffer(1985,64)).exterior.coords) for c in codes if mesh_poly(c).intersects(Point(0,0).buffer(1985,64))],open('p25_cov.json','w'))

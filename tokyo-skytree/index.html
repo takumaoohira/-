@@ -247,8 +247,9 @@ window.SKYTREE_DATA = {
     { id:'S9', title:'国土地理院 ベクトルタイル（地理院地図Vector）', url:'https://github.com/gsi-cyberjapan/gsimaps-vector-experiment', publisher:'国土地理院', checked:'2026-10-02', terms:'国土地理院コンテンツ利用規約（出典の明示）', used:'水域、鉄道中心線（高架・駅区間）、道路中心線と幅員、注記（町名・駅名）' },
     { id:'S10', title:'国土地理院 シームレス空中写真', url:'https://maps.gsi.go.jp/development/ichiran.html#seamlessphoto', publisher:'国土地理院', checked:'2026-10-02', terms:'国土地理院コンテンツ利用規約（出典の明示）', used:'地面のテクスチャ、ソラマチの棟・ドーム・屋上緑地の確認、建物の屋根色、街路樹の検出、ミニマップ' },
     { id:'S11', title:'Web検索結果の要約（東京スカイツリー公式の構造解説、All About「東京ソラマチ大解剖」、押上駅のアクセス解説ほか）', url:'https://www.tokyo-skytree.jp/group/pre-learning/skytree/construction/overview.php', publisher:'各ページ（本文は閲覧制限で未取得）', checked:'2026-10-02', terms:'—', used:'足元一辺約68m、天望回廊 直径約40m・長さ約110m、心柱 直径8m・高さ375m、鋼管 直径2.3m、ヤード構成と売り場階、イーストヤード最頂部158m、B3出口直結、A2出口の方面' },
-    { id:'S12', title:'3D都市モデル（Project PLATEAU）東京都墨田区 2025年度 CityGML（LOD1・LOD2）', url:'https://www.geospatial.jp/ckan/dataset/plateau-13107-sumida-ku-2025', publisher:'国土交通省', checked:'2026-10-02', terms:'データ目録・サイトポリシーで要確認', used:'3次メッシュ21区画（約4.8万棟）。半径1km内の屋根形状つき建物1,257棟（LOD2）、それ以外は外形と実測高さ（LOD1）。スカイツリータウンの屋根面の高さ（4F 屋外広場 19.9m・入口棟 23.5m・連絡ブリッジ 27.5m・イーストタワー 155.6m ほか）' },
+    { id:'S12', title:'3D都市モデル（Project PLATEAU）東京都墨田区 2025年度 CityGML（LOD1・LOD2）', url:'https://www.geospatial.jp/ckan/dataset/plateau-13107-sumida-ku-2025', publisher:'国土交通省', checked:'2026-10-02', terms:'データ目録・サイトポリシーで要確認', used:'3次メッシュ21区画（約4.8万棟）。半径1km内の屋根形状つき建物1,256棟（LOD2）、それ以外は外形と実測高さ（LOD1）。スカイツリータウンの屋根面の高さ（4F 屋外広場 19.9m・入口棟 23.5m・連絡ブリッジ 27.5m・イーストタワー 155.6m ほか）' },
     { id:'S13', title:'東京スカイツリー 公式 フロアガイド（1F・4F・5F）・アクセス（駅からのルート写真）', url:'https://www.tokyo-skytree.jp/floor/', publisher:'東京スカイツリー（公式）', checked:'2026-10-02', terms:'写真は著作物のため参照のみ（ゲーム・リポジトリには含めない）', used:'駅→1F 入口→館内エスカレーター→4F スカイアリーナ→MAIN ENTRANCE の順序、入口棟の外観（ガラス面・屋上の TOKYO SKYTREE 文字・黄色い枠の扉）、5F 出口フロア→連絡ブリッジ→東京ソラマチ「ソラフルパーク」、ソラミ坂＝「押上駅方面の、4Fスカイアリーナへ通じる屋外階段」' },
+    { id:'S14', title:'ウィキメディア・コモンズ 撮影位置つき写真（とうきょうスカイツリー駅 東口・1番線ホーム、4F スカイアリーナ、北十間川ほか8枚）', url:'https://commons.wikimedia.org/', publisher:'各撮影者（くろふね、LERK、掬茶、inunami、MiNe）', checked:'2026-10-02', terms:'CC BY 2.0／CC BY 4.0／CC BY-SA 3.0／CC BY-SA 4.0（README に作者・URL を記載）', used:'人の目線での比較（docs/photo_vs_game_1〜8.jpg）。2026年8〜9月の写真で、東口改札が高架下（タワーの北東）にあることを確認し、東口・高架下通路を追加' },
   ],
   // 施設情報：名称・分類・座標・入口・階・説明・公式URL・確認日・状態
   facilities: [
@@ -265,7 +266,7 @@ window.SKYTREE_DATA = {
     { id:'F11', name:'すみだ水族館', cat:'水族館', pos:[-76,0,40], r:16, floor:'ソラマチ ウエストヤード 5F・6F（要確認）', entrance:'ソラマチ館内（入室対象外）', desc:'ソラマチ館内の水族館。室内は追加候補（指示書 §2）のため未制作です。', src:['S4'], status:'insufficient', statusNote:'所在階は要確認。室内は対象外。' },
     { id:'F12', name:'押上駅（地下・模式）', cat:'駅', pos:[237,-14,-20], r:40, floor:'地下（深さは仮）', entrance:'B3出口：イーストタワー地下3階と直結（資料）／A2出口は位置未確認のため未制作', desc:'東京メトロ半蔵門線・都営浅草線・京成押上線などの駅。駅の位置は国土地理院の鉄道データから取りましたが、改札・ホーム・通路は構内図と照合できていないため模式です。', src:['S5','S6','S9','S11'], status:'insufficient', statusNote:'改札位置・通路形状・出入口の地上位置は資料不足。' },
     { id:'F13', name:'B3 出口（イーストタワー地下3階）', cat:'駅連絡', pos:[195,-14,-12], r:16, floor:'B3', entrance:'押上駅から地下通路', desc:'押上駅とスカイツリータウンを結ぶ地下の連絡口。直結していることは資料で確認、通路の形は推定です。', src:['S11'], status:'estimated', statusNote:'直結は確認。位置・形状は推定。' },
-    { id:'F14', name:'とうきょうスカイツリー駅', cat:'駅', pos:[-116,0,-44], r:45, floor:'高架ホーム（改札は地上）', entrance:'東改札口（位置は推定）', desc:'東武スカイツリーラインの高架駅。線路の位置は国土地理院データ。ホームは2本の線路の間に置いています（形式は推定）。正面改札口・東改札口があることは資料で確認。高架化工事中のため現況の再確認が必要です。', src:['S7','S9','S11'], status:'estimated', statusNote:'線路位置は確認済み。ホーム形式・改札位置は推定。' },
+    { id:'F14', name:'とうきょうスカイツリー駅', cat:'駅', pos:[-116,0,-44], r:45, floor:'高架ホーム（改札は地上）', entrance:'東改札口（位置は推定）', desc:'東武スカイツリーラインの高架駅。2026年の写真で東口改札が高架下（タワーの北東）にあることを確認し、東口と1番線ホーム（PLATEAU 2025 の形）を追加しました。西側のホームと改札は第2版の推定配置のままです。', src:['S7','S9','S11'], status:'estimated', statusNote:'線路位置は確認済み。ホーム形式・改札位置は推定。' },
     { id:'F15', name:'北十間川', cat:'河川', pos:[0,-2.6,70], r:14, floor:'—', entrance:'—', desc:'スカイツリータウンの南を流れる川。川の形は国土地理院の水域データ、水面の高さと護岸は推定です。', src:['S9','S10'], status:'estimated', statusNote:'平面形は確認済み。水位・護岸の高さは推定。' },
     { id:'F16', name:'北十間川の橋', cat:'橋', pos:[97,0,46], r:12, floor:'—', entrance:'—', desc:'道路中心線が川を渡る位置から生成した橋。橋の名前と欄干の形は確認できていません。', src:['S9'], status:'estimated', statusNote:'位置は確認済み。名称・形状は未確認。' },
     { id:'F19', name:'大横川親水公園', cat:'公園', pos:[-258,0,330], r:40, floor:'—', entrance:'—', desc:'浅草通りの南に延びる細長い親水公園（水路は国土地理院の水域データ）。', src:['S9'], status:'estimated', statusNote:'水路の位置は確認済み。園内の整備は未再現。' },
@@ -290,7 +291,7 @@ window.SKYTREE_DATA = {
   ],
   // 検証一覧（実装した内容／未確認の内容の区別）
   verify: [
-    ['周辺の建物の位置・外形・高さ', 'confirmed', 'S12 S8', '墨田区内（取得した3次メッシュ21区画）は PLATEAU 2025、半径1km内の1,257棟は屋根形状つき（LOD2）。区画の外は PLATEAU 2020 LOD1。屋根の色は航空写真から抽出。窓割り・壁の色は推定'],
+    ['周辺の建物の位置・外形・高さ', 'confirmed', 'S12 S8', '墨田区内（取得した3次メッシュ21区画）は PLATEAU 2025、半径1km内の1,256棟は屋根形状つき（LOD2）。区画の外は PLATEAU 2020 LOD1。屋根の色は航空写真から抽出。窓割り・壁の色は推定'],
     ['遠景の建物（半径約6km・高さ15m以上、新宿・丸の内・虎ノ門・池袋の高層ビル群）', 'confirmed', 'S8', 'PLATEAU 2020 の外形と実測高さを簡略化（外接長方形）'],
     ['川・水路の平面形（北十間川・隅田川・大横川親水公園ほか）', 'confirmed', 'S9', '国土地理院 ベクトルタイルの水域。水面の高さ・護岸の高さは推定'],
     ['地面の模様（道路・横断歩道・植え込み）', 'confirmed', 'S10', '国土地理院 シームレス空中写真（約0.5m/画素）。影や車も写り込んだまま'],
@@ -312,7 +313,9 @@ window.SKYTREE_DATA = {
     ['押上駅 B3出口がイーストタワー地下3階と直結', 'confirmed', 'S11', '検索結果の要約で確認。通路の形は推定'],
     ['押上駅の改札・ホーム・通路・A2出口の地上位置', 'insufficient', 'S5 S6', '構内図と照合できていないため模式。A2出口は未制作'],
     ['とうきょうスカイツリー駅の線路位置', 'confirmed', 'S9', '国土地理院の鉄道データ。PLATEAU 2025 の駅舎（LOD2）は、ゲーム側の駅モデルと重なるため描画していない'],
-    ['とうきょうスカイツリー駅のホーム形式・階段・東改札口の位置', 'estimated', 'S7 S11', '正面改札口・東改札口があることのみ確認。高架化工事による変化は未確認'],
+    ['とうきょうスカイツリー駅 東口改札・高架下通路', 'estimated', 'S14', '2026年8〜9月の撮影位置つき写真で、改札が高架下（タワーの北東、x≈110m）にあり、西へ通路が続くことを確認。改札の向き・台数は推定'],
+    ['とうきょうスカイツリー駅 1番線ホーム', 'estimated', 'S12 S14', 'PLATEAU 2025 の線路南側の細長い構造物（長さ約170m、屋根16m）を、写真と照らしてホームと推定。2番線ホームと、改札〜ホームの階段の位置は未確認（場面切替）'],
+    ['とうきょうスカイツリー駅 西側のホーム・改札（第2版の配置）', 'insufficient', 'S9', '国土地理院の駅区間（高架化前の可能性あり）に置いたもの。現在の形と一致するか未確認'],
     ['人・車の配置と密度、列車の運行、環境音', 'staged', '—', '演出上の設定（車は実在の道路中心線の上を走る）'],
     ['営業時間・料金・イベント', 'insufficient', '—', '変動情報は未登録のため表示しない'],
     ['地面の高さ（T.P.）', 'estimated', 'S8', 'PLATEAU の建物の接地高は −1〜+1.3m。ゲームでは平坦（0m）として扱う']
@@ -874,11 +877,14 @@ const PAV_DOOR={a:[-25.4,-37.8],b:[17.2,-42.7],t0:0.74,t1:0.88};   // 北面の�
     const parts=door?[[0,1-PAV_DOOR.t1],[1-PAV_DOOR.t0,1]]:[[0,1]];
     for(const [u0,u1] of parts){const A=[p[0]+dx*u0,p[1]+dz*u0],B=[p[0]+dx*u1,p[1]+dz*u1];wSeg(A[0],A[1],B[0],B[1],F4-0.5,H);
       const nrmv=outN(PAV,p,q);
-      if(glass){quadH('glass',[A[0],F4,A[1]],[B[0],F4,B[1]],[B[0],H-0.9,B[1]],[A[0],H-0.9,A[1]],nrmv);const n=Math.max(1,Math.round(L*(u1-u0)/1.8));for(let k=0;k<=n;k++){const t=k/n;beam('dark',[A[0]+(B[0]-A[0])*t,F4,A[1]+(B[1]-A[1])*t],[A[0]+(B[0]-A[0])*t,H-0.9,A[1]+(B[1]-A[1])*t],0.12);}
+      if(glass){quadH('glass',[A[0],F4,A[1]],[B[0],F4,B[1]],[B[0],H-1.7,B[1]],[A[0],H-1.7,A[1]],nrmv);const n=Math.max(1,Math.round(L*(u1-u0)/1.8));for(let k=0;k<=n;k++){const t=k/n;beam('dark',[A[0]+(B[0]-A[0])*t,F4,A[1]+(B[1]-A[1])*t],[A[0]+(B[0]-A[0])*t,H-1.7,A[1]+(B[1]-A[1])*t],0.12);}
         beam('dark',[A[0],F4+0.05,A[1]],[B[0],F4+0.05,B[1]],0.14);}
       else quadH('sola',[A[0],F4,A[1]],[B[0],F4,B[1]],[B[0],H,B[1]],[A[0],H,A[1]],nrmv,[[0,F4],[L*(u1-u0),F4],[L*(u1-u0),H],[0,H]]);}
     // 屋根の縁（ガラス面の上は濃い色の帯）
-    if(glass)quadH('dark',[p[0],H-0.9,p[1]],[q[0],H-0.9,q[1]],[q[0],H+0.25,q[1]],[p[0],H+0.25,p[1]],outN(PAV,p,q));}
+    if(glass){const n=outN(PAV,p,q),o=1.2;   // 屋根の縁：写真では厚い白い帯が外へ張り出している（寸法は推定）
+      quadH('deck',[p[0]+n[0]*o,H-1.7,p[1]+n[2]*o],[q[0]+n[0]*o,H-1.7,q[1]+n[2]*o],[q[0]+n[0]*o,H+0.25,q[1]+n[2]*o],[p[0]+n[0]*o,H+0.25,p[1]+n[2]*o],n);
+      quadH('ceil',[p[0],H-1.7,p[1]],[q[0],H-1.7,q[1]],[q[0]+n[0]*o,H-1.7,q[1]+n[2]*o],[p[0]+n[0]*o,H-1.7,p[1]+n[2]*o],[0,-1,0]);
+      quadH('deck',[p[0],H+0.25,p[1]],[q[0],H+0.25,q[1]],[q[0]+n[0]*o,H+0.25,q[1]+n[2]*o],[p[0]+n[0]*o,H+0.25,p[1]+n[2]*o],[0,1,0]);}}
   // 扉（MAIN ENTRANCE：黄色い枠）
   {const {a,b,t0,t1}=PAV_DOOR,A=[a[0]+(b[0]-a[0])*t0,a[1]+(b[1]-a[1])*t0],B=[a[0]+(b[0]-a[0])*t1,a[1]+(b[1]-a[1])*t1];
     for(const t of [0,0.5,1]){const x=A[0]+(B[0]-A[0])*t,z=A[1]+(B[1]-A[1])*t;beam('gold',[x,F4,z],[x,F4+3.3,z],t===0.5?0.08:0.3);}
@@ -965,6 +971,25 @@ const STAIR={s0:40,s1:62,n0:-1.4,n1:1.4};
   for(let s=6;s<STN.L;s+=14)for(const n of [-4.3,4.3]){const p=stWorld(s,n);box('conc',p[0]-0.7,p[0]+0.7,0,STN.y-1.1,p[1]-0.7,p[1]+0.7,{top:false});wCirc(p[0],p[1],0.9,0,STN.y-1.1);}
   for(let s=10;s<STN.L;s+=10){const p=stWorld(s,0);flat('lightPanel',p[0]-1.5,p[0]+1.5,p[1]-0.4,p[1]+0.4,STN.y-1.12);}
 }
+flush('estimated');
+/* ----- とうきょうスカイツリー駅 東口（2026年8〜9月にウィキメディア・コモンズへ投稿された位置情報つき写真 S14 で、高架下の改札と
+   「WELCOME TO TOKYO SKYTREE TOWN」の通路を確認。改札の向き・台数・通路の幅は写真からの推定。ホームとの間は場面切替） ----- */
+const EAST_GATE={x:112,z0:-73.6,z1:-68.4};
+for(let z=EAST_GATE.z0;z<=EAST_GATE.z1+0.01;z+=1.3){box('deck',EAST_GATE.x-0.9,EAST_GATE.x+0.9,0,1.05,z-0.13,z+0.13,{col:[0.88,0.9,0.93]});wBox(EAST_GATE.x-0.9,z-0.13,EAST_GATE.x+0.9,z+0.13,0,1.05);flat('lightPanel',EAST_GATE.x+0.5,EAST_GATE.x+0.9,z-0.13,z+0.13,1.06);}
+// 新しいホーム（PLATEAU 2025 の線路南側の細長い構造物：長さ約170m・幅約6〜8m・屋根16m。1番線〈浅草方面〉ホームと推定。床の高さは推定）
+const STN25=TWR.find(r=>r.k==='stn_ground');let PF25=null;const PF_Y=8.7;
+if(STN25){PF25=STN25.p.filter(p=>p[0]<=103.3);const RY=STN25.h;
+  fFn(bbOf(PF25),(x,z)=>pip(PF25,x,z)?PF_Y:null,'tsky_pf2');
+  polyFlat('conc',PF25,PF_Y);polyFlat('ceil',PF25,PF_Y-0.6);polyFlat('deck',PF25,RY);polyFlat('ceil',PF25,RY-0.35);
+  for(let i=0;i<PF25.length;i++){const p=PF25[i],q=PF25[(i+1)%PF25.length],n=outN(PF25,p,q),L=Math.hypot(q[0]-p[0],q[1]-p[1]);if(L<0.5)continue;
+    quadH('conc',[p[0],PF_Y-0.6,p[1]],[q[0],PF_Y-0.6,q[1]],[q[0],PF_Y,q[1]],[p[0],PF_Y,p[1]],n);
+    quadH('deck',[p[0],RY-0.35,p[1]],[q[0],RY-0.35,q[1]],[q[0],RY,q[1]],[p[0],RY,p[1]],n);
+    if(n[2]>0.5){wSeg(p[0],p[1],q[0],q[1],PF_Y-0.5,PF_Y+1.4);quadH('inner',[p[0],PF_Y,p[1]],[q[0],PF_Y,q[1]],[q[0],RY-0.35,q[1]],[p[0],RY-0.35,p[1]],[-n[0],0,-n[2]]);
+      const k=Math.floor(L/12);for(let j=0;j<=k;j++){const t=k?j/k:0.5,x=p[0]+(q[0]-p[0])*t,z=p[1]+(q[1]-p[1])*t;beam('steel',[x,0,z],[x,RY,z],0.4);wCirc(x,z,0.3,0,RY);}}
+    else if(n[2]<-0.5){const o=0.45;beam('paint',[p[0]-n[0]*o,PF_Y+0.01,p[1]-n[2]*o],[q[0]-n[0]*o,PF_Y+0.01,q[1]-n[2]*o],0.12);}}}
+// 高架下の通路（天井は写真の印象から。位置は推定）
+{const P=[[118,-66.5],[118,-75],[40,-66],[40,-58.5]];flat('ceil',40,118,-75,-58.5,6.2);
+  quadH('inner',[118,0,-66],[118,0,-75],[118,6.2,-75],[118,6.2,-66],[-1,0,0]);}
 flush('estimated');
 
 /* ================= 押上駅（地下。構内図未照合のため模式。B3出口＝イーストタワー地下3階直結は資料で確認） ================= */
@@ -1141,7 +1166,7 @@ function buildSigns(){
   // 東京スカイツリー 足元・展望台（文言は施設の公開情報に基づく。位置は推定）
   // 入口棟：屋上の「TOKYO SKYTREE」の文字と MAIN ENTRANCE（公式の経路写真で確認。文字の大きさ・位置は推定）
   {const a=PAV_DOOR.a,b=PAV_DOOR.b,br=353.4,at=(t,o)=>[a[0]+(b[0]-a[0])*t+Math.sin(br*DEG)*o,a[1]+(b[1]-a[1])*t-Math.cos(br*DEG)*o];
-    let p=at(0.45,0.35);sign([['TOKYO SKYTREE',150,'#3d434b',700]],{bg:'none',w:2048,h:200},p[0],F5+1.1,p[1],br,17,1.66,false);
+    let p=at(0.45,1.27);sign([['TOKYO SKYTREE',150,'#4a6f9a',700]],{bg:'none',w:2048,h:200},p[0],F5-0.75,p[1],br,15,1.46,false);
     p=at(0.81,0.36);sign([['MAIN ENTRANCE',44,'#fff',700]],{bg:'#222',w:640,h:96},p[0],F4+3.75,p[1],br,5.2,0.78,false);
     p=at(0.81,0.3);sign([],{bg:'#e2b100',w:64,h:16},p[0],F4+3.75,p[1],br,6.4,1.0,false);}
   sign([['TOKYO SKYTREE Tickets',40,'#fff']],{bg:'#2c3e5c',w:640,h:96},23.9,F4+2.6,-27.5,270,4.6,0.7,false);
@@ -1167,8 +1192,10 @@ function buildSigns(){
   sign([['東京スカイツリーイーストタワー',32,'#14325f'],['地下3階で押上駅と直結',22,'#333',500]],{bg:'#f4f4f0',w:640,h:128},190,4.4,12.2,180,4.4,0.88,false);
   // とうきょうスカイツリー駅（駅名標の位置・デザインは推定）
   for(const s of [18,100])for(const b of [0,180]){const p=stWorld(s,0),u=Math.atan2(STN.u[0],-STN.u[1])/DEG;sign([['とうきょうスカイツリー',46,'#14325f'],['TOKYO SKYTREE',22,'#2a5caa',500]],{bg:'#f7f7f5',w:768,h:160,stripe:'#2a5caa'},p[0],11.0,p[1],(u+b+360)%360,3.6,0.75,false);}
-  {const p=stWorld(73.6,0),u=Math.atan2(STN.u[0],-STN.u[1])/DEG;sign([['東改札口（位置は推定）',40,'#14325f']],{bg:'#f7f7f5',w:512,h:96},p[0],3.4,p[1],(u+180)%360,3.6,0.68,false);
+  {const p=stWorld(73.6,0),u=Math.atan2(STN.u[0],-STN.u[1])/DEG;sign([['改札（位置は推定）',40,'#14325f']],{bg:'#f7f7f5',w:512,h:96},p[0],3.4,p[1],(u+180)%360,3.6,0.68,false);
     sign([['↓ 改札・東京スカイツリー方面',36,'#14325f']],{bg:'#f7f7f5',w:640,h:96},stWorld(38.5,0)[0],ST_SIGN_Y,stWorld(38.5,0)[1],(u+180)%360,3.6,0.54,false);}
+  sign([['とうきょうスカイツリー駅 東口',36,'#fff'],['TOKYO SKYTREE Station East',20,'#d8e6ff',500]],{bg:'#1d4fa0',w:768,h:128},EAST_GATE.x-1.2,3.1,-71,270,4.2,0.7,false);
+  sign([['← WELCOME TO TOKYO SKYTREE TOWN',34,'#1d4fa0']],{bg:'#f4f4f0',w:768,h:96},80,2.4,-58.9,180,5.2,0.65,false);
   // 押上駅（構内は模式。B3出口がイーストタワー地下3階と直結することは資料で確認）
   sign([['B3 出口 東京スカイツリータウン',40],['イーストタワー地下3階 直結',22,'#bcd4ff',500]],NAVY,237,OY+4.2,-8.2,0,6,1.0,false);
   sign([['押上〈スカイツリー前〉駅',44],['構内の配置は模式（構内図と未照合）',22,'#bcd4ff',500]],NAVY,237,OY+4.2,-31.5,180,6,1.0,false);
@@ -1277,9 +1304,13 @@ const pa=(a,r,y)=>[Math.cos(a*DEG)*r,y,Math.sin(a*DEG)*r];
 const sw=(s,n,y)=>{const p=stWorld(s,n);return [p[0],y,p[1]];};
 // とうきょうスカイツリー駅 → 東改札（推定）→ 北側の通り → 館内入口
 const gN=0;
-N('tsky_pf',...sw(18,0,STN.y),'とうきょうスカイツリー駅 ホーム');N('tsky_st_top',...sw(38.8,0,STN.y));N('tsky_st_bot',...sw(63.4,0,0));N('tsky_gate',...sw(74.9,gN,0),'とうきょうスカイツリー駅 東改札（推定）');N('tsky_e',...sw(86,0,0));
+N('tsky_pf',...sw(18,0,STN.y),'とうきょうスカイツリー駅 西側ホーム（第2版の推定配置・要確認）');N('tsky_st_top',...sw(38.8,0,STN.y));N('tsky_st_bot',...sw(63.4,0,0));N('tsky_gate',...sw(74.9,gN,0),'とうきょうスカイツリー駅 西側の改札（西口付近と推定・要確認）');N('tsky_e',...sw(86,0,0));
 N('st_n1',-84,0,-44.5);N('st_n1b',-66,0,-43.8);N('st_n2',-40,0,-50);N('ty_n',-5.2,0,-52.3,'タワーヤード北側 1F 入口（TOKYO SKYTREE）');
 chain('tsky_pf','tsky_st_top','tsky_st_bot','tsky_gate','tsky_e','st_n1','st_n1b','st_n2','ty_n');
+// 東口（2026年の写真で確認した高架下の改札。位置は写真の撮影位置から推定）→ 高架下の通路 → タワーヤード 1F 入口
+N('tsky_pf1',60,PF_Y,-64.8,'とうきょうスカイツリー駅 1番線ホーム（浅草方面：PLATEAU 2025 の形から推定）');N('tsky_pf1w',0,PF_Y,-59.6);chain('tsky_pf1w','tsky_pf1');
+N('tsky_e_in',115,0,-71.65);N('tsky_e_gate',112,0,-71.65,'とうきょうスカイツリー駅 東口改札（2026年の写真から推定）');N('tsky_e_out',108,0,-71.65);N('e_w1',80,0,-65.6,'東口からの高架下通路');N('e_w2',45,0,-62.5);N('e_w3',8,0,-59.5);N('e_w4',-3,0,-58.5);
+chain('tsky_e_in','tsky_e_gate','tsky_e_out','e_w1','e_w2','e_w3','e_w4','ty_n');
 // 南側（北十間川沿いの道）とソラマチひろば
 N('ty_s',-4.8,0,45.4,'タワーヤード南側 入口（推定）');N('s_w',-60,0,47);N('s_e',36,0,42);N('hiroba',70,0,24,'ソラマチひろば（1F）');N('sorami_b',98.2,0,21.0,'ソラミ坂 下（1F）');N('et_1f',190,0,12.6,'イーストタワー 1F 入口（推定）');N('s_e2',140,0,24);
 chain('s_w','ty_s','s_e','hiroba','sorami_b');chain('hiroba','s_e2','et_1f');
@@ -1323,10 +1354,11 @@ for(const [a,b,r] of [['ty_n','plaza_w','タワーヤード 1F 入口 → 館内
   ['et_b3','plaza_e','B3（押上駅連絡）→ 長いエスカレーター → 4F（イーストヤード）→ スカイアリーナ'],['plaza_e','et_b3','4F スカイアリーナ → イーストヤード → B3（押上駅連絡）'],['et_b3','et_1f','B3（押上駅連絡）→ イーストタワー 1F'],['et_1f','et_b3','イーストタワー 1F → B3（押上駅連絡）'],
   ['bridge_e','et_b3','東京ソラマチ 5F → 館内 → B3（押上駅連絡）'],['bridge_e','plaza_e','東京ソラマチ 5F → 館内 → 4F スカイアリーナ']])
   link(a,b,'館内移動（推定）',r,VT,14);
+link('tsky_e_in','tsky_pf1','駅構内（推定）','東口改札 → 1番線ホーム','改札からホームへの階段の位置は未確認のため場面切替で表現。',20);link('tsky_pf1','tsky_e_in','駅構内（推定）','1番線ホーム → 東口改札','改札からホームへの階段の位置は未確認のため場面切替で表現。',20);
 {const l=LINKS.find(l=>l.from==='e4');l.at=[0,F4,0];l.r=11.4;}
 const ARRIVE_HEAD={e350:bOut('e350'),g445:185,e345:bOut('e345'),e5:75,plaza_w:60,plaza_e:265,ty_n:0,ty_s:180,et_b3:0,et_1f:180};
 const DESTS=[['天望デッキ フロア350','e350'],['天望回廊・ソラカラポイント','g_sora'],['4F 入口フロア','e4'],['5F 出口フロア','e5'],['4F 屋外広場（スカイアリーナ）','sky_arena'],['MAIN ENTRANCE（4F 入口棟）','pz_door_o'],['ソラミ坂','sorami_t'],['連絡ブリッジ（5F）','br5_1'],
-  ['とうきょうスカイツリー駅 ホーム','tsky_pf'],['とうきょうスカイツリー駅 東改札（推定）','tsky_gate'],['押上駅 改札（模式）','osh_gate'],['B3 出口（イーストタワー直結）','et_b3'],
+  ['とうきょうスカイツリー駅 1番線ホーム','tsky_pf1'],['とうきょうスカイツリー駅 東口改札（2026年の写真）','tsky_e_gate'],['押上駅 改札（模式）','osh_gate'],['B3 出口（イーストタワー直結）','et_b3'],
   ['ソラマチひろば（1F）','hiroba'],['北十間川の橋（名称未確認）','br_m']].filter(d=>NODES[d[1]]);
 function routeTo(goal){const dist={},next={},nl={},rev={};for(const id in NODES){dist[id]=Infinity;rev[id]=[];}
   for(const id in NODES)for(const e of NODES[id].e)rev[e.to].push({from:id,w:e.w,link:e.link});
@@ -1468,7 +1500,7 @@ function updateLabels(){let n=0;const W=innerWidth,H=innerHeight;
   for(let i=n;i<lblPool.length;i++)lblPool[i].hidden=true;}
 
 /* ================= place / floor / coords ================= */
-const FLOORNAME={deck350:'天望デッキ フロア350',deck345:'天望デッキ フロア345',deck340:'天望デッキ フロア340',deckstairs:'天望デッキ 階段',gallery:'天望回廊',f5:'5F 出口フロア',entr4f:'4F 入口フロア',bridge5f:'5F 連絡ブリッジ',sorami:'ソラミ坂（4F スカイアリーナへの屋外階段）',plaza4f:'4F 屋外広場（スカイアリーナ）',stairs:'屋外大階段（推定）',oshiage:'押上駅 地下コンコース（模式）',passage:'押上駅〜スカイツリータウン 連絡通路',b3:'東京スカイツリータウン B3 連絡口',osh_stairs:'押上駅 出入口の階段',tsky_pf:'とうきょうスカイツリー駅 ホーム',tsky_stairs:'とうきょうスカイツリー駅 階段',bridge:'北十間川の橋（名称未確認）'};
+const FLOORNAME={deck350:'天望デッキ フロア350',deck345:'天望デッキ フロア345',deck340:'天望デッキ フロア340',deckstairs:'天望デッキ 階段',gallery:'天望回廊',f5:'5F 出口フロア',entr4f:'4F 入口フロア',bridge5f:'5F 連絡ブリッジ',sorami:'ソラミ坂（4F スカイアリーナへの屋外階段）',plaza4f:'4F 屋外広場（スカイアリーナ）',stairs:'屋外大階段（推定）',oshiage:'押上駅 地下コンコース（模式）',passage:'押上駅〜スカイツリータウン 連絡通路',b3:'東京スカイツリータウン B3 連絡口',osh_stairs:'押上駅 出入口の階段',tsky_pf:'とうきょうスカイツリー駅 西側ホーム（推定配置）',tsky_pf2:'とうきょうスカイツリー駅 1番線ホーム（PLATEAU 2025）',tsky_stairs:'とうきょうスカイツリー駅 階段',bridge:'北十間川の橋（名称未確認）'};
 const DISTRICTS=W.labels.filter(l=>/丁目$/.test(l.n));
 function placeName(){const f=P.fname;
   if(f==='gallery')return P.y>451?'ソラカラポイント（451.2m）':'天望回廊';
