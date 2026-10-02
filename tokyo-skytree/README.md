@@ -151,5 +151,5 @@
 2. `parse_plat.py`：PLATEAU の CityGML（タワーの周囲12区画）から、建物の外形と実測高さを取り出す
 3. `fetch_far.py`：遠景用に、半径6kmと高層ビル群の区画を S3 から部分的にダウンロードする
 4. `mosaic.py`：空中写真のタイル（z18・z16・z14）をつなげる
-5. `build_assets.py`：`data/bldg.bin`・`far.bin`・`world.json` を作る
+5. `build_assets.py`：`data/bldg.b64.txt`・`far.b64.txt`（建物の外形と高さを16bit整数で詰めてbase64にしたもの）・`world.json` を作る
 6. `compose.py`：比較画像を作る

@@ -57,13 +57,13 @@ for pts,h,col in near:
         if v==0: v=1
     arr.append(v)
     for x,z in pts: arr.append(int(round(x*10))); arr.append(int(round(z*10)))
-open(OUT+'bldg.bin','wb').write(arr.tobytes())
+import base64;open(OUT+'bldg.b64.txt','w').write(base64.b64encode(arr.tobytes()).decode())
 arr=array.array('h')
 for pts,h in farb:
     if len(pts)<3: continue
     arr.append(len(pts)); arr.append(int(round(h)))
     for x,z in pts: arr.append(int(round(x))); arr.append(int(round(z)))
-open(OUT+'far.bin','wb').write(arr.tobytes())
+open(OUT+'far.b64.txt','w').write(base64.b64encode(arr.tobytes()).decode())
 print('near',len(near),'far',len(farb))
 # ---- water
 g16=json.load(open('gsi.json')); g14=json.load(open('gsi14.json'))
