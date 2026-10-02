@@ -1,0 +1,1633 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>東京スカイツリー散策</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: full-bleed 3D world; HUD = translucent indigo plates pinned to corners. Accent = 粋 (light blue) */
+:root{
+  color-scheme: dark;
+  --ink:#0a0f1c;
+  --plate:rgba(12,18,34,.76);
+  --line:rgba(150,205,255,.28);
+  --acc:#8fd3ff;
+  --miyabi:#c08cff;
+  --fg:#eef3fa;
+  --muted:#a3adc2;
+  --ok:#4cc38a; --est:#e8b949; --ng:#f06c84; --stg:#9097ab;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --gut:16px;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ink);color:var(--fg);font-family:var(--body);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+.plate{background:var(--plate);border:1px solid var(--line);border-radius:8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 24px rgba(0,0,0,.3)}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11px;letter-spacing:.18em;color:var(--acc);text-transform:uppercase}
+button{font-family:var(--body)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+#tl{position:fixed;left:calc(var(--gut) + env(safe-area-inset-left,0px));top:calc(var(--gut) + env(safe-area-inset-top,0px));padding:12px 14px;width:min(290px,calc(100vw - 2*var(--gut) - 150px));display:grid;gap:6px}
+#place{font-family:var(--display);font-weight:800;font-size:19px;line-height:1.3;text-wrap:balance}
+#floorL{font-size:12.5px;color:var(--fg)}
+#coord{font-size:11px;color:var(--muted)}
+.row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+#time{width:100%;accent-color:var(--acc);min-width:0}
+#timeOut{color:var(--fg);font-size:13px;min-width:3.2em;text-align:right}
+.seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;grid-column:2 / 4}
+.seg button{flex:1;background:transparent;color:var(--muted);border:0;padding:5px 0;font:500 12px var(--body);cursor:pointer;letter-spacing:.04em;min-width:0}
+.seg button[aria-pressed="true"]{background:rgba(143,211,255,.2);color:var(--fg)}
+.seg button+button{border-left:1px solid var(--line)}
+
+#mapBox{position:fixed;right:calc(var(--gut) + env(safe-area-inset-right,0px));top:calc(var(--gut) + env(safe-area-inset-top,0px));padding:6px;line-height:0}
+#map{width:184px;height:184px;border-radius:5px;display:block;cursor:pointer}
+#mapNote{position:absolute;left:11px;bottom:10px;line-height:1.2;font-size:10.5px;color:var(--fg);text-shadow:0 1px 2px #000}
+
+#guide{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--gut) + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:10px;padding:8px 12px;max-width:calc(100vw - 2*var(--gut) - 520px);min-width:240px}
+#gArrow{width:30px;height:30px;flex:none}
+#gText{font-size:13px;line-height:1.4}
+#gText b{font-weight:700}
+#gText small{display:block;color:var(--muted);font-size:11.5px}
+#guide button{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:5px;padding:5px 8px;font-size:12px;cursor:pointer;white-space:nowrap}
+#guide button[aria-pressed="true"]{background:rgba(143,211,255,.22)}
+
+#prompt{position:fixed;left:50%;top:58%;transform:translateX(-50%);padding:9px 14px;font-size:14px;cursor:pointer;text-align:center;max-width:calc(100vw - 2*var(--gut))}
+#prompt kbd{border:1px solid var(--acc);border-radius:4px;padding:0 6px;margin-right:6px;color:var(--acc);font-family:var(--body)}
+
+#poi{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--gut) + env(safe-area-inset-bottom,0px));width:min(540px,calc(100vw - 2*var(--gut)));padding:12px 16px 14px;transition:opacity .4s}
+#poi .cat{font-size:11px;color:var(--acc);letter-spacing:.12em}
+#poi h2{margin:2px 0 4px;font:800 19px/1.3 var(--display);text-wrap:balance}
+#poi p{margin:0;font-size:13px;line-height:1.7;color:#d9e0ec}
+#poi .meta{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.6}
+.chip{display:inline-block;font-size:10.5px;border-radius:3px;padding:0 6px;margin-right:4px;line-height:1.7;color:#0b1020;font-weight:700;letter-spacing:.04em}
+.chip.confirmed{background:var(--ok)}.chip.estimated{background:var(--est)}.chip.insufficient{background:var(--ng)}.chip.staged{background:var(--stg)}
+
+#dock{position:fixed;left:calc(var(--gut) + env(safe-area-inset-left,0px));bottom:calc(var(--gut) + env(safe-area-inset-bottom,0px));display:flex;gap:6px;flex-wrap:wrap;max-width:calc(50vw - 290px + 260px)}
+#dock button{color:var(--fg);font:500 12.5px var(--body);letter-spacing:.04em;padding:9px 12px;cursor:pointer}
+#dock button[aria-expanded="true"]{background:rgba(143,211,255,.22)}
+
+.panel{position:fixed;left:calc(var(--gut) + env(safe-area-inset-left,0px));bottom:calc(var(--gut) + 52px + env(safe-area-inset-bottom,0px));width:min(430px,calc(100vw - 2*var(--gut)));max-height:min(66vh,620px);overflow:auto;padding:12px 14px;font-size:12.5px;line-height:1.6;user-select:text;-webkit-user-select:text}
+.panel h3{margin:4px 0 8px;font:800 16px var(--display)}
+.panel h4{margin:12px 0 6px;font-size:12px;color:var(--acc);letter-spacing:.1em}
+.panel p{margin:0 0 8px;color:#cfd6e3}
+.panel table{width:100%;border-collapse:collapse;font-size:11.5px}
+.panel td,.panel th{border-bottom:1px solid rgba(150,205,255,.12);padding:5px 4px;vertical-align:top;text-align:left}
+.panel th{color:var(--muted);font-weight:500}
+.panel a{color:var(--acc);word-break:break-all}
+.item{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;padding:6px 4px;border-bottom:1px solid rgba(150,205,255,.12)}
+.item .nm{font-size:13.5px}
+.item .sub{display:block;font-size:11px;color:var(--muted)}
+.item button,.panel .btn{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:5px;padding:4px 9px;font-size:12px;cursor:pointer}
+.item button:hover,.panel .btn:hover{background:rgba(143,211,255,.16)}
+.srow{display:grid;grid-template-columns:120px 1fr 52px;gap:8px;align-items:center;margin:6px 0}
+.srow input[type=range]{accent-color:var(--acc);width:100%}
+.legend span{display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:11.5px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+#toast{position:fixed;left:50%;top:calc(78px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:rgba(12,18,34,.9);border:1px solid var(--est);color:#ffe9b8;padding:8px 14px;border-radius:6px;font-size:13px;max-width:calc(100vw - 2*var(--gut))}
+#keys{position:fixed;right:calc(var(--gut) + env(safe-area-inset-right,0px));bottom:calc(var(--gut) + env(safe-area-inset-bottom,0px));font-size:11px;color:var(--muted);text-align:right;line-height:1.8;text-shadow:0 1px 2px rgba(0,0,0,.9)}
+#keys b{color:var(--fg);font-weight:500;border:1px solid rgba(238,243,250,.35);border-radius:3px;padding:0 4px;margin:0 1px}
+#cross{position:fixed;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:rgba(255,255,255,.6);pointer-events:none}
+#labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;transform:translate(-50%,-100%);font-size:12px;white-space:nowrap;padding:2px 7px;border-radius:4px;background:rgba(10,15,28,.72);border:1px solid var(--line);color:var(--fg)}
+.lbl small{color:var(--muted);margin-left:5px}
+.lbl::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:10px;background:var(--line)}
+
+#perf{position:fixed;right:calc(var(--gut) + 200px);top:calc(var(--gut) + env(safe-area-inset-top,0px));padding:8px 10px;font-size:11px;line-height:1.55;white-space:pre}
+#elev{position:fixed;inset:0;display:grid;place-items:center;background:rgba(6,10,20,.92)}
+#elevCard{text-align:center;display:grid;gap:8px;padding:24px}
+#elevName{font-size:13px;color:var(--acc);letter-spacing:.16em}
+#elevAlt{font:800 clamp(44px,9vw,84px)/1 var(--display)}
+#elevRoute{font-size:15px}
+#elevNote{font-size:12px;color:var(--muted);max-width:30em}
+#choose{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);padding:14px;display:grid;gap:8px;min-width:260px}
+#choose button{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:6px;padding:10px 12px;font-size:14px;cursor:pointer;text-align:left}
+#choose button:hover{background:rgba(143,211,255,.16)}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .5s}
+
+#joy{position:fixed;left:calc(26px + env(safe-area-inset-left,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:124px;height:124px;border-radius:50%;border:1px solid var(--line);background:rgba(12,18,34,.35)}
+#knob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(143,211,255,.35);border:1px solid var(--acc)}
+.tbtn{position:fixed;right:calc(var(--gut) + env(safe-area-inset-right,0px));width:60px;height:60px;border-radius:50%;color:var(--fg);font:500 12px var(--body);cursor:pointer}
+#runBtn{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+#actBtn{bottom:calc(166px + env(safe-area-inset-bottom,0px))}
+#runBtn[aria-pressed="true"]{background:rgba(143,211,255,.3)}
+
+#start{position:fixed;inset:0;display:grid;place-items:center;padding:24px var(--gut);background:linear-gradient(180deg,rgba(6,10,20,.1) 0%,rgba(6,10,20,.5) 50%,rgba(6,10,20,.9) 100%);overflow:auto}
+#startCard{width:min(600px,100%);display:grid;gap:12px;text-align:left;align-self:end;margin-bottom:5vh}
+#startCard .en{font:600 clamp(13px,2vw,15px) var(--body);letter-spacing:.32em;color:var(--acc)}
+#startCard h1{margin:0;font:800 clamp(28px,6vw,52px)/1.15 var(--display);letter-spacing:.06em;text-shadow:0 2px 30px rgba(0,0,0,.5)}
+#startCard p{margin:0;font-size:14px;line-height:1.85;color:#dbe2ee;max-width:36em}
+#startCard .note{font-size:12px;color:#ffe2a6;border-left:2px solid var(--est);padding-left:10px}
+#go{justify-self:start;background:var(--acc);color:#06121f;border:0;border-radius:6px;padding:12px 26px;font:700 15px var(--body);letter-spacing:.14em;cursor:pointer}
+#go:disabled{opacity:.55;cursor:progress}
+#startKeys{font-size:12.5px;color:var(--muted);line-height:1.9}
+#startKeys b{color:var(--fg);font-weight:500}
+
+@media (max-width:900px){#guide{max-width:calc(100vw - 2*var(--gut));top:auto;bottom:calc(64px + env(safe-area-inset-bottom,0px))} #perf{right:auto;left:var(--gut);top:200px}}
+@media (max-width:620px){
+  #map{width:118px;height:118px}
+  #tl{width:calc(100vw - 2*var(--gut) - 146px);padding:9px 10px}
+  #place{font-size:15.5px}
+  #coord{display:none}
+  #poi p{font-size:12px;line-height:1.6}
+  #poi h2{font-size:16px}
+  #keys{display:none}
+  #dock button{padding:8px 9px;font-size:12px}
+}
+body.touch #poi{bottom:calc(230px + env(safe-area-inset-bottom,0px))}
+body.touch #poi p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+body.touch #guide{bottom:calc(214px + env(safe-area-inset-bottom,0px))}
+body.photo #tl,body.photo #mapBox,body.photo #dock,body.photo #keys,body.photo #poi,body.photo #guide,body.photo #prompt,body.photo .panel,body.photo #labels,body.photo #perf,body.photo #cross{visibility:hidden}
+@media (prefers-reduced-motion:reduce){#poi,#flash{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0" aria-label="東京スカイツリーと周辺の3Dビュー"></canvas>
+<div id="labels" aria-hidden="true"></div>
+<div id="cross" hidden></div>
+
+<div id="tl" class="plate">
+  <div class="eyebrow">Tokyo Skytree · Oshiage</div>
+  <div id="place">押上・業平エリア</div>
+  <div id="floorL" class="num">地上</div>
+  <div id="coord" class="num"></div>
+  <div class="row"><label for="time">時刻</label><input id="time" type="range" min="0" max="24" step="0.05" value="15.5"><output id="timeOut" for="time">15:30</output></div>
+  <div class="row"><span>天候</span><div class="seg" role="group" aria-label="天候"><button data-w="clear" aria-pressed="true">晴れ</button><button data-w="haze" aria-pressed="false">かすみ</button><button data-w="cloud" aria-pressed="false">くもり</button></div></div>
+  <div class="row"><span>照明</span><div class="seg" role="group" aria-label="ライティング"><button data-l="auto" aria-pressed="true">自動</button><button data-l="iki" aria-pressed="false">粋</button><button data-l="miyabi" aria-pressed="false">雅</button><button data-l="off" aria-pressed="false">消灯</button></div></div>
+</div>
+
+<div id="mapBox" class="plate"><canvas id="map" width="368" height="368" aria-label="現在地の地図（クリックで縮尺切替）"></canvas><div id="mapNote" class="num"></div></div>
+
+<div id="guide" class="plate" hidden>
+  <svg id="gArrow" viewBox="0 0 30 30" aria-hidden="true"><g id="gArrowG" transform="rotate(0 15 15)"><path d="M15 3 L24 24 L15 19 L6 24 Z" fill="#8fd3ff"/></g></svg>
+  <div id="gText"></div>
+  <button id="autoBtn" aria-pressed="false" title="経路を自動で歩きます（確認動画の撮影用）">自動歩行</button>
+  <button id="gEnd">終了</button>
+</div>
+
+<div id="prompt" class="plate" hidden></div>
+<div id="poi" class="plate" hidden><div class="cat"></div><h2></h2><p></p><div class="meta"></div></div>
+<div id="toast" role="status" hidden></div>
+<div id="keys"><b>W A S D</b> 移動　<b>Shift</b> 走る　<b>E</b> 乗る・操作<br><b>G</b> 目的地　<b>P</b> 写真　<b>L</b> 眺望ラベル　<b>V</b> 検証表示　<b>F3</b> 性能<br>マウス 視点　<b>Esc</b> カーソル解放</div>
+
+<div id="dock">
+  <button class="plate" data-p="destPanel" aria-expanded="false">目的地</button>
+  <button class="plate" data-p="facPanel" aria-expanded="false">施設情報</button>
+  <button class="plate" data-p="verPanel" aria-expanded="false">検証</button>
+  <button class="plate" data-p="setPanel" aria-expanded="false">設定</button>
+  <button class="plate" id="photoBtn">写真</button>
+</div>
+
+<div id="destPanel" class="panel plate" hidden></div>
+<div id="facPanel" class="panel plate" hidden></div>
+<div id="verPanel" class="panel plate" hidden></div>
+<div id="setPanel" class="panel plate" hidden>
+  <h3>設定</h3>
+  <p>目線の高さ・歩行速度は指示書の初期値（1.6m・1.4m/秒）です。体験確認後に調整してください。</p>
+  <div class="srow"><label for="sEye">目線の高さ</label><input id="sEye" type="range" min="1.0" max="2.0" step="0.05" value="1.6"><output id="oEye" class="num">1.60m</output></div>
+  <div class="srow"><label for="sSpd">歩行速度</label><input id="sSpd" type="range" min="0.8" max="2.5" step="0.1" value="1.4"><output id="oSpd" class="num">1.4m/s</output></div>
+  <div class="srow"><label for="sCrowd">人の密度</label><input id="sCrowd" type="range" min="0" max="1" step="0.05" value="0.5"><output id="oCrowd" class="num">50%</output></div>
+  <div class="srow"><label for="sCars">車の量</label><input id="sCars" type="range" min="0" max="1" step="0.05" value="0.6"><output id="oCars" class="num">60%</output></div>
+  <div class="srow"><label for="sFov">画角（水平）</label><input id="sFov" type="range" min="50" max="100" step="1" value="75"><output id="oFov" class="num">75°</output></div>
+  <p style="font-size:11.5px;color:var(--muted)">人・車の密度と環境音は<b>演出上の設定</b>で、実測の再現ではありません。</p>
+  <h4>表示・音</h4>
+  <div class="srow"><span>水面反射</span><div class="seg" style="grid-column:2/4"><button data-r="1" aria-pressed="true">あり</button><button data-r="0" aria-pressed="false">なし</button></div></div>
+  <div class="srow"><span>影</span><div class="seg" style="grid-column:2/4"><button data-sh="1" aria-pressed="true">あり</button><button data-sh="0" aria-pressed="false">なし</button></div></div>
+  <div class="srow"><span>環境音</span><div class="seg" style="grid-column:2/4"><button data-snd="1" aria-pressed="false">オン</button><button data-snd="0" aria-pressed="true">オフ</button></div></div>
+  <div class="srow"><span>眺望ラベル</span><div class="seg" style="grid-column:2/4"><button data-lb="1" aria-pressed="true">表示</button><button data-lb="0" aria-pressed="false">隠す</button></div></div>
+</div>
+
+<div id="perf" class="plate num" hidden></div>
+<div id="choose" class="plate" hidden></div>
+<div id="elev" hidden><div id="elevCard"><div id="elevName"></div><div id="elevAlt" class="num"></div><div id="elevRoute"></div><div id="elevNote"></div></div></div>
+<div id="flash"></div>
+
+<div id="joy" hidden><div id="knob"></div></div>
+<button id="actBtn" class="plate tbtn" hidden>乗る</button>
+<button id="runBtn" class="plate tbtn" aria-pressed="false" hidden>走る</button>
+
+<div id="start">
+  <div id="startCard">
+    <div class="en">TOKYO SKYTREE · OSHIAGE</div>
+    <h1>東京スカイツリー散策</h1>
+    <p>高さ634mの東京スカイツリーと押上・業平の街を一人称で歩けます。押上駅の地下コンコースやとうきょうスカイツリー駅から4F入口フロアへ向かい、天望シャトルで天望デッキ（フロア350）、さらに天望回廊（フロア445〜450）まで上がれます。時刻・天候・ライティング（粋・雅）も切り替えられます。</p>
+    <p class="note">試作版（指示書 第1版の「地形と仮配置」〜「主要部分の試作」段階に相当）です。高さ634m・展望台のフロア名などは公式資料で確認できましたが、建物の形・駅の構内・道路の配置の多くは推定や仮配置です。確認済みかどうかは「検証」パネルと検証表示（Vキー）で確認できます。</p>
+    <button id="go" disabled>準備中…</button>
+    <div id="startKeys"><b>パソコン</b>　WASD で移動、Shift で走る、マウスで見回す、E でエレベーターに乗る<br><b>スマホ</b>　左下のスティックで移動、画面をドラッグして見回す、「乗る」ボタンで操作</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script id="skytree-data">
+/* ===== 施設情報・資料台帳・検証データ（指示書 §4 §11 §14 §16 §18 に対応） =====
+   座標系：原点＝タワー中心（概略 35.710063N, 139.8107E）、+X＝東、-Z＝真北、1単位＝1m、Y＝地面からの高さ（T.P.未補正）
+   status: confirmed=確認済み / estimated=複数資料から推定 / insufficient=資料不足 / staged=演出・仮配置 */
+window.SKYTREE_DATA = {
+  baseDate: '2026-09-23',
+  origin: { lat: 35.710063, lon: 139.8107, note: 'タワー中心の概略値。測量による確認は未実施。' },
+  sources: [
+    { id:'S1', title:'東京スカイツリー 施設概要と構造', url:'https://www.tokyo-skytree.jp/about/', publisher:'東京スカイツリー（公式）', checked:'2026-09-23', terms:'未確認', used:'高さ634m、ライティング名称（粋・雅）' },
+    { id:'S2', title:'東京スカイツリー フロアガイド', url:'https://www.tokyo-skytree.jp/floor/', publisher:'東京スカイツリー（公式）', checked:'2026-09-23', terms:'未確認', used:'4F入口フロア・5F出口フロア、天望デッキ フロア340/345/350' },
+    { id:'S3', title:'東京スカイツリー 天望回廊', url:'https://www.tokyo-skytree.jp/floor/tembogalleria/', publisher:'東京スカイツリー（公式）', checked:'2026-09-23', terms:'未確認', used:'天望回廊 フロア445〜450、ソラカラポイント' },
+    { id:'S4', title:'東京ソラマチ フロアガイド', url:'https://www.tokyo-solamachi.jp/floor/', publisher:'東京ソラマチ（公式）', checked:'2026-09-23', terms:'未確認', used:'ソラマチ各階の構成（棟名のみ参照）' },
+    { id:'S5', title:'東京メトロ 押上駅 構内図', url:'https://www.tokyometro.jp/station/oshiage/yardmap/index_print.html', publisher:'東京地下鉄', checked:'2026-09-23', terms:'未確認', used:'未反映（構内配置は模式）' },
+    { id:'S6', title:'東京都交通局 押上駅', url:'https://www.kotsu.metro.tokyo.jp/subway/stations/oshiage.html', publisher:'東京都交通局', checked:'2026-09-23', terms:'未確認', used:'未反映（構内配置は模式）' },
+    { id:'S7', title:'東武鉄道 路線図と駅情報', url:'https://www.tobu.co.jp/railway/guide/', publisher:'東武鉄道', checked:'2026-09-23', terms:'未確認', used:'未反映（駅構造は模式）' }
+  ],
+  // 施設情報：名称・分類・座標・入口・階・説明・公式URL・確認日・状態
+  facilities: [
+    { id:'F01', name:'東京スカイツリー', cat:'電波塔・展望施設', pos:[0,0,0], r:45, floor:'4F 入口フロア／5F 出口フロア', entrance:'4F 入口フロア（タワーヤード）', desc:'高さ634mの自立式電波塔。足元は正三角形、上部に向かって円形へ変化する断面を推定で再現しています。', src:['S1','S2'], status:'estimated', statusNote:'高さ634mは確認済み。断面形状・鉄骨の部材配置は推定（模式）。' },
+    { id:'F02', name:'4F 入口フロア', cat:'東京スカイツリー', pos:[0,15,10], r:16, floor:'4F', entrance:'4F 屋外広場側の入口（位置は推定）', desc:'天望デッキへ向かう天望シャトルの乗り場。チケットカウンター等の配置は資料不足のため模式です。', src:['S2'], status:'estimated', statusNote:'フロア名は確認済み。入口位置・室内配置は推定。' },
+    { id:'F03', name:'5F 出口フロア', cat:'東京スカイツリー', pos:[12,20,0], r:9, floor:'5F', entrance:'天望デッキからの下りシャトル到着階', desc:'展望台からの下りシャトルの到着階。外の4F広場へは東側の階段で下ります（経路は推定）。', src:['S2'], status:'estimated', statusNote:'フロア名は確認済み。屋外への動線は推定。' },
+    { id:'F04', name:'天望デッキ フロア350', cat:'展望台', pos:[0,350,15], r:24, floor:'フロア350（地上350m）', entrance:'天望シャトル到着', desc:'天望デッキの最上層。「フロア350」は地上350mの意味で、350階ではありません。天望回廊行きのシャトルもここから出ます（乗り場の位置は推定）。', src:['S2'], status:'estimated', statusNote:'フロア構成は確認済み。窓割り・柱位置は資料不足（模式）。' },
+    { id:'F05', name:'天望デッキ フロア345', cat:'展望台', pos:[0,345,15], r:24, floor:'フロア345（地上345m）', entrance:'フロア350から階段', desc:'天望デッキの中間層。天望回廊からの下りシャトルの到着階として仮に設定しています。', src:['S2'], status:'estimated', statusNote:'到着階の割り当ては推定。' },
+    { id:'F06', name:'天望デッキ フロア340', cat:'展望台', pos:[0,340,15], r:24, floor:'フロア340（地上340m）', entrance:'フロア345から階段', desc:'天望デッキの最下層。ガラス床（位置は推定）と、5F出口フロアへの下りシャトル乗り場があります。', src:['S2'], status:'estimated', statusNote:'ガラス床・乗り場の位置は推定。' },
+    { id:'F07', name:'天望回廊 フロア445〜450', cat:'展望台', pos:[0,447,15], r:24, floor:'フロア445〜450', entrance:'天望回廊シャトル到着（フロア445）', desc:'ガラス張りのスロープ回廊を一周しながらフロア445から450まで上ります。最高到達点はソラカラポイント（451.2m）。', src:['S3'], status:'estimated', statusNote:'フロア構成は確認済み。スロープの周回数・勾配は推定。' },
+    { id:'F08', name:'東京ソラマチ（ウエストヤード）', cat:'商業施設', pos:[-190,0,40], r:40, floor:'1F〜（入室対象外）', entrance:'南面 1F（位置は推定）', desc:'タワーの西側の商業棟。店舗の室内は今回の再現範囲外です。', src:['S4'], status:'estimated', statusNote:'棟の位置・高さは推定の箱モデル。' },
+    { id:'F09', name:'東京ソラマチ（イーストヤード）', cat:'商業施設', pos:[145,0,40], r:40, floor:'1F〜（入室対象外）', entrance:'南面 1F（位置は推定）', desc:'タワーの東側の商業棟。地下で押上駅と連絡しています（連絡口の位置は推定）。', src:['S4'], status:'estimated', statusNote:'棟の位置・高さは推定の箱モデル。' },
+    { id:'F10', name:'東京スカイツリーイーストタワー', cat:'オフィス棟', pos:[243,0,22], r:30, floor:'入室対象外', entrance:'南面（位置は推定）', desc:'スカイツリータウン東端の高層棟。高さ・階数は資料確認前のため概略値です。', src:[], status:'insufficient', statusNote:'高さ・形状とも資料未取得。' },
+    { id:'F11', name:'すみだ水族館', cat:'水族館', pos:[-160,0,40], r:18, floor:'ソラマチ ウエストヤード 5F・6F（要確認）', entrance:'ソラマチ館内（入室対象外）', desc:'ソラマチ館内の水族館。室内は追加候補（指示書 §2）のため未制作です。', src:['S4'], status:'insufficient', statusNote:'所在階は要確認。室内は対象外。' },
+    { id:'F12', name:'押上駅（地下コンコース・模式）', cat:'駅', pos:[220,-10,180], r:60, floor:'地下（深さは仮）', entrance:'浅草通りの地上出入口 2か所（番号は未確認のため表示しない）', desc:'東京メトロ半蔵門線・都営浅草線・京成押上線・東武スカイツリーラインの駅。改札・ホーム・事業者ごとの境界は構内図との照合前のため、ひとつのコンコースとして模式化しています。', src:['S5','S6'], status:'insufficient', statusNote:'改札位置・出入口番号・乗換動線は資料不足。' },
+    { id:'F13', name:'東京スカイツリータウン B3 連絡口', cat:'駅連絡', pos:[90,-10,15], r:14, floor:'B3（仮）', entrance:'押上駅から地下連絡通路', desc:'押上駅とソラマチを地下で結ぶ連絡口（推定）。エレベーターで1F・4Fへ移動できます。', src:['S4','S5'], status:'insufficient', statusNote:'位置・階は推定。' },
+    { id:'F14', name:'とうきょうスカイツリー駅', cat:'駅', pos:[-370,0,-20], r:45, floor:'高架ホーム（改札は地上）', entrance:'南側の地上改札（位置は推定）', desc:'東武スカイツリーラインの高架駅。押上駅とは別の駅です。構造は東武鉄道の公式資料での再確認前のため模式です。', src:['S7'], status:'insufficient', statusNote:'ホーム形式・改札位置は資料不足。' },
+    { id:'F15', name:'北十間川', cat:'河川', pos:[0,-2.5,95], r:14, floor:'—', entrance:'—', desc:'スカイツリータウンの南を東西に流れる川。川幅・水位・護岸は概略値です。', src:[], status:'estimated', statusNote:'流路は地図照合前の概略。' },
+    { id:'F16', name:'西十間橋', cat:'橋', pos:[-560,0,95], r:14, floor:'—', entrance:'—', desc:'北十間川に架かる橋。川面に映るスカイツリーを眺められる場所として知られています（位置は概略）。', src:[], status:'estimated', statusNote:'位置は概略。橋の形状は模式。' },
+    { id:'F17', name:'東武橋', cat:'橋', pos:[-230,0,95], r:12, floor:'—', entrance:'—', desc:'とうきょうスカイツリー駅の近くで北十間川を渡る橋（位置は概略）。', src:[], status:'estimated', statusNote:'名称・位置は要確認。' },
+    { id:'F18', name:'京成橋', cat:'橋', pos:[40,0,95], r:12, floor:'—', entrance:'—', desc:'タワーの南で北十間川を渡り、浅草通りとスカイツリータウンを結ぶ橋（位置は概略）。', src:[], status:'estimated', statusNote:'位置は概略。橋の形状は模式。' },
+    { id:'F19', name:'大横川親水公園', cat:'公園', pos:[-300,0,320], r:30, floor:'—', entrance:'浅草通り側', desc:'浅草通りから南へ延びる細長い親水公園（範囲は概略）。', src:[], status:'estimated', statusNote:'範囲は概略。' },
+    { id:'F20', name:'業平橋（浅草通り）', cat:'橋', pos:[-300,0,180], r:16, floor:'—', entrance:'—', desc:'浅草通りが大横川を渡る地点。とうきょうスカイツリー駅の旧駅名「業平橋」の由来です。', src:[], status:'estimated', statusNote:'位置は概略。' },
+    { id:'F21', name:'4F 屋外広場（タワーヤード）', cat:'広場', pos:[-40,15,-10], r:28, floor:'4F', entrance:'南側の屋外大階段・ソラマチ連絡エレベーター', desc:'タワーの足元の屋外広場。広場の正式名称と階段の位置は資料確認前です。', src:['S2'], status:'estimated', statusNote:'名称・形状・階段位置は推定。' }
+  ],
+  // 眺望区域のランドマーク（緯度経度は概略値。方位・距離はゲーム内で計算）
+  landmarks: [
+    { name:'東京タワー', lat:35.65858, lon:139.74543, h:333 },
+    { name:'富士山', lat:35.3606, lon:138.7274, h:3776, far:true },
+    { name:'浅草寺', lat:35.7148, lon:139.7967, h:50 },
+    { name:'隅田川', lat:35.7101, lon:139.7992, h:0 },
+    { name:'アサヒビール本社', lat:35.7106, lon:139.7987, h:100 },
+    { name:'新宿副都心', lat:35.6900, lon:139.6950, h:240 },
+    { name:'サンシャイン60', lat:35.7289, lon:139.7193, h:240 },
+    { name:'東京駅周辺', lat:35.6812, lon:139.7671, h:200 },
+    { name:'麻布台ヒルズ', lat:35.6603, lon:139.7404, h:330 },
+    { name:'両国', lat:35.6969, lon:139.7932, h:40 }
+  ],
+  // 検証一覧（実装した内容／未確認の内容の区別）
+  verify: [
+    ['タワー高さ 634m', 'confirmed', 'S1', '頂部までのモデル高さを634.0mに設定'],
+    ['天望デッキ フロア340・345・350／天望回廊 フロア445〜450', 'confirmed', 'S2 S3', '各フロアを地上高(m)と同じ高さに配置。「フロア350」を350階として扱わない'],
+    ['4F 入口フロア・5F 出口フロア', 'confirmed', 'S2', '階の名称のみ確認。室内配置は模式'],
+    ['ライティング名称「粋」「雅」', 'confirmed', 'S1', '常設2種のみ。照射範囲・色味は推定。期間限定ライティングは未実装'],
+    ['塔体断面（足元 三角形→上部 円形）', 'estimated', 'S1', '一般に公表されている形状の説明に基づく推定。寸法は概略'],
+    ['鉄骨トラスの部材配置・本数・太さ', 'insufficient', '—', '図面未取得。24本柱＋X形ブレースの模式'],
+    ['心柱・昇降路など内部構造', 'insufficient', '—', '円筒で模式化'],
+    ['展望台の窓割り・柱・ガラス床の位置', 'insufficient', '—', '写真・図面未取得'],
+    ['天望回廊スロープの周回数・勾配', 'estimated', 'S3', '約0.9周で5m上がる設定'],
+    ['シャトルの発着階（回廊下り→345、デッキ下り→340→5F）', 'estimated', 'S2', '公式フロアガイドとの照合が必要'],
+    ['ソラマチ・イーストタワーの棟配置・高さ', 'estimated', 'S4', '箱モデル。窓割り・庇・入口は未再現'],
+    ['押上駅 構内（改札・ホーム・乗換）', 'insufficient', 'S5 S6', '構内図との照合前。ひとつのコンコースで模式化。ホームは未制作'],
+    ['押上駅 出入口番号', 'insufficient', 'S5 S6', '推測で番号を付けないため、ゲーム内では表示しない'],
+    ['とうきょうスカイツリー駅 構造・改札', 'insufficient', 'S7', '高架の相対式ホームと地上改札で模式化'],
+    ['北十間川・橋（西十間橋・東武橋・京成橋）の位置', 'estimated', '—', '地図照合・上面図での確認は未実施'],
+    ['道路（浅草通り・四ツ目通り）の位置・幅員・車線', 'estimated', '—', '概略。その他の道路は名称未登録'],
+    ['隅田川・浅草方面の位置', 'estimated', '—', '緯度経度の概略値から配置（眺望区域）'],
+    ['周辺の住宅・商業建物', 'staged', '—', '乱数による仮配置。現地の形状を示すものではない（指示書 §4）'],
+    ['遠景の市街地・高層ビル群', 'staged', '—', '仮配置。東京タワー・富士山などの方位は緯度経度から計算'],
+    ['人・車の密度、環境音', 'staged', '—', '演出上の設定（実測の再現ではない）'],
+    ['営業時間・料金・イベント', 'insufficient', '—', '変動情報は未登録のため表示しない'],
+    ['地上の高さ基準（T.P.）・地形の起伏', 'insufficient', '—', '平坦な地面（y=0）として扱う']
+  ],
+  // 比較視点（指示書 §16：最低12視点）— 実写の基準写真は未取得
+  views: [
+    { id:'V01', name:'タワー北側（北側道路）', pos:[0,1.6,-130], head:180, pitch:42, fov:75 },
+    { id:'V02', name:'タワー東側（イーストヤード前）', pos:[150,1.6,82], head:288, pitch:32, fov:75 },
+    { id:'V03', name:'タワー南側（京成橋上）', pos:[40,1.6,95], head:352, pitch:28, fov:75 },
+    { id:'V04', name:'タワー西側（とうきょうスカイツリー駅前広場）', pos:[-372,1.6,40], head:92, pitch:22, fov:75 },
+    { id:'V05', name:'押上駅 地上出入口（浅草通り北側・番号未確認）', pos:[312,1.6,169], head:300, pitch:20, fov:75 },
+    { id:'V06', name:'とうきょうスカイツリー駅 地上改札前', pos:[-372,1.6,-10], head:0, pitch:8, fov:75 },
+    { id:'V07', name:'押上駅→施設 接続（B3連絡通路）', pos:[105,-8.4,120], head:0, pitch:0, fov:75 },
+    { id:'V08', name:'とうきょうスカイツリー駅→施設 接続（川沿い）', pos:[-300,1.6,82], head:80, pitch:18, fov:75 },
+    { id:'V09', name:'4F 入口周辺', pos:[-2.6,16.6,34], head:0, pitch:30, fov:75 },
+    { id:'V10', name:'西十間橋上からの景観', pos:[-560,1.6,95], head:76, pitch:14, fov:60 },
+    { id:'V11', name:'天望デッキ フロア350（南西方向）', pos:[-11,351.6,11.5], head:226, pitch:-12, fov:75 },
+    { id:'V12', name:'天望回廊（西方向）', pos:[-15,449.6,-3], head:258, pitch:-10, fov:75 }
+  ]
+};
+</script>
+<script>
+(()=>{
+'use strict';
+const D=window.SKYTREE_DATA;
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+const DEG=Math.PI/180;
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const R=rng(20260923);
+const T0=performance.now();
+
+/* ---------- 座標変換（§6） ---------- */
+const ORI=D.origin,M_LAT=111000,M_LON=111000*Math.cos(ORI.lat*DEG);
+const toLL=(x,z)=>({lat:ORI.lat-z/M_LAT,lon:ORI.lon+x/M_LON});
+const fromLL=(lat,lon)=>({x:(lon-ORI.lon)*M_LON,z:-(lat-ORI.lat)*M_LAT});
+const bearingOf=(dx,dz)=>((Math.atan2(dx,-dz)/DEG)+360)%360;
+const dirName=b=>['北','北東','東','南東','南','南西','西','北西'][Math.round(b/45)%8];
+
+/* ---------- renderer ---------- */
+const canvas=$('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,logarithmicDepthBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const ANISO=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(60,1,0.12,70000);
+camera.rotation.order='YXZ';
+
+/* ---------- textures ---------- */
+function cv(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return [c,c.getContext('2d')];}
+function speckle(g,w,h,amt){const id=g.getImageData(0,0,w,h),d=id.data;for(let i=0;i<d.length;i+=4){const n=(Math.random()-0.5)*amt;d[i]+=n;d[i+1]+=n;d[i+2]+=n;}g.putImageData(id,0,0);}
+function mkTex(c,mx,my,srgb=true){const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;if(srgb)t.encoding=THREE.sRGBEncoding;t.anisotropy=ANISO;t.repeat.set(1/mx,1/my);return t;}
+function flatTex(base,amt,px=128){const [c,g]=cv(px,px);g.fillStyle=base;g.fillRect(0,0,px,px);speckle(g,px,px,amt);return c;}
+const TX={};
+{ // ground: weathered urban concrete/asphalt mix
+  const [c,g]=cv(256,256);g.fillStyle='#75726c';g.fillRect(0,0,256,256);
+  for(let i=0;i<260;i++){g.fillStyle=`rgba(${60+Math.random()*60|0},${60+Math.random()*55|0},${55+Math.random()*50|0},${Math.random()*0.18})`;g.fillRect(Math.random()*256,Math.random()*256,4+Math.random()*30,4+Math.random()*30);}
+  speckle(g,256,256,22);TX.ground=mkTex(c,16,16);
+}
+{const c=flatTex('#3d3f43',26,256);TX.road=mkTex(c,10,10);}
+{ // sidewalk interlocking tiles (0.3m)
+  const [c,g]=cv(256,256);g.fillStyle='#a7a29a';g.fillRect(0,0,256,256);
+  for(let y=0;y<8;y++)for(let x=0;x<8;x++){const s=0.85+Math.random()*0.2;g.fillStyle=`rgb(${168*s|0},${160*s|0},${150*s|0})`;g.fillRect(x*32+1,y*32+1,30,30);}
+  speckle(g,256,256,18);TX.walk=mkTex(c,2.4,2.4);
+}
+{ // plaza stone (1.2m)
+  const [c,g]=cv(256,256);g.fillStyle='#bdb8ae';g.fillRect(0,0,256,256);
+  for(let y=0;y<4;y++)for(let x=0;x<4;x++){const s=0.9+Math.random()*0.14;g.fillStyle=`rgb(${196*s|0},${190*s|0},${180*s|0})`;g.fillRect(x*64+1,y*64+1,62,62);}
+  speckle(g,256,256,14);TX.tile=mkTex(c,4.8,4.8);
+}
+{const [c,g]=cv(128,128);g.fillStyle='#55703c';g.fillRect(0,0,128,128);for(let i=0;i<900;i++){g.fillStyle=`rgba(${40+Math.random()*60|0},${80+Math.random()*60|0},${30+Math.random()*30|0},0.6)`;g.fillRect(Math.random()*128,Math.random()*128,2,3);}TX.grass=mkTex(c,6,6);}
+{const c=flatTex('#a9a8a3',20,128);TX.conc=mkTex(c,6,6);}
+// facade textures: day map + night emissive (same layout)
+function facade(kind){
+  const W=256,H=256,[c,g]=cv(W,H),[e,ge]=cv(W,H);ge.fillStyle='#000';ge.fillRect(0,0,W,H);
+  if(kind==='res'){ // 4 units x 4 floors over 12m x 12m, balconies
+    g.fillStyle='#d8d3c8';g.fillRect(0,0,W,H);
+    for(let fy=0;fy<4;fy++)for(let fx=0;fx<4;fx++){const x=fx*64,y=fy*64;
+      g.fillStyle='#4a5560';g.fillRect(x+8,y+14,30,34);g.fillStyle='#5e6a74';g.fillRect(x+42,y+18,16,24);
+      g.fillStyle='#ece8df';g.fillRect(x,y+46,64,8);g.fillStyle='rgba(0,0,0,.25)';g.fillRect(x,y+54,64,3);
+      if(Math.random()<0.45){const w=Math.random()<0.7?'255,214,150':'235,240,255',a=0.55+Math.random()*0.45;ge.fillStyle=`rgba(${w},${a})`;ge.fillRect(x+8,y+14,30,34);if(Math.random()<0.5)ge.fillRect(x+42,y+18,16,24);}}
+  }else if(kind==='com'){ // 4 bays x 4 floors over 14m, punched windows
+    g.fillStyle='#b9bcc0';g.fillRect(0,0,W,H);
+    for(let fy=0;fy<4;fy++)for(let fx=0;fx<4;fx++){const x=fx*64,y=fy*64;
+      g.fillStyle='#34414f';g.fillRect(x+5,y+10,54,40);g.fillStyle='rgba(255,255,255,.12)';g.fillRect(x+5,y+10,54,6);g.fillStyle='#9ca1a6';g.fillRect(x+31,y+10,2,40);
+      if(Math.random()<0.55){const a=0.5+Math.random()*0.5;ge.fillStyle=`rgba(${Math.random()<0.75?'240,244,255':'255,220,170'},${a})`;ge.fillRect(x+5,y+10,54,40);}}
+  }else{ // curtain wall, 8m tile
+    const grd=g.createLinearGradient(0,0,W,H);grd.addColorStop(0,'#5d7590');grd.addColorStop(1,'#3f566e');g.fillStyle=grd;g.fillRect(0,0,W,H);
+    g.fillStyle='rgba(220,232,245,.55)';for(let y=0;y<4;y++)g.fillRect(0,y*64+60,W,4);for(let x=0;x<8;x++)g.fillRect(x*32,0,2,H);
+    for(let y=0;y<4;y++)for(let x=0;x<8;x++){if(Math.random()<0.7){ge.fillStyle=`rgba(235,242,255,${0.45+Math.random()*0.5})`;ge.fillRect(x*32+2,y*64+2,30,58);}}
+  }
+  speckle(g,W,H,10);
+  const m=kind==='res'?12:kind==='com'?14:8;
+  return {map:mkTex(c,m,m),em:mkTex(e,m,m)};
+}
+TX.res=facade('res');TX.com=facade('com');TX.cw=facade('cw');
+
+/* ---------- materials ---------- */
+const U={time:{value:0},glowCol:{value:new THREE.Color(0x000000)},glowAmt:{value:0}};
+function std(o){return new THREE.MeshStandardMaterial(Object.assign({roughness:0.85,metalness:0,vertexColors:true},o));}
+const MAT={
+  ground:std({map:TX.ground,roughness:0.95,vertexColors:false}),
+  road:std({map:TX.road,roughness:0.9}),
+  walk:std({map:TX.walk}),
+  tile:std({map:TX.tile,roughness:0.8}),
+  grass:std({map:TX.grass,roughness:1}),
+  paint:std({color:0xf2f2ee,roughness:0.7,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),
+  conc:std({map:TX.conc}),
+  curb:std({color:0xb8b5ae}),
+  res:std({map:TX.res.map,emissiveMap:TX.res.em,emissive:0xffffff,emissiveIntensity:0}),
+  com:std({map:TX.com.map,emissiveMap:TX.com.em,emissive:0xffffff,emissiveIntensity:0}),
+  cw:std({map:TX.cw.map,emissiveMap:TX.cw.em,emissive:0xffffff,emissiveIntensity:0,roughness:0.3,metalness:0.45}),
+  roof:std({color:0x74746f,roughness:0.95}),
+  tower:std({color:0xeaf0f6,roughness:0.42,metalness:0.35}),
+  core:std({color:0xc9ccd0,roughness:0.7,emissive:0x000000}),
+  deck:std({color:0xdfe5ec,roughness:0.35,metalness:0.55,side:THREE.DoubleSide}),
+  glass:new THREE.MeshStandardMaterial({color:0x9fc3e6,roughness:0.06,metalness:0.2,transparent:true,opacity:0.22,depthWrite:false,side:THREE.DoubleSide,emissive:0x000000}),
+  floorIn:std({color:0x6f6a64,roughness:0.6,side:THREE.DoubleSide}),
+  ceil:std({color:0xe8e8e6,roughness:0.9,side:THREE.DoubleSide,emissive:0x000000}),
+  rail:std({color:0x8a9097,roughness:0.4,metalness:0.6}),
+  dark:std({color:0x2a2e34,roughness:0.6,metalness:0.3}),
+  steel:std({color:0x6d747c,roughness:0.5,metalness:0.6}),
+  lamp:std({color:0xfff6e0,emissive:0xfff1d0,emissiveIntensity:0}),
+  inner:std({color:0xe4e2dc,roughness:0.75,side:THREE.DoubleSide}),
+  lightPanel:std({color:0xffffff,emissive:0xf4f8ff,emissiveIntensity:1.4}),
+  tt:std({color:0xff5a1f,roughness:0.6,emissive:0xff6a1a,emissiveIntensity:0}),
+  ttw:std({color:0xf4f1ea,roughness:0.6,emissive:0xffd9a0,emissiveIntensity:0}),
+  gold:std({color:0xe2a52a,roughness:0.3,metalness:0.9}),
+  tree:std({roughness:0.95,flatShading:true}),
+  trunk:std({color:0x5a4634}),
+  sigOff:std({color:0x1d1f22})
+};
+// tower glow injection (ライティング：内側を強く、外側を弱く — 一様に光らせない §7)
+MAT.tower.onBeforeCompile=sh=>{
+  sh.uniforms.uGlowCol=U.glowCol;sh.uniforms.uGlowAmt=U.glowAmt;
+  sh.vertexShader='attribute float glow;\nvarying float vGlow;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvGlow=glow;');
+  sh.fragmentShader='uniform vec3 uGlowCol;\nuniform float uGlowAmt;\nvarying float vGlow;\n'+sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\ntotalEmissiveRadiance+=uGlowCol*uGlowAmt*vGlow;');
+};
+const NOSHADOW=new Set(['paint','glass','lightPanel','lamp','ground','road','walk','grass','ceil']);
+const RECV_ONLY=new Set(['ground','road','walk','grass','tile','paint']);
+
+/* ---------- geometry buffers ---------- */
+const BUF={};
+const W1=[1,1,1];
+function buf(k){return BUF[k]||(BUF[k]={p:[],n:[],u:[],c:[],g:[]});}
+function nrm(a,b,d){const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];const x=uy*vz-uz*vy,y=uz*vx-ux*vz,z=ux*vy-uy*vx,l=Math.hypot(x,y,z)||1;return [x/l,y/l,z/l];}
+function tri(B,a,b,c,ua,ub,uc,n,col,g){B.p.push(a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);for(let i=0;i<3;i++){B.n.push(n[0],n[1],n[2]);B.c.push(col[0],col[1],col[2]);B.g.push(g);}B.u.push(ua[0],ua[1],ub[0],ub[1],uc[0],uc[1]);}
+const UV0=[[0,0],[1,0],[1,1],[0,1]];
+function quad(k,a,b,c,d,uv,col,g){const B=buf(k),n=nrm(a,b,d);uv=uv||UV0;col=col||W1;g=g||0;tri(B,a,b,c,uv[0],uv[1],uv[2],n,col,g);tri(B,a,c,d,uv[0],uv[2],uv[3],n,col,g);}
+function quadH(k,a,b,c,d,hint,uv,col,g){const n=nrm(a,b,d);if(n[0]*hint[0]+n[1]*hint[1]+n[2]*hint[2]<0){uv=uv||UV0;quad(k,a,d,c,b,[uv[0],uv[3],uv[2],uv[1]],col,g);}else quad(k,a,b,c,d,uv,col,g);}
+function box(k,x0,x1,y0,y1,z0,z1,o={}){
+  const col=o.col||W1,g=o.g||0,W=x1-x0,Dp=z1-z0,v0=y0,v1=y1,uo=o.uOff||0;
+  if(o.sides!==false){
+    quad(k,[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],[[uo,v0],[uo+W,v0],[uo+W,v1],[uo,v1]],col,g);
+    quad(k,[x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0],[[uo,v0],[uo+W,v0],[uo+W,v1],[uo,v1]],col,g);
+    quad(k,[x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[[uo,v0],[uo+Dp,v0],[uo+Dp,v1],[uo,v1]],col,g);
+    quad(k,[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0],[[uo,v0],[uo+Dp,v0],[uo+Dp,v1],[uo,v1]],col,g);
+  }
+  if(o.top!==false)quad(o.topK||k,[x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0],[[x0,-z1],[x1,-z1],[x1,-z0],[x0,-z0]],o.topCol||col,g);
+  if(o.bottom)quad(o.botK||k,[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[[x0,z0],[x1,z0],[x1,z1],[x0,z1]],col,g);
+}
+function flat(k,x0,x1,z0,z1,y,col){quad(k,[x0,y,z1],[x1,y,z1],[x1,y,z0],[x0,y,z0],[[x0,-z1],[x1,-z1],[x1,-z0],[x0,-z0]],col);}
+const _a=new THREE.Vector3(),_b=new THREE.Vector3(),_d=new THREE.Vector3(),_s=new THREE.Vector3(),_t=new THREE.Vector3(),_up=new THREE.Vector3();
+// square-section member between two points; glowFn(nx,ny,nz,cx,cy,cz) -> glow per face
+function beam(k,A,B,w,col,glowFn){
+  _a.set(A[0],A[1],A[2]);_b.set(B[0],B[1],B[2]);_d.subVectors(_b,_a);const L=_d.length();if(L<1e-4)return;_d.divideScalar(L);
+  _up.set(0,1,0);if(Math.abs(_d.y)>0.95)_up.set(1,0,0);
+  _s.crossVectors(_d,_up).normalize();_t.crossVectors(_s,_d).normalize();
+  const h=w/2,o=[[h,h],[-h,h],[-h,-h],[h,-h]];
+  for(let i=0;i<4;i++){const p=o[i],q=o[(i+1)%4];
+    const ox=_s.x*p[0]+_t.x*p[1],oy=_s.y*p[0]+_t.y*p[1],oz=_s.z*p[0]+_t.z*p[1];
+    const px=_s.x*q[0]+_t.x*q[1],py=_s.y*q[0]+_t.y*q[1],pz=_s.z*q[0]+_t.z*q[1];
+    const hint=[ox+px,oy+py,oz+pz];
+    const g=glowFn?glowFn(hint[0]/w,hint[1]/w,hint[2]/w,(A[0]+B[0])/2,(A[1]+B[1])/2,(A[2]+B[2])/2):0;
+    quadH(k,[A[0]+ox,A[1]+oy,A[2]+oz],[A[0]+px,A[1]+py,A[2]+pz],[B[0]+px,B[1]+py,B[2]+pz],[B[0]+ox,B[1]+oy,B[2]+oz],hint,[[0,0],[w,0],[w,L],[0,L]],col,g);}
+}
+const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_v=new THREE.Vector3(),_sc=new THREE.Vector3();
+function mtx(x,y,z,ry=0,sx=1,sy=1,sz=1,rx=0){_e.set(rx,ry,0);_q.setFromEuler(_e);return _m.clone().compose(_v.set(x,y,z),_q,_sc.set(sx,sy,sz));}
+function addGeo(k,geo,m,col,g){
+  const G=geo.index?geo.toNonIndexed():geo;if(m)G.applyMatrix4(m);
+  const B=buf(k),P=G.attributes.position,N=G.attributes.normal,UV=G.attributes.uv;col=col||W1;g=g||0;
+  for(let i=0;i<P.count;i++){B.p.push(P.getX(i),P.getY(i),P.getZ(i));B.n.push(N.getX(i),N.getY(i),N.getZ(i));B.u.push(UV?UV.getX(i):0,UV?UV.getY(i):0);B.c.push(col[0],col[1],col[2]);B.g.push(g);}
+}
+const TAGGED=[];
+function flush(tag){
+  for(const k in BUF){const B=BUF[k];if(!B.p.length)continue;
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(B.p,3));geo.setAttribute('normal',new THREE.Float32BufferAttribute(B.n,3));
+    geo.setAttribute('uv',new THREE.Float32BufferAttribute(B.u,2));geo.setAttribute('color',new THREE.Float32BufferAttribute(B.c,3));
+    geo.setAttribute('glow',new THREE.Float32BufferAttribute(B.g,1));geo.computeBoundingSphere();
+    const mesh=new THREE.Mesh(geo,MAT[k]);mesh.castShadow=!NOSHADOW.has(k)&&!RECV_ONLY.has(k);mesh.receiveShadow=!NOSHADOW.has(k)||RECV_ONLY.has(k);
+    if(k==='glass')mesh.renderOrder=2;
+    mesh.userData.tag=tag;mesh.userData.mat=MAT[k];scene.add(mesh);TAGGED.push(mesh);
+    delete BUF[k];}
+}
+const sRGB=h=>{const c=new THREE.Color(h);c.convertSRGBToLinear();return [c.r,c.g,c.b];};
+
+/* ---------- walkable floors & walls（移動・衝突） ---------- */
+const floors=[];
+function fRect(x0,z0,x1,z1,y,name){floors.push({b:[x0,z0,x1,z1],h:()=>y,name});}
+function fRamp(x0,z0,x1,z1,axis,ya,yb,name){floors.push({b:[x0,z0,x1,z1],name,h:axis==='x'?(x=>lerp(ya,yb,(x-x0)/(x1-x0))):((x,z)=>lerp(ya,yb,(z-z0)/(z1-z0)))});}
+function fFn(b,h,name){floors.push({b,h,name});}
+const angOf=(x,z)=>{let a=Math.atan2(z,x)/DEG;return a<0?a+360:a;};
+const inArc=(a,a0,a1)=>a0<=a1?(a>=a0&&a<=a1):(a>=a0||a<=a1);
+function ringFloor(y,rIn,rOut,holes,name){fFn([-rOut,-rOut,rOut,rOut],(x,z)=>{const r=Math.hypot(x,z);if(r<rIn||r>rOut)return null;const a=angOf(x,z);for(const h of holes)if(inArc(a,h[0],h[1])&&r>=h[2]&&r<=h[3])return null;return y;},name);}
+function arcFloor(rIn,rOut,a0,a1,y0,y1,name){fFn([-rOut,-rOut,rOut,rOut],(x,z)=>{const r=Math.hypot(x,z);if(r<rIn||r>rOut)return null;const a=angOf(x,z);if(a<a0||a>a1)return null;return lerp(y0,y1,(a-a0)/(a1-a0));},name);}
+const holes=[];
+const WALK_R=1050;
+const GRID=32,grid=new Map(),wallsG=[];
+const gk=(i,j)=>i*100003+j;
+function wAdd(w,x0,z0,x1,z1){for(let i=Math.floor((x0-1)/GRID);i<=Math.floor((x1+1)/GRID);i++)for(let j=Math.floor((z0-1)/GRID);j<=Math.floor((z1+1)/GRID);j++){const k=gk(i,j);let l=grid.get(k);if(!l)grid.set(k,l=[]);l.push(w);}}
+function wBox(x0,z0,x1,z1,y0,y1){wAdd({t:'b',x0,z0,x1,z1,y0,y1},x0,z0,x1,z1);}
+function wCirc(cx,cz,r,y0,y1){wAdd({t:'c',cx,cz,r,y0,y1},cx-r,cz-r,cx+r,cz+r);}
+function wRing(r,y0,y1,gaps){wallsG.push({t:'r',r,y0,y1,gaps});}
+function wSeg(ax,az,bx,bz,y0,y1){wallsG.push({t:'s',ax,az,bx,bz,y0,y1});}
+function blocked(x,z,y){
+  const pr=0.3,a=y+0.35,b=y+1.75,l=grid.get(gk(Math.floor(x/GRID),Math.floor(z/GRID)));
+  if(l)for(const w of l){if(w.y1<=a||w.y0>=b)continue;
+    if(w.t==='b'){if(x>w.x0-pr&&x<w.x1+pr&&z>w.z0-pr&&z<w.z1+pr)return true;}
+    else if(Math.hypot(x-w.cx,z-w.cz)<w.r+pr)return true;}
+  for(const w of wallsG){if(w.y1<=a||w.y0>=b)continue;
+    if(w.t==='r'){const d=Math.hypot(x,z);if(Math.abs(d-w.r)<pr+0.06){const an=angOf(x,z);let gap=false;for(const g of w.gaps)if(inArc(an,g[0],g[1]))gap=true;if(!gap)return true;}}
+    else{const dx=w.bx-w.ax,dz=w.bz-w.az,t=clamp(((x-w.ax)*dx+(z-w.az)*dz)/(dx*dx+dz*dz),0,1);if(Math.hypot(x-w.ax-dx*t,z-w.az-dz*t)<pr+0.08)return true;}}
+  return false;
+}
+// solid mass under a ramp so ground-level walkers cannot pass through it
+function rampSolid(x0,z0,x1,z1,axis,ya,yb,base){
+  const L=axis==='x'?x1-x0:z1-z0,n=Math.ceil(L/1.4);
+  for(let i=0;i<n;i++){const s0=i/n,s1=(i+1)/n,top=Math.min(lerp(ya,yb,s0),lerp(ya,yb,s1))-0.2;if(top<=base+0.35)continue;
+    if(axis==='x')wBox(x0+L*s0,z0,x0+L*s1,z1,base,top);else wBox(x0,z0+L*s0,x1,z0+L*s1,base,top);}
+}
+
+/* ================= sky & light ================= */
+const skyU={uSun:{value:new THREE.Vector3(0,1,0)},uTop:{value:new THREE.Color()},uHor:{value:new THREE.Color()},uSunCol:{value:new THREE.Color()},uNight:{value:0}};
+const sky=new THREE.Mesh(new THREE.SphereGeometry(50000,32,16),new THREE.ShaderMaterial({uniforms:skyU,side:THREE.BackSide,depthWrite:false,depthTest:false,fog:false,
+  vertexShader:'varying vec3 vDir;void main(){vDir=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:`uniform vec3 uSun,uTop,uHor,uSunCol;uniform float uNight;varying vec3 vDir;
+  float h3(vec3 p){p=fract(p*0.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+  void main(){vec3 d=normalize(vDir);float h=d.y;vec3 col=mix(uHor,uTop,pow(clamp(h,0.,1.),0.55));if(h<0.)col=mix(uHor,uHor*0.6,clamp(-h*5.,0.,1.));
+  float s=max(dot(d,normalize(uSun)),0.);col+=uSunCol*(pow(s,1200.)*40.+pow(s,12.)*0.3);
+  if(uNight>0.01&&h>0.08){float st=h3(floor(d*520.));if(st>0.9994)col+=vec3(0.8,0.85,1.)*uNight*(st-0.9994)*900.;}
+  gl_FragColor=vec4(col,1.);
+  #include <tonemapping_fragment>
+  #include <encodings_fragment>
+  }`}));
+sky.renderOrder=-10;sky.frustumCulled=false;scene.add(sky);
+const hemi=new THREE.HemisphereLight(0xc4dcff,0x5d554c,0.6);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+{const c=sun.shadow.camera;c.left=-190;c.right=190;c.top=190;c.bottom=-190;c.near=10;c.far=2200;}
+sun.shadow.bias=-0.0005;sun.shadow.normalBias=0.05;scene.add(sun,sun.target);
+const indoor=new THREE.PointLight(0xfff2e2,0,46,1.4);scene.add(indoor);
+scene.fog=new THREE.FogExp2(0xc8d6e6,0.0001);
+
+/* ================= geography（概略・§6） ================= */
+// 隅田川 中心線 [z, x]（緯度経度の概略値から）
+const SUMIDA=[[-20000,-1500],[-6000,-1500],[-4000,-900],[-2600,-200],[-1800,-300],[-900,-600],[-600,-830],[0,-1180],[600,-1250],[1300,-1250],[1800,-1800],[3500,-2300],[5200,-3300],[8000,-3600],[20000,-3600]];
+const SUM_HW=75;
+function sumidaX(z){for(let i=0;i<SUMIDA.length-1;i++){const a=SUMIDA[i],b=SUMIDA[i+1];if(z>=a[0]&&z<=b[0])return lerp(a[1],b[1],(z-a[0])/(b[0]-a[0]));}return z<0?SUMIDA[0][1]:SUMIDA[SUMIDA.length-1][1];}
+// 北十間川 中心線 [x, z]・半幅
+const KJ=[[-1050,-30],[-800,-30],[-650,95],[1100,95]],KJ_HW=11,WATER_Y=-2.5;
+function segD(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,t=clamp(((px-ax)*dx+(pz-az)*dz)/(dx*dx+dz*dz),0,1);return Math.hypot(px-ax-dx*t,pz-az-dz*t);}
+function polyD(P,x,z){let m=1e9;for(let i=0;i<P.length-1;i++)m=Math.min(m,segD(x,z,P[i][0],P[i][1],P[i+1][0],P[i+1][1]));return m;}
+const kjDist=(x,z)=>polyD(KJ,x,z);
+function offsetPoly(pts,hw){const A=[],B=[];for(let i=0;i<pts.length;i++){const p=pts[i];let tx=0,tz=0;
+  if(i>0){const dx=p[0]-pts[i-1][0],dz=p[1]-pts[i-1][1],l=Math.hypot(dx,dz);tx+=dx/l;tz+=dz/l;}
+  if(i<pts.length-1){const dx=pts[i+1][0]-p[0],dz=pts[i+1][1]-p[1],l=Math.hypot(dx,dz);tx+=dx/l;tz+=dz/l;}
+  const tl=Math.hypot(tx,tz);tx/=tl;tz/=tl;const nx=-tz,nz=tx;let sc=1;
+  if(i>0&&i<pts.length-1){const dx=pts[i+1][0]-p[0],dz=pts[i+1][1]-p[1],l=Math.hypot(dx,dz);sc=1/Math.max(0.3,(-dz/l)*nx+(dx/l)*nz);}
+  A.push([p[0]+nx*hw*sc,p[1]+nz*hw*sc]);B.push([p[0]-nx*hw*sc,p[1]-nz*hw*sc]);}return {A,B};}
+// 地下への階段の開口（地面に穴）
+const HOLES=[[289,165.5,300,168.5],[180,191.5,191,194.5]];
+function groundAt(x,z){
+  if(x*x+z*z>WALK_R*WALK_R)return null;
+  if(x<sumidaX(z)+SUM_HW+4)return null;
+  if(kjDist(x,z)<KJ_HW+0.4)return null;
+  for(const h of HOLES)if(x>h[0]&&x<h[2]&&z>h[1]&&z<h[3])return null;
+  return 0;
+}
+function floorAt(x,z,cur){
+  let best=null,name='ground';const g=groundAt(x,z);
+  if(g!=null&&g<=cur+0.7&&g>=cur-1.2)best=g;
+  for(const f of floors){const b=f.b;if(x<b[0]||x>b[2]||z<b[1]||z>b[3])continue;const y=f.h(x,z);if(y==null)continue;
+    if(y<=cur+0.7&&y>=cur-1.2&&(best==null||y>best)){best=y;name=f.name;}}
+  return best==null?null:{y:best,name};
+}
+
+/* ----- ground meshes (east/west of the Sumida) ----- */
+function shapeFrom(pts,Cls){const s=new (Cls||THREE.Shape)();pts.forEach((p,i)=>i?s.lineTo(p[0],-p[1]):s.moveTo(p[0],-p[1]));return s;}
+function addShapeMesh(pts,holesArr,mat,y,tag,recv=true){const s=shapeFrom(pts);for(const h of holesArr)s.holes.push(shapeFrom(h,THREE.Path));const g=new THREE.ShapeGeometry(s);g.rotateX(-Math.PI/2);g.translate(0,y,0);
+  const m=new THREE.Mesh(g,mat);m.receiveShadow=recv;m.userData.tag=tag;m.userData.mat=mat;scene.add(m);TAGGED.push(m);return m;}
+const kjOff=offsetPoly(KJ,KJ_HW),kjPoly=[...kjOff.A,...kjOff.B.slice().reverse()];
+const rectPts=h=>[[h[0],h[1]],[h[2],h[1]],[h[2],h[3]],[h[0],h[3]]];
+{
+  const E=SUMIDA.map(([z])=>[sumidaX(z)+SUM_HW,z]);E.push([25000,20000],[25000,-20000]);
+  const Wp=SUMIDA.map(([z])=>[sumidaX(z)-SUM_HW,z]);Wp.push([-25000,20000],[-25000,-20000]);
+  addShapeMesh(E,[kjPoly,...HOLES.map(rectPts)],MAT.ground,0,'estimated');
+  addShapeMesh(Wp,[],MAT.ground,0,'estimated');
+}
+
+/* ----- water with planar reflection（水面にタワーが映る §10） ----- */
+const reflRT=new THREE.WebGLRenderTarget(512,512,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter});
+const mirrorCam=new THREE.PerspectiveCamera();
+const waterU={tRefl:{value:reflRT.texture},textureMatrix:{value:new THREE.Matrix4()},uTime:U.time,uDeep:{value:new THREE.Color(0x24384a)},uSky:{value:new THREE.Color(0x8fa9c4)},fogC:{value:new THREE.Color()},fogD:{value:0.0001},uRefl:{value:1}};
+const waterMat=new THREE.ShaderMaterial({uniforms:waterU,
+  vertexShader:`uniform mat4 textureMatrix;varying vec4 vR;varying vec3 vW;
+  #include <common>
+  #include <logdepthbuf_pars_vertex>
+  void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;vR=textureMatrix*w;gl_Position=projectionMatrix*viewMatrix*w;
+  #include <logdepthbuf_vertex>
+  }`,
+  fragmentShader:`uniform sampler2D tRefl;uniform float uTime,fogD,uRefl;uniform vec3 uDeep,uSky,fogC;varying vec4 vR;varying vec3 vW;
+  #include <common>
+  #include <logdepthbuf_pars_fragment>
+  void main(){
+  #include <logdepthbuf_fragment>
+  vec2 rp=vec2(sin(vW.x*0.7+uTime*1.1)+sin(vW.z*1.9-uTime*1.4)*0.6+sin((vW.x+vW.z)*3.1+uTime*2.3)*0.25,cos(vW.z*0.6+uTime*0.9)+sin(vW.x*1.5+uTime*1.7)*0.5);
+  vec4 uv=vR;uv.xy+=rp*0.0035*uv.w;
+  vec3 refl=texture2DProj(tRefl,uv).rgb;
+  vec3 V=normalize(cameraPosition-vW);float fr=0.3+0.7*pow(1.-clamp(V.y,0.,1.),4.);
+  vec3 col=mix(uDeep,uRefl>0.5?refl*0.62:uSky*0.7,fr*0.85);
+  float d=length(cameraPosition-vW);col=mix(col,fogC,1.-exp(-fogD*fogD*d*d));
+  gl_FragColor=vec4(col,1.);
+  #include <tonemapping_fragment>
+  #include <encodings_fragment>
+  }`});
+const waters=[];
+waters.push(addShapeMesh(kjPoly,[],waterMat,WATER_Y,'estimated',false));
+{const Wp=[],Ep=[];for(let z=-20000;z<=20000;z+=z<-4000||z>6000?2000:100){Wp.push([sumidaX(z)-SUM_HW,z]);Ep.push([sumidaX(z)+SUM_HW,z]);}
+ waters.push(addShapeMesh([...Wp,...Ep.reverse()],[],waterMat,WATER_Y,'estimated',false));}
+
+/* ================= roads（§10） ================= */
+const ROADS=[
+  {n:'浅草通り',ax:'x',c:180,w:30,cw:18,a0:-1121,a1:1100,major:true},
+  {n:'（道路名 未登録）',ax:'x',c:-95,w:14,cw:8,a0:-1045,a1:1100},
+  {n:'（道路名 未登録）',ax:'x',c:-520,w:12,cw:7,a0:-780,a1:1100},
+  {n:'（道路名 未登録）',ax:'x',c:560,w:12,cw:7,a0:-1150,a1:1100},
+  {n:'四ツ目通り',ax:'z',c:360,w:24,cw:16,a0:-1100,a1:1100,major:true},
+  {n:'（道路名 未登録）',ax:'z',c:-560,w:10,cw:6,a0:-520,a1:1100},
+  {n:'（道路名 未登録）',ax:'z',c:40,w:12,cw:7,a0:84,a1:560},
+  {n:'（道路名 未登録）',ax:'z',c:-230,w:10,cw:6,a0:84,a1:1100},
+  {n:'（道路名 未登録）',ax:'z',c:720,w:12,cw:7,a0:-1100,a1:1100},
+  {n:'（道路名 未登録）',ax:'z',c:-900,w:10,cw:6,a0:0,a1:1100}
+];
+const BRIDGES={'-560':'西十間橋','-230':'東武橋','40':'京成橋'};
+const EWs=ROADS.filter(r=>r.ax==='x'),NSs=ROADS.filter(r=>r.ax==='z');
+function subIv(a0,a1,cuts){let s=[[a0,a1]];for(const [c0,c1] of cuts){const n=[];for(const [s0,s1] of s){if(c1<=s0||c0>=s1){n.push([s0,s1]);continue;}if(c0>s0)n.push([s0,c0]);if(c1<s1)n.push([c1,s1]);}s=n;}return s.filter(v=>v[1]-v[0]>0.4);}
+const INTER=[];
+for(const e of EWs)for(const n of NSs)if(n.c>e.a0&&n.c<e.a1&&e.c>n.a0-1&&e.c<n.a1+1)INTER.push({e,n,x:n.c,z:e.c,sig:!!(e.major||n.major)});
+function roadAt(x,z,m=0){for(const r of ROADS){if(r.ax==='x'){if(x>r.a0-m&&x<r.a1+m&&Math.abs(z-r.c)<r.w/2+m)return r;}else if(z>r.a0-m&&z<r.a1+m&&Math.abs(x-r.c)<r.w/2+m)return r;}return null;}
+function carriageAt(x,z){for(const r of ROADS){if(r.ax==='x'){if(x>r.a0&&x<r.a1&&Math.abs(z-r.c)<r.cw/2+0.5)return r;}else if(z>r.a0&&z<r.a1&&Math.abs(x-r.c)<r.cw/2+0.5)return r;}return null;}
+const SIDEWALKS=[],TREES=[],LIGHTS=[];
+const holeCutsX=(z0,z1)=>HOLES.filter(h=>h[3]>z0&&h[1]<z1).map(h=>[h[0]-1,h[2]+1]);
+for(const r of ROADS){
+  const hw=r.w/2,hc=r.cw/2;
+  if(r.ax==='x'){
+    for(const [s0,s1] of [[r.a0,r.a1]])flat('road',s0,s1,r.c-hc,r.c+hc,0.02);
+    // sidewalks cut by crossing carriageways
+    const cuts=NSs.filter(n=>r.c>n.a0-1&&r.c<n.a1+1&&n.c>r.a0&&n.c<r.a1).map(n=>[n.c-n.cw/2,n.c+n.cw/2]);
+    for(const side of [-1,1]){const z0=side<0?r.c-hw:r.c+hc,z1=side<0?r.c-hc:r.c+hw;
+      for(const [s0,s1] of subIv(r.a0,r.a1,[...cuts,...holeCutsX(z0,z1)])){box('walk',s0,s1,0,0.15,z0,z1,{topK:'walk'});SIDEWALKS.push({ax:'x',a0:s0,a1:s1,c:(z0+z1)/2,w:z1-z0,road:r});}}
+    // lane paint
+    const pc=subIv(r.a0,r.a1,cuts.map(c=>[c[0]-5,c[1]+5]));
+    for(const [s0,s1] of pc){flat('paint',s0,s1,r.c-0.08,r.c+0.08,0.04);
+      if(r.cw>=14)for(const o of [-r.cw/4,r.cw/4])for(let x=s0+2;x<s1-3;x+=9)flat('paint',x,x+3,r.c+o-0.06,r.c+o+0.06,0.04);
+      for(const o of [-hc+0.3,hc-0.3])flat('paint',s0,s1,r.c+o-0.07,r.c+o+0.07,0.04);}
+  }else{
+    const cutsC=EWs.filter(e=>r.c>e.a0&&r.c<e.a1&&e.c>r.a0-1&&e.c<r.a1+1);
+    for(const [s0,s1] of subIv(r.a0,r.a1,cutsC.map(e=>[e.c-e.cw/2,e.c+e.cw/2])))flat('road',r.c-hc,r.c+hc,s0,s1,0.02);
+    for(const side of [-1,1]){const x0=side<0?r.c-hw:r.c+hc,x1=side<0?r.c-hc:r.c+hw;
+      for(const [s0,s1] of subIv(r.a0,r.a1,cutsC.map(e=>[e.c-e.w/2,e.c+e.w/2]))){box('walk',x0,x1,0,0.15,s0,s1,{topK:'walk'});SIDEWALKS.push({ax:'z',a0:s0,a1:s1,c:(x0+x1)/2,w:x1-x0,road:r});}}
+    for(const [s0,s1] of subIv(r.a0,r.a1,cutsC.map(e=>[e.c-e.w/2-5,e.c+e.w/2+5]))){flat('paint',r.c-0.08,r.c+0.08,s0,s1,0.04);
+      if(r.cw>=14)for(const o of [-r.cw/4,r.cw/4])for(let z=s0+2;z<s1-3;z+=9)flat('paint',r.c+o-0.06,r.c+o+0.06,z,z+3,0.04);
+      for(const o of [-hc+0.3,hc-0.3])flat('paint',r.c+o-0.07,r.c+o+0.07,s0,s1,0.04);}
+    // bridge over 北十間川
+    if(r.a0<95&&r.a1>95){const z0=95-KJ_HW-1,z1=95+KJ_HW+1;
+      fRect(r.c-hw,z0,r.c+hw,z1,0,'bridge');
+      box('conc',r.c-hw-0.3,r.c+hw+0.3,-1.3,0,z0,z1,{top:false,bottom:true});
+      for(const s of [-1,1]){const x=r.c+s*(hw+0.15);beam('rail',[x,1.1,z0],[x,1.1,z1],0.12);for(let z=z0;z<=z1;z+=2)beam('rail',[x,0,z],[x,1.1,z],0.08);beam('rail',[x,0.5,z0],[x,0.5,z1],0.05);
+        wBox(x-0.15,z0,x+0.15,z1,0,1.2);}
+    }
+  }
+}
+// crosswalks, stop lines, signals
+const SIGS=[];
+for(const I of INTER){const {e,n}=I;
+  for(const s of [-1,1]){ // crossing the EW road, on both sides of the NS road
+    const x=I.x+s*(n.w/2+2.4);for(let z=e.c-e.cw/2+0.5;z<e.c+e.cw/2-0.3;z+=0.9)flat('paint',x-2,x+2,z,z+0.45,0.045);
+    const zz=I.z+s*(e.w/2+2.4);for(let x2=n.c-n.cw/2+0.5;x2<n.c+n.cw/2-0.3;x2+=0.9)flat('paint',x2,x2+0.45,zz-2,zz+2,0.045);
+  }
+  if(I.sig)for(const sx of [-1,1])for(const sz of [-1,1])SIGS.push({x:I.x+sx*(n.w/2-0.8),z:I.z+sz*(e.w/2-0.8),sx,sz,I});
+}
+// street trees & lights along major roads
+for(const s of SIDEWALKS){if(!s.road.major&&s.w<2.5)continue;const L=s.a1-s.a0;if(L<10)continue;
+  for(let t=s.a0+5;t<s.a1-4;t+=s.road.major?16:24){const out=s.ax==='x'?(s.c>s.road.c?1:-1):(s.c>s.road.c?1:-1);
+    const p=s.ax==='x'?[t,s.c-out*(s.w/2-0.7)]:[s.c-out*(s.w/2-0.7),t];
+    if(Math.hypot(p[0],p[1])>1080)continue;
+    if(s.road.major)TREES.push([p[0],p[1],0.9+R()*0.3,0]);
+    if(((t-s.a0)/16|0)%2===0)LIGHTS.push([p[0],p[1],s.ax,-out]);}}
+flush('estimated');
+
+/* ----- river banks, railings, river signs ----- */
+function bankWall(pts,hint,yb,yt,bridges){for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];
+  const mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2,hn=hint(mx,mz);
+  quadH('conc',[a[0],yb,a[1]],[b[0],yb,b[1]],[b[0],yt,b[1]],[a[0],yt,a[1]],[hn[0],0,hn[1]],[[0,yb],[Math.hypot(b[0]-a[0],b[1]-a[1]),yb],[Math.hypot(b[0]-a[0],b[1]-a[1]),yt],[0,yt]]);
+  if(!bridges)continue;
+  // railing segments skipping bridges
+  const L=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.ceil(L/2.5);let prev=null;
+  for(let k=0;k<=n;k++){const t=k/n,x=lerp(a[0],b[0],t),z=lerp(a[1],b[1],t);
+    const onB=NSs.some(r=>r.a0<95&&r.a1>95&&Math.abs(x-r.c)<r.w/2+0.6&&Math.abs(z-95)<20);
+    if(onB||x*x+z*z>1110*1110){prev=null;continue;}
+    beam('rail',[x,0,z],[x,1.1,z],0.07);if(prev){beam('rail',[prev[0],1.1,prev[1]],[x,1.1,z],0.09);beam('rail',[prev[0],0.55,prev[1]],[x,0.55,z],0.04);}prev=[x,z];}}}
+{
+  const toC=(x,z)=>{let best=null,bd=1e9;for(let i=0;i<KJ.length-1;i++){const d=segD(x,z,KJ[i][0],KJ[i][1],KJ[i+1][0],KJ[i+1][1]);if(d<bd){bd=d;best=i;}}const a=KJ[best],b=KJ[best+1],dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz),0,1);return [a[0]+dx*t-x,a[1]+dz*t-z];};
+  bankWall(kjOff.A,toC,-4,0,true);bankWall(kjOff.B,toC,-4,0,true);
+  quadH('conc',[kjOff.A[0][0],-4,kjOff.A[0][1]],[kjOff.B[0][0],-4,kjOff.B[0][1]],[kjOff.B[0][0],0,kjOff.B[0][1]],[kjOff.A[0][0],0,kjOff.A[0][1]],[1,0,0]);
+  const n=kjOff.A.length-1;quadH('conc',[kjOff.A[n][0],-4,kjOff.A[n][1]],[kjOff.B[n][0],-4,kjOff.B[n][1]],[kjOff.B[n][0],0,kjOff.B[n][1]],[kjOff.A[n][0],0,kjOff.A[n][1]],[-1,0,0]);
+  const E=[],Wb=[];for(let z=-3000;z<=4000;z+=50){E.push([sumidaX(z)+SUM_HW,z]);Wb.push([sumidaX(z)-SUM_HW,z]);}
+  bankWall(E,()=>[-1,0],-3.5,0,false);bankWall(Wb,()=>[1,0],-3.5,0,false);
+  // promenade along the north bank west of the station, and riverside trees
+  for(let x=-290;x<=262;x+=11)if(Math.abs(x)>16)TREES.push([x,79.5,0.85+R()*0.3,0]);
+  for(let x=-640;x<=1060;x+=13){if(NSs.some(r=>Math.abs(x-r.c)<r.w/2+4))continue;if(x>-300&&x<275)continue;TREES.push([x,79,0.8+R()*0.3,0]);}
+}
+flush('estimated');
+
+/* ================= 東京スカイツリータウン（箱モデル・推定） ================= */
+const tintSola=[1,1,1.02];
+box('cw',-290,-75,0,30,-40,40,{topK:'roof',col:tintSola});box('cw',-270,-120,30,42,-32,30,{topK:'roof'});wBox(-290,-40,-75,40,0,42);
+box('conc',-75,75,0,15,-60,40,{topK:'tile'});wBox(-75,-60,75,40,0,15);
+box('cw',75,215,0,34,-60,40,{topK:'roof',col:tintSola});box('cw',90,200,34,46,-50,30,{topK:'roof'});wBox(75,-60,215,40,0,46);
+box('cw',215,272,0,150,-55,20,{topK:'roof',col:[0.92,0.96,1.04]});box('cw',222,265,150,158,-48,13,{topK:'roof'});wBox(215,-55,272,20,0,158);
+for(let i=0;i<6;i++){const x=-280+i*36;box('steel',x,x+14,42,44.5,-20,-6,{});}
+flat('tile',-290,272,40,84,0.03);flat('tile',-440,-290,-24,84,0.03);flat('tile',-290,272,-88,-60,0.03);flat('tile',-290,-75,-60,-40,0.03);flat('tile',-440,-300,-56,-24,0.03);
+fRect(-75,-60,75,40,15,'plaza4f');
+// plaza edge railings (south & north)
+for(const z of [40,-60])for(const [x0,x1] of (z===40?[[-75,-12],[12,75]]:[[-75,75]])){beam('rail',[x0,16.1,z],[x1,16.1,z],0.1);for(let x=x0;x<=x1;x+=2.5)beam('rail',[x,15,z],[x,16.1,z],0.07);}
+// 屋外大階段（推定）: promenade → 4F plaza
+fRamp(-12,44,12,80,'z',15,0,'stairs');fRect(-12,40,12,44,15,'stairs');rampSolid(-12,44,12,80,'z',15,0,0);wBox(-12,40,12,44,0,15);
+box('conc',-12,12,0,15,40,44,{topK:'tile'});
+for(let i=0;i<50;i++){const z0=44+i*0.72,top=15-(i+1)*0.3;if(top<=0)break;box('tile',-12,12,0,top,z0,z0+0.72,{topK:'tile'});}
+for(const x of [-12.2,12.2]){beam('rail',[x,16,44],[x,1.0,80],0.1);for(let z=44;z<=80;z+=3)beam('rail',[x,15-(z-44)*15/36,z],[x,16-(z-44)*15/36,z],0.07);}
+flush('estimated');
+
+/* ================= 東京スカイツリー本体 ================= */
+const TOWER_H=634;
+const TR=[[0,39.3],[40,35.2],[80,31.5],[120,28.2],[160,25.4],[200,23.0],[240,21.0],[280,19.4],[333,17.8],[362,16.9],[400,15.9],[438,14.9],[458,12.6],[480,11.0],[497,9.6]];
+function towerR(y){for(let i=0;i<TR.length-1;i++)if(y<=TR[i+1][0])return lerp(TR[i][1],TR[i+1][1],(y-TR[i][0])/(TR[i+1][0]-TR[i][0]));return TR[TR.length-1][1];}
+// 足元の正三角形（頂点を北に置く：向きは未確認）から高さ約300mで円形へ
+function towerShapeR(th,y){const Rr=towerR(y),k=1-smooth(0,300,y);if(k<=0)return Rr;
+  let a=((th+Math.PI/2)%(2*Math.PI/3)+2*Math.PI/3)%(2*Math.PI/3);if(a>Math.PI/3)a-=2*Math.PI/3;
+  const rt=Math.min((Rr/2)/Math.cos(Math.PI/3-Math.abs(a)),Rr*0.93);return lerp(Rr,rt,k);}
+const NC=24,colTh=i=>-Math.PI/2+i*2*Math.PI/NC;
+const TP=(i,y)=>{const th=colTh(i),r=towerShapeR(th,y);return [Math.cos(th)*r,y,Math.sin(th)*r];};
+const towerGlow=(nx,ny,nz,cx,cy,cz)=>{const r=Math.hypot(cx,cz)||1,inw=-(nx*cx+nz*cz)/r;return (0.08+0.92*Math.max(0,inw)*Math.max(0,inw))*(0.6+0.4*Math.sin(cy*0.045))+(ny<-0.5?0.35:0);};
+const SECTIONS=[[0,333,30],[362,438,6],[458,497,3]];
+const TOWER_NODES=[];
+for(const [y0,y1,n] of SECTIONS){const ys=[];for(let j=0;j<=n;j++)ys.push(lerp(y0,y1,j/n));
+  for(let j=0;j<ys.length;j++){const y=ys[j],t=y/500,wc=lerp(2.3,0.9,t),wr=lerp(1.0,0.55,t),wd=lerp(0.8,0.42,t);
+    for(let i=0;i<NC;i++){const A=TP(i,y),B=TP((i+1)%NC,y);beam('tower',A,B,wr,null,towerGlow);TOWER_NODES.push(A);
+      if(j<ys.length-1){const y2=ys[j+1],C=TP(i,y2),Dd=TP((i+1)%NC,y2);const big=i%8===0&&y<180?1.9:1;
+        beam('tower',A,C,wc*big,null,towerGlow);beam('tower',A,Dd,wd,null,towerGlow);beam('tower',B,C,wd,null,towerGlow);}}}}
+// gain tower 497→634
+{const lv=[];for(let y=497;y<=625;y+=8)lv.push(y);
+  const GP=(k,y)=>{const r=lerp(5.4,2.3,(y-497)/128),a=(45+k*90)*DEG;return [Math.cos(a)*r,y,Math.sin(a)*r];};
+  for(let j=0;j<lv.length;j++){for(let k=0;k<4;k++){const A=GP(k,lv[j]),B=GP((k+1)%4,lv[j]);beam('tower',A,B,0.4,null,()=>0.7);
+    if(j<lv.length-1){const C=GP(k,lv[j+1]),Dd=GP((k+1)%4,lv[j+1]);beam('tower',A,C,0.75,null,()=>0.7);beam('tower',A,Dd,0.3,null,()=>0.5);beam('tower',B,C,0.3,null,()=>0.5);}}}
+  addGeo('tower',new THREE.CylinderGeometry(0.35,0.95,9,10),mtx(0,629.5,0),W1,0.9);
+  for(const [y,r] of [[505,6.2],[540,4.6],[585,3.6],[618,2.8]])addGeo('tower',new THREE.CylinderGeometry(r,r,1.6,16),mtx(0,y,0),W1,0.6);
+  // transition cone between 天望回廊 roof and gain tower
+  addGeo('tower',new THREE.CylinderGeometry(5.6,9.8,39,24,1,true),mtx(0,477.5,0),W1,0.5);}
+// 心柱・昇降路（模式）
+addGeo('core',new THREE.CylinderGeometry(8,8,333,32,1,true),mtx(0,166.5,0));
+addGeo('core',new THREE.CylinderGeometry(7,7,78,24,1,true),mtx(0,399,0));
+addGeo('core',new THREE.CylinderGeometry(6,6,40,20,1,true),mtx(0,477,0));
+flush('estimated');
+
+/* ----- 4F 入口フロア / 5F 出口フロア ----- */
+function cylCover(r,y0,y1,g0,g1,seg=64){ // open cylinder covering everything except world-angle gap [g0,g1]
+  if(g1<g0)g1+=360;const a0=g1,a1=g0+360;const geo=new THREE.CylinderGeometry(r,r,y1-y0,seg,1,true,(90-a1)*DEG,(a1-a0)*DEG);geo.translate(0,(y0+y1)/2,0);return geo;}
+function ringSlab(k,y,rIn,rOut,a0,a1,col){const g=new THREE.RingGeometry(rIn,rOut,72,1,-a1*DEG,(a1-a0)*DEG);g.rotateX(-Math.PI/2);g.translate(0,y,0);addGeo(k,g,null,col);}
+const HALL_DOOR=[91,104],F5_DOOR=[4,20];
+addGeo('glass',cylCover(17,15,20,HALL_DOOR[0],HALL_DOOR[1]));addGeo('glass',cylCover(17,20,25,F5_DOOR[0],F5_DOOR[1]));
+for(let a=0;a<360;a+=15)if(!inArc(a,HALL_DOOR[0]-2,HALL_DOOR[1]+2)){const x=Math.cos(a*DEG)*17.05,z=Math.sin(a*DEG)*17.05;beam('deck',[x,15,z],[x,25,z],0.18);}
+for(const a of HALL_DOOR.concat(F5_DOOR)){const x=Math.cos(a*DEG)*17.05,z=Math.sin(a*DEG)*17.05;beam('dark',[x,15,z],[x,25,z],0.35);}
+ringSlab('deck',25,7.9,17.6,0,360);ringSlab('floorIn',20,8.5,16.9,0,360);ringSlab('lightPanel',19.9,11,11.6,0,360);
+wRing(17,15,20,[HALL_DOOR]);wRing(17,20,25,[F5_DOOR]);wCirc(0,0,8.05,-20,640);
+ringFloor(20,8.6,16.8,[],'f5');
+fRect(16.6,1.5,30,5.5,20,'f5');box('deck',16.6,30,19.5,20,1.5,5.5,{topK:'tile'});
+fRamp(30,1.5,44,5.5,'x',20,15,'f5stairs');rampSolid(30,1.5,44,5.5,'x',20,15,15);
+for(let i=0;i<16;i++){const x0=30+i*0.875,top=20-(i+1)*0.3125;box('tile',x0,x0+0.875,15,top,1.5,5.5,{topK:'tile'});}
+for(const z of [1.35,5.65]){beam('rail',[17,21.1,z],[30,21.1,z],0.08);beam('rail',[30,21.1,z],[44,16.1,z],0.08);}
+// shuttle doors on the core
+const door=(a,y,label)=>{const x=Math.cos(a*DEG),z=Math.sin(a*DEG),tx=-z,tz=x,r=8.06;
+  quadH('dark',[x*r-tx*1.3,y,z*r-tz*1.3],[x*r+tx*1.3,y,z*r+tz*1.3],[x*r+tx*1.3,y+2.8,z*r+tz*1.3],[x*r-tx*1.3,y+2.8,z*r-tz*1.3],[x,0,z]);
+  quadH('lightPanel',[x*(r+0.01)-tx*1.3,y+2.9,z*(r+0.01)-tz*1.3],[x*(r+0.01)+tx*1.3,y+2.9,z*(r+0.01)+tz*1.3],[x*(r+0.01)+tx*1.3,y+3.1,z*(r+0.01)+tz*1.3],[x*(r+0.01)-tx*1.3,y+3.1,z*(r+0.01)-tz*1.3],[x,0,z]);};
+for(const a of [30,150,210,330])door(a,15);door(0,20);
+// ticket counter（配置は推定）
+for(let a=235;a<275;a+=8){const x=Math.cos(a*DEG)*13.4,z=Math.sin(a*DEG)*13.4;box('deck',x-1.2,x+1.2,15,16.1,z-1.2,z+1.2,{});wBox(x-1.2,z-1.2,x+1.2,z+1.2,15,16.1);}
+// legs & lattice columns at plaza level
+for(const a of [-90,30,150])wCirc(Math.cos(a*DEG)*36,Math.sin(a*DEG)*36,3.4,0,80);
+for(let i=0;i<NC;i++){const p=TP(i,15);wCirc(p[0],p[2],1.0,0,80);}
+flush('estimated');
+
+/* ----- 天望デッキ（フロア340・345・350） ----- */
+const DK_R=22.6,RAMP1=[200,250],RAMP2=[260,310],GLASSF=[80,100];
+addGeo('deck',new THREE.LatheGeometry([new THREE.Vector2(15.5,330.5),new THREE.Vector2(19.2,333.8),new THREE.Vector2(DK_R+0.15,337.5)],72));
+addGeo('deck',new THREE.LatheGeometry([new THREE.Vector2(DK_R+0.15,357),new THREE.Vector2(20.3,360.2),new THREE.Vector2(16.6,362.6)],72));
+addGeo('glass',new THREE.CylinderGeometry(DK_R,DK_R,19.5,96,1,true),mtx(0,347.25,0));
+for(const y of [344.45,349.45])addGeo('deck',new THREE.CylinderGeometry(DK_R+0.12,DK_R+0.12,0.6,96,1,true),mtx(0,y+0.3,0));
+for(let i=0;i<64;i++){const a=i/64*Math.PI*2;beam('deck',[Math.cos(a)*(DK_R+0.08),337.5,Math.sin(a)*(DK_R+0.08)],[Math.cos(a)*(DK_R+0.08),357,Math.sin(a)*(DK_R+0.08)],0.16);}
+ringSlab('floorIn',350,13.2,DK_R,0,360);ringSlab('floorIn',350,8.9,13.2,RAMP1[1],RAMP1[0]+360);
+ringSlab('floorIn',345,13.2,DK_R,0,360);ringSlab('floorIn',345,8.9,13.2,RAMP2[1],RAMP2[0]+360);
+ringSlab('floorIn',340,8.9,17,0,360);ringSlab('floorIn',340,21,DK_R,0,360);ringSlab('floorIn',340,17,21,GLASSF[1],GLASSF[0]+360);
+ringSlab('glass',340.01,17,21,GLASSF[0],GLASSF[1]);ringSlab('ceil',356.8,8.9,DK_R,0,360);
+addGeo('inner',new THREE.CylinderGeometry(9,9,20,40,1,true),mtx(0,347,0));
+for(let i=0;i<12;i++){const a=(i*30+15)*DEG,x=Math.cos(a)*19.4,z=Math.sin(a)*19.4;box('deck',x-0.25,x+0.25,337.5,357,z-0.25,z+0.25,{top:false});wCirc(x,z,0.4,336,360);}
+for(const y of [344.6,349.6,356.7])for(let i=0;i<24;i++){const a=i*15*DEG;const r0=12,r1=14;quad('lightPanel',[Math.cos(a)*r0,y,Math.sin(a)*r0],[Math.cos(a+0.05)*r0,y,Math.sin(a+0.05)*r0],[Math.cos(a+0.05)*r1,y,Math.sin(a+0.05)*r1],[Math.cos(a)*r1,y,Math.sin(a)*r1]);}
+function arcStrip(k,rIn,rOut,a0,a1,y0,y1,seg,yOff=0){for(let i=0;i<seg;i++){const t0=i/seg,t1=(i+1)/seg,b0=lerp(a0,a1,t0)*DEG,b1=lerp(a0,a1,t1)*DEG,h0=lerp(y0,y1,t0)+yOff,h1=lerp(y0,y1,t1)+yOff;
+  quadH(k,[Math.cos(b0)*rIn,h0,Math.sin(b0)*rIn],[Math.cos(b1)*rIn,h1,Math.sin(b1)*rIn],[Math.cos(b1)*rOut,h1,Math.sin(b1)*rOut],[Math.cos(b0)*rOut,h0,Math.sin(b0)*rOut],[0,1,0]);}}
+function arcRail(r,a0,a1,y0,y1,seg){for(let i=0;i<seg;i++){const t0=i/seg,t1=(i+1)/seg,b0=lerp(a0,a1,t0)*DEG,b1=lerp(a0,a1,t1)*DEG,h0=lerp(y0,y1,t0),h1=lerp(y0,y1,t1);
+  beam('rail',[Math.cos(b0)*r,h0+1.1,Math.sin(b0)*r],[Math.cos(b1)*r,h1+1.1,Math.sin(b1)*r],0.07);beam('rail',[Math.cos(b0)*r,h0,Math.sin(b0)*r],[Math.cos(b0)*r,h0+1.1,Math.sin(b0)*r],0.05);}}
+arcStrip('floorIn',9.8,13.2,RAMP1[0],RAMP1[1],350,345,24);arcStrip('floorIn',9.8,13.2,RAMP2[0],RAMP2[1],345,340,24);
+arcRail(13.3,RAMP1[0],RAMP1[1],350,350,10);arcRail(13.3,RAMP2[0],RAMP2[1],345,345,10);arcRail(13.25,RAMP1[0],RAMP1[1],350,345,12);arcRail(13.25,RAMP2[0],RAMP2[1],345,340,12);
+ringFloor(350,9.6,DK_R-0.7,[[RAMP1[0],RAMP1[1],9.6,13.4]],'deck350');
+ringFloor(345,9.6,DK_R-0.7,[[RAMP2[0],RAMP2[1],9.6,13.4]],'deck345');
+ringFloor(340,9.6,DK_R-0.7,[],'deck340');
+arcFloor(9.6,13.2,RAMP1[0],RAMP1[1],350,345,'deckstairs');arcFloor(9.6,13.2,RAMP2[0],RAMP2[1],345,340,'deckstairs');
+const coreDoor=(a,y,r)=>{const x=Math.cos(a*DEG),z=Math.sin(a*DEG),tx=-z,tz=x;
+  quadH('dark',[x*r-tx*1.3,y,z*r-tz*1.3],[x*r+tx*1.3,y,z*r+tz*1.3],[x*r+tx*1.3,y+2.8,z*r+tz*1.3],[x*r-tx*1.3,y+2.8,z*r-tz*1.3],[x,0,z]);};
+coreDoor(30,350,9.06);coreDoor(180,350,9.06);coreDoor(330,345,9.06);coreDoor(150,340,9.06);coreDoor(0,340,9.06);
+flush('estimated');
+
+/* ----- 天望回廊（フロア445〜450、ソラカラポイント451.2m） ----- */
+const GAL_IN=12.6,GAL_OUT=18.8;
+function galY(A){return A<=0.9?445+5*A/0.9:A<0.94?450:A<0.96?lerp(450,451.2,(A-0.94)/0.02):451.2;}
+fFn([-GAL_OUT,-GAL_OUT,GAL_OUT,GAL_OUT],(x,z)=>{const r=Math.hypot(x,z);if(r<GAL_IN||r>GAL_OUT)return null;return galY(angOf(x,z)/360);},'gallery');
+addGeo('deck',new THREE.LatheGeometry([new THREE.Vector2(13,436),new THREE.Vector2(17,440),new THREE.Vector2(19.5,443.5)],72));
+addGeo('deck',new THREE.LatheGeometry([new THREE.Vector2(19.5,454.5),new THREE.Vector2(16.6,456.6),new THREE.Vector2(12.6,458)],72));
+addGeo('glass',new THREE.CylinderGeometry(19.4,19.4,11,96,1,true),mtx(0,449,0));
+addGeo('inner',new THREE.CylinderGeometry(12.4,12.4,18,36,1,true),mtx(0,449,0));
+ringSlab('ceil',454.4,12.4,19.4,0,360);
+{const N=144;for(let i=0;i<N;i++){const A0=i/N,A1=(i+1)/N,b0=A0*2*Math.PI,b1=A1*2*Math.PI,h0=galY(A0+1e-4),h1=galY(A1-1e-4);
+  quadH('floorIn',[Math.cos(b0)*GAL_IN,h0,Math.sin(b0)*GAL_IN],[Math.cos(b1)*GAL_IN,h1,Math.sin(b1)*GAL_IN],[Math.cos(b1)*19.3,h1,Math.sin(b1)*19.3],[Math.cos(b0)*19.3,h0,Math.sin(b0)*19.3],[0,1,0]);
+  // spiral frame on the glass（螺旋状のフレーム：模式）
+  beam('deck',[Math.cos(b0)*19.45,h0+2.6,Math.sin(b0)*19.45],[Math.cos(b1)*19.45,h1+2.6,Math.sin(b1)*19.45],0.22);
+  if(i%3===0)beam('rail',[Math.cos(b0)*18.95,h0,Math.sin(b0)*18.95],[Math.cos(b0)*18.95,h0+1.0,Math.sin(b0)*18.95],0.05);
+  beam('rail',[Math.cos(b0)*18.95,h0+1.0,Math.sin(b0)*18.95],[Math.cos(b1)*18.95,h1+1.0,Math.sin(b1)*18.95],0.06);
+  if(i%4===0)quadH('lightPanel',[Math.cos(b0)*12.45,h0+0.15,Math.sin(b0)*12.45],[Math.cos(b1)*12.45,h1+0.15,Math.sin(b1)*12.45],[Math.cos(b1)*12.45,h1+0.35,Math.sin(b1)*12.45],[Math.cos(b0)*12.45,h0+0.35,Math.sin(b0)*12.45],[1,0,0]);}
+ quadH('glass',[GAL_IN,444,0],[19.4,444,0],[19.4,455,0],[GAL_IN,455,0],[0,0,1]);
+ coreDoor(5,445,12.46);coreDoor(352,451.2,12.46);}
+flush('estimated');
+
+/* ----- aviation lights & 雅 sparkles ----- */
+const avMat=new THREE.MeshBasicMaterial({color:0xff2a1a,toneMapped:false,fog:false});
+const avLights=[];
+for(const [y,r] of [[634.6,0.6],[600,2.6],[540,4.8],[497,9.8],[455,19.6],[360,20.5]]){for(let k=0;k<(r<1?1:4);k++){const a=k*Math.PI/2+0.4,m=new THREE.Mesh(new THREE.SphereGeometry(r<1?0.9:0.7,8,6),avMat);m.position.set(Math.cos(a)*r,y,Math.sin(a)*r);scene.add(m);avLights.push(m);}}
+const spkU={uTime:U.time,uAmt:{value:0}};
+const sparkle=(()=>{const pos=[],ph=[];for(let i=0;i<TOWER_NODES.length;i+=1){const p=TOWER_NODES[i];if(p[1]>480)continue;pos.push(p[0]*1.01,p[1],p[2]*1.01);ph.push(Math.random()*100);}
+  for(let i=0;i<1400;i++){const y=R()*495,th=R()*Math.PI*2,r=towerShapeR(th,y);if(y>330&&y<363||y>436&&y<458)continue;pos.push(Math.cos(th)*r,y,Math.sin(th)*r);ph.push(Math.random()*100);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('ph',new THREE.Float32BufferAttribute(ph,1));
+  const m=new THREE.ShaderMaterial({uniforms:spkU,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+    vertexShader:`attribute float ph;uniform float uTime,uAmt;varying float vA;
+    #include <common>
+    #include <logdepthbuf_pars_vertex>
+    void main(){vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;float tw=pow(max(0.,sin(uTime*(1.3+fract(ph)*2.)+ph)),8.);vA=uAmt*tw;gl_PointSize=clamp(900./-mv.z,1.5,6.)*(0.6+tw);
+    #include <logdepthbuf_vertex>
+    }`,
+    fragmentShader:`varying float vA;
+    #include <common>
+    #include <logdepthbuf_pars_fragment>
+    void main(){
+    #include <logdepthbuf_fragment>
+    vec2 c=gl_PointCoord-0.5;float d=1.-smoothstep(0.,0.5,length(c));gl_FragColor=vec4(vec3(1.,0.86,0.55)*d*vA*2.,1.);}`});
+  const p=new THREE.Points(g,m);p.frustumCulled=false;scene.add(p);return p;})();
+
+/* ================= 押上駅（地下・模式） ================= */
+const OY=-10,OC=-5.5;
+function wallX(x,z0,z1,y0,y1,k='inner'){quad(k,[x,y0,z0],[x,y0,z1],[x,y1,z1],[x,y1,z0],[[z0,y0],[z1,y0],[z1,y1],[z0,y1]]);}
+function wallZ(z,x0,x1,y0,y1,gaps=[],k='inner'){for(const [a,b] of subIv(x0,x1,gaps))quad(k,[a,y0,z],[b,y0,z],[b,y1,z],[a,y1,z],[[a,y0],[b,y0],[b,y1],[a,y1]]);}
+function room(x0,x1,z0,z1,ceil,gN,gS,gW,gE){flat('tile',x0,x1,z0,z1,OY);quad('ceil',[x0,ceil,z0],[x1,ceil,z0],[x1,ceil,z1],[x0,ceil,z1]);
+  wallZ(z0,x0,x1,OY,ceil,gN);wallZ(z1,x0,x1,OY,ceil,gS);
+  for(const [a,b] of subIv(z0,z1,gW||[]))wallX(x0,a,b,OY,ceil);for(const [a,b] of subIv(z0,z1,gE||[]))wallX(x1,a,b,OY,ceil);}
+room(95,330,172,188,OC,[[100,110],[270,278]],[[202,210]]);
+fRect(95,172,330,188,OY,'oshiage');
+room(100,110,30,172,-6,[[100,110]],[[100,110]]);
+fRect(100,30,110,172,OY,'passage');
+room(60,120,0,30,OC,[],[[100,110]]);fRect(60,0,120,30,OY,'b3');
+// stairs to street（北側・南側の地上出入口：番号は未確認のため表示しない）
+room(270,278,165.5,172,OC,[],[[270,278]],[],[[165.5,168.5]]);fRect(270,165.5,278,172.5,OY,'oshiage');
+fRamp(278,165.5,300,168.5,'x',OY,0,'osh_stairs');
+room(202,210,186,194.5,OC,[[202,210]],[],[[191.5,194.5]]);fRect(202,185.5,210,194.5,OY,'oshiage');
+fRamp(180,191.5,202,194.5,'x',0,OY,'osh_stairs');
+for(const [x0,x1,zA,zB,dir] of [[278,300,165.5,168.5,1],[180,202,191.5,194.5,-1]]){
+  const n=34;for(let i=0;i<n;i++){const xa=lerp(x0,x1,i/n),xb=lerp(x0,x1,(i+1)/n),t=dir>0?(i+1)/n:1-i/n,top=lerp(OY,0,t);box('tile',xa,xb,OY-0.2,top,zA,zB,{topK:'tile',sides:true});}
+  wallZ(zA,x0,x1,OY,0.02);wallZ(zB,x0,x1,OY,0.02);
+  const xo=dir>0?x0:x1,xs=dir>0?289:191;quad('ceil',[xo,OC,zA],[xs,-0.4,zA],[xs,-0.4,zB],[xo,OC,zB]);
+  // surface entrance: low walls + canopy
+  const ox0=dir>0?289:180,ox1=dir>0?300:191;
+  for(const z of [zA-0.15,zB+0.15]){box('steel',ox0,ox1,0,1.1,z-0.1,z+0.1,{});}
+  const xe=dir>0?ox0:ox1;box('steel',xe-0.1,xe+0.1,0,1.1,zA,zB,{});
+  box('dark',ox0-0.5,ox1+0.5,3.0,3.25,zA-0.9,zB+0.9,{});for(const xp of [ox0-0.3,ox1+0.3])for(const zp of [zA-0.7,zB+0.7])beam('steel',[xp,0,zp],[xp,3,zp],0.12);
+}
+// gates（自動改札：台数・位置は模式）
+const GATE_X=225;for(let z=173;z<187.5;z+=1.05){box('deck',GATE_X-0.9,GATE_X+0.9,OY,OY+1.05,z,z+0.24,{col:[0.9,0.92,0.95]});wBox(GATE_X-0.9,z,GATE_X+0.9,z+0.24,OY,OY+1.05);
+  flat('lightPanel',GATE_X-0.9,GATE_X-0.5,z,z+0.24,OY+1.06);}
+for(let x=240;x<258;x+=1.5){box('deck',x,x+1.2,OY,OY+1.7,186.9,188,{col:[0.7,0.78,0.86]});wBox(x,186.9,x+1.2,188,OY,OY+1.7);}
+for(let x=100;x<330;x+=6){flat('lightPanel',x,x+3,179,181,OC-0.01);}
+for(let z=34;z<172;z+=6)flat('lightPanel',104,106,z,z+3,-6.01);
+for(let x=64;x<118;x+=8)flat('lightPanel',x,x+4,14,16,OC-0.01);
+// B3 elevator door
+quadH('dark',[88.7,OY,0.06],[91.3,OY,0.06],[91.3,OY+2.8,0.06],[88.7,OY+2.8,0.06],[0,0,1]);
+flush('insufficient');
+const ugLights=[];for(const [x,z] of [[150,180],[260,180],[105,100],[90,15]]){const l=new THREE.PointLight(0xf2f6ff,0,70,1.2);l.position.set(x,OC-0.6,z);scene.add(l);ugLights.push(l);}
+
+/* ================= 東武スカイツリーライン 高架・とうきょうスカイツリー駅（模式） ================= */
+const VIA=[[-1350,-40],[-440,-40],[-300,-40],[-275,-62],[-255,-110],[-205,-400],[-120,-1100]];
+const VIA_Y=7.5;
+function slab(k,A,B,wd,y0,y1){const dx=B[0]-A[0],dz=B[1]-A[1],l=Math.hypot(dx,dz),nx=-dz/l*wd/2,nz=dx/l*wd/2;
+  const a=[A[0]+nx,A[1]+nz],b=[B[0]+nx,B[1]+nz],c=[B[0]-nx,B[1]-nz],d=[A[0]-nx,A[1]-nz];
+  quadH(k,[a[0],y1,a[1]],[b[0],y1,b[1]],[c[0],y1,c[1]],[d[0],y1,d[1]],[0,1,0]);quadH(k,[a[0],y0,a[1]],[b[0],y0,b[1]],[c[0],y0,c[1]],[d[0],y0,d[1]],[0,-1,0]);
+  quadH(k,[a[0],y0,a[1]],[b[0],y0,b[1]],[b[0],y1,b[1]],[a[0],y1,a[1]],[nx,0,nz]);quadH(k,[d[0],y0,d[1]],[c[0],y0,c[1]],[c[0],y1,c[1]],[d[0],y1,d[1]],[-nx,0,-nz]);}
+const STA=[-440,-300];
+for(let i=0;i<VIA.length-1;i++){const A=VIA[i],B=VIA[i+1];
+  if(A[0]===-440&&B[0]===-300)continue;
+  slab('conc',A,B,10,VIA_Y-1,VIA_Y);
+  for(const s of [-1,1]){const dx=B[0]-A[0],dz=B[1]-A[1],l=Math.hypot(dx,dz),nx=-dz/l,nz=dx/l;
+    slab('conc',[A[0]+nx*s*4.9,A[1]+nz*s*4.9],[B[0]+nx*s*4.9,B[1]+nz*s*4.9],0.25,VIA_Y,VIA_Y+1.1);
+    for(const o of [-2-0.53,-2+0.53,2-0.53,2+0.53])slab('steel',[A[0]+nx*o,A[1]+nz*o],[B[0]+nx*o,B[1]+nz*o],0.09,VIA_Y,VIA_Y+0.18);
+    // piers
+    for(let t=0;t<l;t+=18){const px=A[0]+dx/l*t,pz=A[1]+dz/l*t;if(s>0)continue;
+      const onR=carriageAt(px,pz)||(sumidaX(pz)-SUM_HW<px&&px<sumidaX(pz)+SUM_HW);if(onR)continue;
+      box('conc',px-1,px+1,0,VIA_Y-1,pz-1,pz+1,{top:false});wCirc(px,pz,1.3,0,VIA_Y-1);}
+    // catenary poles
+    if(s>0)for(let t=0;t<l;t+=50){const px=A[0]+dx/l*t,pz=A[1]+dz/l*t;beam('steel',[px+nx*4.7,VIA_Y,pz+nz*4.7],[px+nx*4.7,VIA_Y+7,pz+nz*4.7],0.25);beam('steel',[px+nx*4.7,VIA_Y+6.6,pz+nz*4.7],[px-nx*4.7,VIA_Y+6.6,pz-nz*4.7],0.18);}
+  }
+  // truss over the Sumida
+  if(A[0]<-1000){const xs=sumidaX(-40)+SUM_HW+6,xe=sumidaX(-40)-SUM_HW-6;for(let x=xs;x>xe;x-=8)for(const z of [-45,-35]){beam('steel',[x,VIA_Y,z],[x-4,VIA_Y+7,z],0.35);beam('steel',[x-4,VIA_Y+7,z],[x-8,VIA_Y,z],0.35);beam('steel',[x,VIA_Y+7,z],[x-8,VIA_Y+7,z],0.4);}}
+}
+// station deck with stair opening; side platforms (south one is walkable)
+const SH=[-362,-35,-338,-31];
+box('conc',STA[0],STA[1],VIA_Y-1,VIA_Y,-56,-35,{});box('conc',STA[0],STA[1],VIA_Y-1,VIA_Y,-31,-24,{});
+box('conc',STA[0],SH[0],VIA_Y-1,VIA_Y,-35,-31,{});box('conc',SH[2],STA[1],VIA_Y-1,VIA_Y,-35,-31,{});
+for(const o of [-2-0.53,-2+0.53,2-0.53,2+0.53])box('steel',STA[0],STA[1],VIA_Y,VIA_Y+0.18,-40+o-0.045,-40+o+0.045,{});
+box('tile',STA[0],STA[1],VIA_Y,8.5,-50,-44,{topK:'tile'});
+box('tile',STA[0],SH[0],VIA_Y,8.5,-36,-30,{topK:'tile'});box('tile',SH[2],STA[1],VIA_Y,8.5,-36,-30,{topK:'tile'});
+box('tile',SH[0],SH[2],VIA_Y,8.5,-36,-35,{topK:'tile'});box('tile',SH[0],SH[2],VIA_Y,8.5,-31,-30,{topK:'tile'});
+flat('paint',STA[0],STA[1],-35.9,-35.6,8.52);flat('paint',STA[0],STA[1],-44.4,-44.1,8.52);
+fFn([STA[0],-36,STA[1],-30],(x,z)=>(x>SH[0]&&x<SH[2]&&z>SH[1]&&z<SH[3])?null:8.5,'tsky_pf');
+fRamp(SH[0],SH[1],SH[2],SH[3],'x',0,8.5,'tsky_stairs');rampSolid(SH[0],SH[1],SH[2],SH[3],'x',0,8.5,0);
+for(let i=0;i<28;i++){const xa=lerp(SH[0],SH[2],i/28),xb=lerp(SH[0],SH[2],(i+1)/28);box('tile',xa,xb,0,8.5*(i+1)/28,SH[1],SH[3],{topK:'tile'});}
+for(const z of [SH[1]-0.1,SH[3]+0.1])beam('rail',[SH[0],1.1,z],[SH[2],9.6,z],0.08);
+for(const [z0,z1] of [[-50.5,-43.5],[-36.5,-29.5]]){box('dark',STA[0]+10,STA[1]-10,12.3,12.6,z0,z1,{});for(let x=STA[0]+14;x<STA[1]-10;x+=16)beam('steel',[x,8.5,(z0+z1)/2],[x,12.3,(z0+z1)/2],0.3);}
+for(let x=STA[0]+6;x<STA[1];x+=16)for(const z of [-54,-28.5]){box('conc',x-1,x+1,0,VIA_Y-1,z-1,z+1,{top:false});wCirc(x,z,1.3,0,VIA_Y-1);}
+// gate line（地上改札：模式）
+for(let x=-400;x<-332;x+=1.05){box('deck',x,x+0.24,0,1.05,-23,-21.2,{col:[0.9,0.92,0.95]});wBox(x,-23,x+0.24,-21.2,0,1.05);}
+wBox(-440,-23,-401,-21.2,0,6);wBox(-331,-23,-300,-21.2,0,6);box('inner',-440,-401,0,4.5,-22.6,-21.6,{});box('inner',-331,-300,0,4.5,-22.6,-21.6,{});
+for(let x=-430;x<-305;x+=8)flat('lightPanel',x,x+4,-42,-40,VIA_Y-1.02);
+flush('insufficient');
+
+/* ================= 周辺の建物（仮配置：現地形状の根拠なし §4） ================= */
+function occupied(x0,z0,x1,z1){
+  const cx=(x0+x1)/2,cz=(z0+z1)/2;
+  if(Math.hypot(cx,cz)>1085)return true;
+  if(x0<sumidaX(cz)+SUM_HW+16)return true;
+  for(const r of ROADS){const m=1.2;if(r.ax==='x'){if(x1>r.a0-m&&x0<r.a1+m&&z1>r.c-r.w/2-m&&z0<r.c+r.w/2+m)return true;}else if(z1>r.a0-m&&z0<r.a1+m&&x1>r.c-r.w/2-m&&x0<r.c+r.w/2+m)return true;}
+  const pts=[[cx,cz],[x0,z0],[x1,z0],[x0,z1],[x1,z1]];
+  for(const p of pts){if(kjDist(p[0],p[1])<KJ_HW+7.5)return true;if(polyD(VIA,p[0],p[1])<9)return true;}
+  if(x1>-450&&x0<285&&z1>-95&&z0<86)return true;
+  if(x1>-324&&x0<-276&&z1>100&&z0<1100)return true;
+  return false;
+}
+let bldgCount=0;const BLDGS=[[-290,-40,-75,40,42],[-75,-60,75,40,15],[75,-60,215,40,46],[215,-55,272,20,158]];
+for(let x=-1085;x<1085;){const sx=13+R()*12;
+  for(let z=-1085;z<1085;){const sz=12+R()*11;
+    const g=1+R()*2,x0=x+g,x1=x+sx-g,z0=z+g,z1=z+sz-g;
+    if(x1-x0>6&&z1-z0>6&&!occupied(x0,z0,x1,z1)){
+      const cx=(x0+x1)/2,cz=(z0+z1)/2,dA=Math.abs(cz-180),dY=Math.abs(cx-360),dO=Math.hypot(cx-260,cz-180);
+      let k='res',h=6+R()*9;
+      if(dO<230||dA<34||dY<34){k='com';h=12+R()*R()*48;}else if(R()<0.08){h=20+R()*22;}
+      h=Math.round(h/3)*3+0.4;
+      const tint=0.86+R()*0.2,col=k==='res'?[tint,tint*(0.97+R()*0.05),tint*(0.92+R()*0.08)]:[tint,tint,tint*(1+R()*0.05)];
+      box(k,x0,x1,0,h,z0,z1,{topK:'roof',col,uOff:R()*20});wBox(x0,z0,x1,z1,0,h);bldgCount++;BLDGS.push([x0,z0,x1,z1,h,k]);
+      if(h>14&&R()<0.6){const bx=lerp(x0+1,x1-4,R()),bz=lerp(z0+1,z1-4,R());box('steel',bx,bx+3,h,h+2.2,bz,bz+3,{});}
+    }
+    z+=sz;}
+  x+=sx;}
+flush('staged');
+
+/* ================= 遠景：市街地・高層ビル群・ランドマーク（眺望区域） ================= */
+const FAR=[];
+for(let i=0;i<9000;i++){const r=1100+Math.pow(R(),0.75)*9000,a=R()*Math.PI*2,x=Math.cos(a)*r,z=Math.sin(a)*r;
+  if(Math.abs(x-sumidaX(z))<SUM_HW+25)continue;if(polyD(KJ,x,z)<20)continue;
+  const w=14+R()*26,d=14+R()*26,h=8+R()*R()*42;FAR.push([x,z,w,d,h]);}
+
+const CLUSTERS=[[-10430,2230,26,120,243,650],[-4120,2790,36,100,200,520],[-5020,5010,30,110,255,700],[-6340,5500,1,330,330,0],[-7350,5510,6,120,238,320],[-8240,-2090,1,240,240,0],[-8100,-1950,8,60,140,320],[390,1510,6,60,130,220],[-3300,3900,20,60,150,700]];
+for(const [cx,cz,n,h0,h1,sp] of CLUSTERS)for(let i=0;i<n;i++){const x=cx+(R()-0.5)*sp,z=cz+(R()-0.5)*sp;FAR.push([x,z,30+R()*30,30+R()*30,i===0?h1:h0+R()*(h1-h0)]);}
+const farMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.85,map:TX.com.map,emissiveMap:TX.com.em,emissive:0xffffff,emissiveIntensity:0});
+farMat.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\n#ifdef USE_INSTANCING\n{vec4 wpI=modelMatrix*instanceMatrix*vec4(position,1.0);vec2 wuv=abs(normal.x)>0.5?vec2(wpI.z,wpI.y):vec2(wpI.x,wpI.y);vUv=(uvTransform*vec3(wuv,1.0)).xy;if(normal.y>0.5)vUv=vec2(0.02,0.98);}\n#endif');};
+const farMesh=(()=>{const g=new THREE.BoxGeometry(1,1,1);g.translate(0,0.5,0);const m=new THREE.InstancedMesh(g,farMat,FAR.length);const c=new THREE.Color();
+  FAR.forEach((b,i)=>{m.setMatrixAt(i,mtx(b[0],0,b[1],0,b[2],b[4],b[3]));const t=0.5+R()*0.3;c.setRGB(t,t,t*(1+R()*0.08));m.setColorAt(i,c);});
+  m.instanceMatrix.needsUpdate=true;m.userData.tag='staged';m.userData.mat=farMat;scene.add(m);TAGGED.push(m);return m;})();
+const farLights=(()=>{const pos=[],col=[];const c=new THREE.Color();
+  for(const b of FAR){const n=1+(b[4]>40?3:R()*2|0);for(let k=0;k<n;k++){const side=R()*4|0,u=(R()-0.5);let x=b[0],z=b[1];if(side===0)z-=b[3]/2+0.5,x+=u*b[2];else if(side===1)z+=b[3]/2+0.5,x+=u*b[2];else if(side===2)x-=b[2]/2+0.5,z+=u*b[3];else x+=b[2]/2+0.5,z+=u*b[3];
+    pos.push(x,2+R()*(b[4]-3),z);c.setHSL(R()<0.7?0.1:0.6,0.5,0.6+R()*0.3);col.push(c.r,c.g,c.b);}}
+  for(let i=0;i<14000;i++){const r=1000+Math.pow(R(),0.7)*9500,a=R()*Math.PI*2,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.abs(x-sumidaX(z))<SUM_HW+10)continue;pos.push(x,1.5,z);c.setHSL(0.09,0.75,0.55+R()*0.2);col.push(c.r,c.g,c.b);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  const m=new THREE.PointsMaterial({size:2.2,sizeAttenuation:false,vertexColors:true,transparent:true,opacity:0,depthWrite:false});
+  const p=new THREE.Points(g,m);p.frustumCulled=false;scene.add(p);return p;})();
+// 東京タワー（緯度経度から配置。形状は模式）
+const LM={};for(const l of D.landmarks){const p=fromLL(l.lat,l.lon);LM[l.name]=Object.assign({},l,p);}
+{const T=LM['東京タワー'],hw=y=>40*Math.pow(1-y/345,1.55)+1.2;const lv=[0,12,25,40,56,74,94,116,140,150,170,195,222,250];
+  for(let j=0;j<lv.length;j++){const y=lv[j],k=Math.floor(j/2)%2?'ttw':'tt';
+    const P4=[[1,1],[-1,1],[-1,-1],[1,-1]].map(([a,b])=>[T.x+a*hw(y),y,T.z+b*hw(y)]);
+    for(let i=0;i<4;i++){beam(k,P4[i],P4[(i+1)%4],1.4);if(j<lv.length-1){const y2=lv[j+1],Q=[[1,1],[-1,1],[-1,-1],[1,-1]].map(([a,b])=>[T.x+a*hw(y2),y2,T.z+b*hw(y2)]);
+      beam(k,P4[i],Q[i],2.2);beam(k,P4[i],Q[(i+1)%4],0.9);beam(k,P4[(i+1)%4],Q[i],0.9);}}}
+  box('ttw',T.x-hw(146)-2,T.x+hw(146)+2,143,152,T.z-hw(146)-2,T.z+hw(146)+2,{});box('ttw',T.x-7,T.x+7,247,254,T.z-7,T.z+7,{});
+  for(let y=254;y<333;y+=13)addGeo(Math.floor((y-254)/13)%2?'tt':'ttw',new THREE.CylinderGeometry(lerp(3.2,0.6,(y-254)/80),lerp(3.6,0.9,(y-254)/80),13,8),mtx(T.x,y+6.5,T.z));}
+// アサヒビール本社周辺・浅草寺・吾妻橋（眺望用の模式）
+{const A=LM['アサヒビール本社'];box('cw',A.x+20,A.x+48,0,95,A.z-14,A.z+14,{col:[1.25,0.95,0.45],topK:'ttw'});box('ttw',A.x+22,A.x+46,95,100,A.z-12,A.z+12,{});
+  box('dark',A.x+52,A.x+90,0,22,A.z-12,A.z+18,{});addGeo('gold',new THREE.SphereGeometry(1,16,10),mtx(A.x+72,30,A.z+3,0.3,16,6,7));
+  const S=LM['浅草寺'];for(let i=0;i<5;i++){const y=i*10,w=9-i*1.1;box('tt',S.x+40-w/2,S.x+40+w/2,y,y+8,S.z+60-w/2,S.z+60+w/2,{});box('dark',S.x+40-w,S.x+40+w,y+8,y+9.6,S.z+60-w,S.z+60+w,{});}
+  addGeo('steel',new THREE.CylinderGeometry(0.4,0.6,10,6),mtx(S.x+40,55,S.z+60));
+  box('tt',S.x-18,S.x+18,0,14,S.z-12,S.z+12,{});addGeo('dark',new THREE.ConeGeometry(30,14,4,1),mtx(S.x,21,S.z,Math.PI/4,1,1,0.75));
+  const bz=10,xs=sumidaX(bz)+SUM_HW+5,xe=sumidaX(bz)-SUM_HW-5;box('conc',xe,xs,1.5,2.6,bz-11,bz+11,{});for(const z of [bz-11,bz+11])for(let i=0;i<3;i++){const a0=lerp(xe,xs,i/3),a1=lerp(xe,xs,(i+1)/3);for(let k=0;k<8;k++){const t0=k/8,t1=(k+1)/8;beam('tt',[lerp(a0,a1,t0),2.6+Math.sin(t0*Math.PI)*7,z],[lerp(a0,a1,t1),2.6+Math.sin(t1*Math.PI)*7,z],0.8);}}}
+flush('estimated');
+// 富士山（約105km先。見かけの大きさを保って22km地点に縮尺配置）
+const fujiMat=new THREE.MeshBasicMaterial({color:0x6f7f99,fog:false,transparent:true,opacity:0.8,depthWrite:false});
+const fuji=(()=>{const F=LM['富士山'],dist=Math.hypot(F.x,F.z),s=22000/dist,H=3776*s,Rb=15000*s,pts=[];
+  for(let i=0;i<=24;i++){const t=i/24,y=t*H;pts.push(new THREE.Vector2(Rb*Math.pow(1-t,1.9)+260*s,y));}pts.push(new THREE.Vector2(0,H));
+  const m=new THREE.Mesh(new THREE.LatheGeometry(pts,48),fujiMat);m.position.set(F.x*s,-60,F.z*s);m.renderOrder=-5;scene.add(m);return m;})();
+
+/* ================= trees & street lights ================= */
+{
+  const tg=new THREE.CylinderGeometry(0.16,0.24,3.2,6);tg.translate(0,1.6,0);
+  const cg=new THREE.IcosahedronGeometry(2.3,1);cg.scale(1,0.9,1);cg.translate(0,4.6,0);
+  const n=TREES.length,trunks=new THREE.InstancedMesh(tg,MAT.trunk,n),crowns=new THREE.InstancedMesh(cg,new THREE.MeshStandardMaterial({roughness:0.95,flatShading:true}),n);
+  const c=new THREE.Color();
+  TREES.forEach((t,i)=>{const m=mtx(t[0],0,t[1],R()*6,t[2],t[2],t[2]);trunks.setMatrixAt(i,m);crowns.setMatrixAt(i,m);c.setHSL(0.24+R()*0.07,0.38+R()*0.15,0.12+R()*0.06);crowns.setColorAt(i,c);});
+  for(const m of [trunks,crowns]){m.castShadow=true;m.receiveShadow=true;m.userData.tag='staged';m.userData.mat=m.material;scene.add(m);TAGGED.push(m);}
+}
+for(const [x,z,ax,dir] of LIGHTS){const dx=ax==='x'?0:dir,dz=ax==='x'?dir:0;
+  beam('steel',[x,0,z],[x,7.2,z],0.16);beam('steel',[x,7.2,z],[x+dx*1.6,7.4,z+dz*1.6],0.1);box('lamp',x+dx*1.6-0.35,x+dx*1.6+0.35,7.15,7.35,z+dz*1.6-0.2,z+dz*1.6+0.2,{});}
+/* ----- traffic signals（信号機） ----- */
+const SIGM={};for(const ax of ['e','n'])for(const [s,col] of [['g',0x20e0a0],['y',0xffb020],['r',0xff3030]]){MAT[`s_${ax}${s}`]=std({color:0x222222,emissive:col,emissiveIntensity:0});SIGM[ax+s]=MAT[`s_${ax}${s}`];}
+for(const ax of ['e','n'])for(const [s,col] of [['g',0x40c0ff],['r',0xff3030]]){MAT[`p_${ax}${s}`]=std({color:0x222222,emissive:col,emissiveIntensity:0});SIGM['p'+ax+s]=MAT[`p_${ax}${s}`];}
+for(const S of SIGS){const {x,z,sx,sz}=S;beam('steel',[x,0,z],[x,5.6,z],0.2);
+  // car head for EW traffic (faces along x), for NS traffic (faces along z)
+  beam('steel',[x,5.4,z],[x,5.4,z-sz*3.2],0.12);const hz=z-sz*3.2;box('dark',x-0.2,x+0.2,5.0,5.45,hz-0.9,hz+0.9,{});
+  ['g','y','r'].forEach((s,i)=>box(`s_e${s}`,x+sx*0.21-0.02,x+sx*0.21+0.02,5.08,5.37,hz-0.75+i*0.55,hz-0.45+i*0.55,{}));
+  beam('steel',[x,5.0,z],[x-sx*3.2,5.0,z],0.12);const hx=x-sx*3.2;box('dark',hx-0.9,hx+0.9,4.6,5.05,z-0.2,z+0.2,{});
+  ['g','y','r'].forEach((s,i)=>box(`s_n${s}`,hx-0.75+i*0.55,hx-0.45+i*0.55,4.68,4.97,z+sz*0.21-0.02,z+sz*0.21+0.02,{}));
+  // pedestrian heads
+  box('dark',x-0.25,x+0.25,2.3,3.1,z-sz*0.25-0.15,z-sz*0.25+0.15,{});box(`p_ng`,x-0.18,x+0.18,2.35,2.65,z-sz*0.42-0.02,z-sz*0.42+0.02,{});box(`p_nr`,x-0.18,x+0.18,2.75,3.05,z-sz*0.42-0.02,z-sz*0.42+0.02,{});
+  box('dark',x-sx*0.25-0.15,x-sx*0.25+0.15,2.3,3.1,z-0.25,z+0.25,{});box(`p_eg`,x-sx*0.42-0.02,x-sx*0.42+0.02,2.35,2.65,z-0.18,z+0.18,{});box(`p_er`,x-sx*0.42-0.02,x-sx*0.42+0.02,2.75,3.05,z-0.18,z+0.18,{});
+}
+flush('staged');
+const CYCLE=60;
+function phase(t){t=((t%CYCLE)+CYCLE)%CYCLE;return {e:t<26?'g':t<29?'y':'r',n:t>=30&&t<56?'g':t>=56&&t<59?'y':'r',pe:t<22?'g':t<26?'b':'r',pn:t>=30&&t<52?'g':t>=52&&t<56?'b':'r'};}
+
+/* ================= signs（読める日本語の看板 §10） ================= */
+const FONT='"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif';
+function signTex(lines,o){const w=o.w||512,h=o.h||128,[c,g]=cv(w,h);
+  if(o.bg!=='none'){g.fillStyle=o.bg||'#173b6e';g.fillRect(0,0,w,h);}
+  if(o.stripe){g.fillStyle=o.stripe;g.fillRect(0,h-8,w,8);}
+  const tot=lines.reduce((s,l)=>s+l[1]*1.22,0);let y=(h-tot)/2;
+  for(const [t,size,color,wt] of lines){let sz=size;g.font=`${wt||700} ${sz}px ${FONT}`;while(g.measureText(t).width>w-28&&sz>10){sz-=2;g.font=`${wt||700} ${sz}px ${FONT}`;}
+    g.fillStyle=color||'#fff';g.textAlign=o.align||'center';g.textBaseline='middle';g.fillText(t,o.align==='left'?24:w/2,y+size*0.61);y+=size*1.22;}
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=ANISO;return t;}
+const signBack=new THREE.MeshStandardMaterial({color:0x3a3f47,roughness:0.6});
+function sign(lines,o,x,y,z,bearing,wm,hm,back=true){const tex=signTex(lines,o),th=Math.PI-bearing*DEG;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(wm,hm),new THREE.MeshBasicMaterial({map:tex,toneMapped:false,transparent:o.bg==='none',side:back?THREE.FrontSide:THREE.DoubleSide}));
+  m.position.set(x,y,z);m.rotation.y=th;scene.add(m);
+  if(back){const b=new THREE.Mesh(new THREE.PlaneGeometry(wm,hm),signBack);b.position.set(x-Math.sin(th)*0.03,y,z-Math.cos(th)*0.03);b.rotation.y=th+Math.PI;scene.add(b);}return m;}
+const brgAt=a=>((Math.atan2(Math.cos(a*DEG),-Math.sin(a*DEG))/DEG)+360)%360;
+const onCore=(a,r,y,lines,o,w,h)=>sign(lines,o,Math.cos(a*DEG)*r,y,Math.sin(a*DEG)*r,brgAt(a),w,h,false);
+const BLUE={bg:'#14325f',w:768,h:128},NAVY={bg:'#0f1d38',w:768,h:128},WHITE={bg:'#f4f4f0',w:512,h:128},TOBU={bg:'#f7f7f5',w:768,h:160,stripe:'#2a5caa'};
+function buildSigns(){
+  const osh=[['押上〈スカイツリー前〉駅',46],['地下鉄・京成・東武　出入口番号：未確認',22,'#bcd4ff',500]];
+  sign(osh,BLUE,301.4,3.75,167,90,4.4,0.74);sign(osh,BLUE,294.5,3.75,164.5,0,10,1.6);
+  sign(osh,BLUE,178.6,3.75,193,270,4.4,0.74);sign(osh,BLUE,185.5,3.75,195.5,180,10,1.6);
+  sign([['↑ 東京スカイツリータウン（連絡通路）',46],['TOKYO SKYTREE TOWN',22,'#bcd4ff',500]],NAVY,200,-6.7,179.95,90,6,1.0,false);
+  sign([['↑ 地上出口（浅草通り）',46],['EXIT',22,'#bcd4ff',500]],NAVY,200,-6.7,179.95,270,6,1.0,false);
+  sign([['→ 東京スカイツリータウン 連絡通路',44],['B3 連絡口・エレベーター',22,'#bcd4ff',500]],NAVY,128,-6.7,179.95,90,6,1.0,false);
+  sign([['↑ 東京スカイツリータウン B3',44],['エレベーター 1F・4F',22,'#bcd4ff',500]],NAVY,105,-7.2,160,180,5.6,0.95,false);
+  sign([['↑ 押上駅 改札・地上出口',44],['TO OSHIAGE STA.',22,'#bcd4ff',500]],NAVY,105,-7.2,45,0,5.6,0.95,false);
+  sign([['← 改札・地上出口（浅草通り）',44]],NAVY,105,-6.9,173.2,0,5.6,0.8,false);
+  sign([['改札（位置・台数は模式）',40]],NAVY,225,-6.4,179.95,90,5.4,0.75,false);sign([['改札（位置・台数は模式）',40]],NAVY,225,-6.4,179.95,270,5.4,0.75,false);
+  sign([['↑ 地上出口（浅草通り 北側）',44]],NAVY,274,-6.9,174,180,5,0.8,false);
+  sign([['↑ 地上出口（浅草通り 南側）',44]],NAVY,206,-6.9,185,0,5,0.8,false);
+  sign([['東京スカイツリータウン B3 連絡口',40],['位置は推定　エレベーター 1F（川沿い）・4F（屋外広場）',22,'#bcd4ff',500]],NAVY,90,-6.4,0.08,180,9,1.4,false);
+  sign([['エレベーター',36,'#14325f'],['B3（押上駅）・4F（屋外広場）',24,'#333',500]],WHITE,90,3.4,40.06,180,3.6,0.9,false);
+  box('deck',57,63,15,18.6,33,37,{});wBox(57,33,63,37,15,18.6);flush('estimated');
+  sign([['エレベーター',36,'#14325f'],['B3（押上駅）・1F（川沿い）',24,'#333',500]],WHITE,60,18.0,32.94,0,3.6,0.9,false);
+  sign([['TOKYO SKYTREE',40,'#fff'],['4F 入口フロア',30,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},Math.cos(97.5*DEG)*17.15,22.6,Math.sin(97.5*DEG)*17.15,brgAt(97.5),6.4,1.28,false);
+  onCore(97.5,8.12,18.4,[['天望シャトル のりば',40],['天望デッキ フロア350 行き',24,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.4,0.88);
+  onCore(8,8.12,23.2,[['5F 出口フロア',40],['出口は東側（4F 屋外広場へ階段）',22,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.4,0.88);
+  sign([['↑ 出口・4F 屋外広場',40]],{bg:'#1a2238',w:512,h:96},17.2,23.0,3.5,270,3.2,0.6,false);
+  onCore(30,9.12,353.2,[['FLOOR 350',44],['天望デッキ（地上350m）',24,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.0,0.8);
+  onCore(180,9.12,353.4,[['天望回廊シャトル のりば',40],['天望回廊 フロア445 行き',24,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.4,0.88);
+  onCore(195,9.12,352.6,[['↓ フロア345・340（階段）',36]],{bg:'#1a2238',w:640,h:96},3.6,0.54);
+  onCore(330,9.12,348.2,[['FLOOR 345',44],['天望回廊からの到着（推定）',22,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.0,0.8);
+  onCore(150,9.12,343.4,[['下りシャトル のりば',40],['5F 出口フロア 行き（推定）',24,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.4,0.88);
+  onCore(90,9.12,343.2,[['FLOOR 340',44],['ガラス床（位置は推定）',22,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.0,0.8);
+  onCore(5,12.5,448.0,[['天望回廊 フロア445',40],['スロープを一周して450へ',22,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.0,0.8);
+  onCore(352,12.5,454.0,[['ソラカラポイント 451.2m',36],['下りシャトル（フロア345 行き・推定）',22,'#bfe6ff',500]],{bg:'#1a2238',w:640,h:128},4.0,0.8);
+  sign([['とうきょうスカイツリー駅',52,'#14325f'],['TOKYO SKYTREE Sta.　東武スカイツリーライン',24,'#2a5caa',500]],TOBU,-366,5.0,-23.9,180,12,2.5,false);
+  sign([['改札（位置は模式）',40,'#14325f']],{bg:'#f7f7f5',w:512,h:96},-366,3.9,-22.8,0,4,0.75,false);
+  for(const x of [-420,-320])for(const b of [90,270])sign([['とうきょうスカイツリー',46,'#14325f'],['TOKYO SKYTREE',22,'#2a5caa',500]],TOBU,x,11.2,-33,b,3.6,0.75,false);
+  for(const r of NSs){if(!(r.a0<95&&r.a1>95))continue;const nm=BRIDGES[String(r.c)]||'（橋名未確認）';
+    beam('steel',[r.c+r.w/2+0.7,0,82.6],[r.c+r.w/2+0.7,1.1,82.6],0.12);beam('steel',[r.c-r.w/2-0.7,0,107.4],[r.c-r.w/2-0.7,1.1,107.4],0.12);
+    sign([[nm,48,'#222'],['北十間川',22,'#555',500]],{bg:'#e9e5da',w:384,h:128},r.c+r.w/2+0.7,1.35,82.5,0,1.3,0.43);
+    sign([[nm,48,'#222'],['北十間川',22,'#555',500]],{bg:'#e9e5da',w:384,h:128},r.c-r.w/2-0.7,1.35,107.5,180,1.3,0.43);}
+  flush('estimated');
+  sign([['東京ソラマチ',90,'#fff',700],['TOKYO Solamachi',34,'#e8f3ff',500]],{bg:'none',w:1024,h:200},-180,22,40.06,180,24,4.7);
+  sign([['東京ソラマチ',90,'#fff',700],['TOKYO Solamachi',34,'#e8f3ff',500]],{bg:'none',w:1024,h:200},145,22,40.06,180,24,4.7);
+  sign([['TOKYO SKYTREE TOWN',60,'#fff',700]],{bg:'none',w:1024,h:128},-45,9,40.06,180,16,2);
+  for(const [x,z,b,t] of [[349,166,0,'浅草通り'],[371,194,180,'浅草通り'],[349,194,270,'四ツ目通り'],[371,166,90,'四ツ目通り'],[30,166,0,'浅草通り']]){beam('steel',[x,0,z],[x,3.4,z],0.1);sign([[t,52,'#fff']],{bg:'#2a5caa',w:384,h:96},x,3.2,z,b,1.6,0.4);}
+  sign([['大横川親水公園',44,'#fff'],['（範囲は概略）',22,'#dfe',500]],{bg:'#2f5a3a',w:512,h:128},-300,1.8,197,0,2.6,0.65);
+  sign([['北十間川',48,'#222']],{bg:'#e9e5da',w:384,h:96},56,1.3,83.3,0,1.3,0.33);
+  sign([['↑ 東京スカイツリー 4F 入口',40,'#fff'],['屋外大階段（位置は推定）',22,'#cfe3ff',500]],{bg:'#14325f',w:640,h:128},-200,2.5,83,270,3.4,0.68);
+  sign([['↑ 東京スカイツリータウン',40,'#fff'],['京成橋をわたる',22,'#cfe3ff',500]],{bg:'#14325f',w:640,h:128},47,2.5,112,180,3.4,0.68);
+  beam('steel',[-200,0,83],[-200,1.8,83],0.12);beam('steel',[47,0,112],[47,1.8,112],0.12);flush('estimated');
+}
+
+/* ================= cars（車は車道、人は歩道 §12） ================= */
+function geoFromBuf(k){const B=BUF[k];const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(B.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(B.n,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(B.u,2));delete BUF[k];return g;}
+box('__car',-2.2,2.2,0.28,1.05,-0.85,0.85,{});box('__car',-1.15,1.0,1.05,1.58,-0.78,0.78,{});box('__car',-1.9,-1.1,0,0.42,-0.9,0.9,{});box('__car',1.1,1.9,0,0.42,-0.9,0.9,{});
+const carGeo=geoFromBuf('__car');
+box('__hl',2.2,2.24,0.62,0.86,-0.75,-0.45,{});box('__hl',2.2,2.24,0.62,0.86,0.45,0.75,{});const hlGeo=geoFromBuf('__hl');
+box('__tl',-2.24,-2.2,0.66,0.86,-0.8,-0.5,{});box('__tl',-2.24,-2.2,0.66,0.86,0.5,0.8,{});const tlGeo=geoFromBuf('__tl');
+const LANES=[];
+for(const r of ROADS){if(r.cw<6)continue;const offs=r.cw>=14?[r.cw/2-2,r.cw/2-5.5]:[r.cw/4];
+  for(const dir of [1,-1])for(const o of offs){const perp=r.ax==='x'?r.c-dir*o:r.c+dir*o;
+    const stops=INTER.filter(I=>I.sig&&(r.ax==='x'?I.e===r:I.n===r)).map(I=>{const cross=r.ax==='x'?I.n:I.e,at=r.ax==='x'?I.x:I.z;return {s:at-dir*(cross.w/2+3.2)};});
+    LANES.push({r,dir,perp,a0:Math.max(r.a0,-1300),a1:Math.min(r.a1,1300),stops,cars:[]});}}
+const MAXC=260;let carN=0;
+const carMesh=new THREE.InstancedMesh(carGeo,new THREE.MeshStandardMaterial({roughness:0.35,metalness:0.4}),MAXC);
+const hlMesh=new THREE.InstancedMesh(hlGeo,new THREE.MeshBasicMaterial({color:0xfff4d6,toneMapped:false}),MAXC);
+const tlMesh=new THREE.InstancedMesh(tlGeo,new THREE.MeshBasicMaterial({color:0xff2a2a,toneMapped:false}),MAXC);
+carMesh.castShadow=true;carMesh.receiveShadow=true;
+for(const m of [carMesh,hlMesh,tlMesh]){m.frustumCulled=false;scene.add(m);}
+carMesh.userData.tag='staged';carMesh.userData.mat=carMesh.material;TAGGED.push(carMesh);
+const CAR_COLS=[0xf2f2f0,0xf2f2f0,0x1a1a1c,0xb9bec4,0x8b9096,0x6e1f22,0x1f3a6b,0x2c4a2c,0xd8c46a];
+const CARS=[];
+for(const L of LANES){const len=L.a1-L.a0,n=Math.floor(len/38);for(let i=0;i<n;i++){if(CARS.length>=MAXC)break;const c={L,s:L.a0+(i+R())*len/n,v:0,vmax:9+R()*4,on:R()};CARS.push(c);L.cars.push(c);
+  carMesh.setColorAt(CARS.length-1,new THREE.Color(CAR_COLS[R()*CAR_COLS.length|0]));}}
+carMesh.instanceColor.needsUpdate=true;
+const _cm=new THREE.Matrix4(),_cq=new THREE.Quaternion(),_cp=new THREE.Vector3(),_cs=new THREE.Vector3(1,1,1),_cy=new THREE.Vector3(0,1,0),_hide=new THREE.Matrix4().makeScale(0,0,0);
+let carDensity=0.6;
+function updateCars(dt,ph){
+  for(const L of LANES){L.cars.sort((a,b)=>L.dir*(a.s-b.s));const axPh=L.r.ax==='x'?ph.e:ph.n;
+    for(let i=L.cars.length-1;i>=0;i--){const c=L.cars[i];if(c.on>carDensity){c.hidden=true;continue;}c.hidden=false;
+      let target=c.vmax;const ahead=L.cars.slice(i+1).find(o=>o.on<=carDensity);
+      if(ahead){const gap=L.dir*(ahead.s-c.s);if(gap<9)target=0;else if(gap<22)target=Math.min(target,(gap-9)*0.8);}
+      if(axPh!=='g')for(const st of L.stops){const d=L.dir*(st.s-c.s);if(d>-0.5&&d<30){target=Math.min(target,Math.max(0,(d-0.5)*0.6));}}
+      c.v+=clamp(target-c.v,-6*dt,2.5*dt);c.s+=L.dir*c.v*dt;
+      if(L.dir>0&&c.s>L.a1)c.s=L.a0;if(L.dir<0&&c.s<L.a0)c.s=L.a1;}}
+  CARS.forEach((c,i)=>{if(c.hidden){carMesh.setMatrixAt(i,_hide);hlMesh.setMatrixAt(i,_hide);tlMesh.setMatrixAt(i,_hide);return;}
+    const L=c.L,x=L.r.ax==='x'?c.s:L.perp,z=L.r.ax==='x'?L.perp:c.s,dx=L.r.ax==='x'?L.dir:0,dz=L.r.ax==='x'?0:L.dir;
+    _cq.setFromAxisAngle(_cy,Math.atan2(-dz,dx));_cm.compose(_cp.set(x,0.03,z),_cq,_cs);carMesh.setMatrixAt(i,_cm);hlMesh.setMatrixAt(i,_cm);tlMesh.setMatrixAt(i,_cm);});
+  carMesh.instanceMatrix.needsUpdate=hlMesh.instanceMatrix.needsUpdate=tlMesh.instanceMatrix.needsUpdate=true;
+}
+
+/* ================= pedestrians ================= */
+const PATHS=[];
+for(const s of SIDEWALKS){if(s.a1-s.a0<12)continue;const mid=s.ax==='x'?[(s.a0+s.a1)/2,s.c]:[s.c,(s.a0+s.a1)/2];if(Math.hypot(mid[0],mid[1])>760)continue;
+  PATHS.push(s.ax==='x'?{x0:s.a0,z0:s.c,x1:s.a1,z1:s.c,y:0.15,w:s.w*0.7}:{x0:s.c,z0:s.a0,x1:s.c,z1:s.a1,y:0.15,w:s.w*0.7});}
+PATHS.push({x0:-290,z0:60,x1:270,z1:60,y:0.03,w:30,wt:6},{x0:-640,z0:80,x1:-300,z1:80,y:0,w:4},{x0:-70,z0:30,x1:70,z1:30,y:15,w:14,wt:3},{x0:-70,z0:-48,x1:70,z1:-48,y:15,w:16,wt:2},
+  {x0:100,z0:180,x1:320,z1:180,y:OY,w:12,wt:3},{x0:105,z0:35,x1:105,z1:170,y:OY,w:7},{x0:-430,z0:-10,x1:-310,z1:60,y:0.03,w:30,wt:2},{x0:-430,z0:-33,x1:-305,z1:-33,y:8.5,w:4,wt:2});
+for(const y of [350,345,340])PATHS.push({ring:true,r:17.5,y,w:5,wt:3});
+PATHS.push({ring:true,r:15.6,y:447,w:3,wt:2,gal:true});
+const MAXP=420;
+const pedBody=new THREE.InstancedMesh((()=>{const g=new THREE.CylinderGeometry(0.19,0.16,1.42,8);g.translate(0,0.71,0);return g;})(),new THREE.MeshStandardMaterial({roughness:0.85}),MAXP);
+const pedHead=new THREE.InstancedMesh((()=>{const g=new THREE.SphereGeometry(0.13,10,8);g.translate(0,1.56,0);return g;})(),new THREE.MeshStandardMaterial({roughness:0.7}),MAXP);
+for(const m of [pedBody,pedHead]){m.castShadow=true;m.frustumCulled=false;scene.add(m);}
+pedBody.userData.tag='staged';pedBody.userData.mat=pedBody.material;TAGGED.push(pedBody);
+const PEDS=[];{const totW=PATHS.reduce((s,p)=>s+(p.wt||1)*(p.ring?60:Math.hypot(p.x1-p.x0,p.z1-p.z0)),0);
+  const CL=[0x22252b,0x3b4250,0xe6e2da,0x5a6b80,0x7a3b3b,0x2f4f4f,0xc9b79c,0x1c2c4c,0x8a8f99];
+  for(let i=0;i<MAXP;i++){let t=R()*totW,p=PATHS[0];for(const q of PATHS){const w=(q.wt||1)*(q.ring?60:Math.hypot(q.x1-q.x0,q.z1-q.z0));if(t<w){p=q;break;}t-=w;}
+    PEDS.push({p,s:R(),dir:R()<0.5?1:-1,off:(R()-0.5)*p.w,v:1.0+R()*0.55,ph:R()*6,on:R()});
+    pedBody.setColorAt(i,new THREE.Color(CL[R()*CL.length|0]));pedHead.setColorAt(i,new THREE.Color(R()<0.8?0x1b1612:0x6a5a48));}}
+let crowd=0.5;
+function updatePeds(dt,night){const lim=crowd*(night?0.55:1);
+  PEDS.forEach((q,i)=>{if(q.on>lim){pedBody.setMatrixAt(i,_hide);pedHead.setMatrixAt(i,_hide);return;}
+    const p=q.p;let x,z,y=p.y,ang;
+    if(p.ring){q.s+=q.dir*q.v*dt/(2*Math.PI*p.r);const a=q.s*2*Math.PI,r=p.r+q.off*0.4;x=Math.cos(a)*r;z=Math.sin(a)*r;
+      if(p.gal){const A=((a/(2*Math.PI))%1+1)%1;y=galY(Math.min(A,0.89));}ang=Math.atan2(-Math.cos(a)*q.dir,-Math.sin(a)*q.dir);}
+    else{const L=Math.hypot(p.x1-p.x0,p.z1-p.z0);q.s+=q.dir*q.v*dt/L;if(q.s>1){q.s=1;q.dir=-1;}if(q.s<0){q.s=0;q.dir=1;}
+      const ux=(p.x1-p.x0)/L,uz=(p.z1-p.z0)/L;x=lerp(p.x0,p.x1,q.s)-uz*q.off;z=lerp(p.z0,p.z1,q.s)+ux*q.off;ang=Math.atan2(-ux*q.dir,-uz*q.dir);}
+    q.ph+=dt*q.v*5.5;_cq.setFromAxisAngle(_cy,ang);_cm.compose(_cp.set(x,y+Math.abs(Math.sin(q.ph))*0.035,z),_cq,_cs);pedBody.setMatrixAt(i,_cm);pedHead.setMatrixAt(i,_cm);});
+  pedBody.instanceMatrix.needsUpdate=pedHead.instanceMatrix.needsUpdate=true;}
+pedBody.instanceColor.needsUpdate=pedHead.instanceColor.needsUpdate=true;
+
+/* ================= trains（演出：時刻表ではない） ================= */
+function polyLen(P){const L=[0];for(let i=1;i<P.length;i++)L.push(L[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));return L;}
+function offLine(P,o){return offsetPoly(P,o).A;}
+const TRACKS=[offLine(VIA,-2),offLine(VIA,2)].map(P=>({P,L:polyLen(P)}));
+function trackAt(T,s){s=clamp(s,0,T.L[T.L.length-1]);let i=1;while(i<T.L.length-1&&T.L[i]<s)i++;const a=T.P[i-1],b=T.P[i],t=(s-T.L[i-1])/(T.L[i]-T.L[i-1]);return {x:lerp(a[0],b[0],t),z:lerp(a[1],b[1],t),dx:(b[0]-a[0])/(T.L[i]-T.L[i-1]),dz:(b[1]-a[1])/(T.L[i]-T.L[i-1])};}
+const trainTex=(()=>{const [c,g]=cv(512,64),[e,ge]=cv(512,64);g.fillStyle='#c9cfd6';g.fillRect(0,0,512,64);g.fillStyle='#2a5caa';g.fillRect(0,40,512,6);g.fillStyle='#e07a2c';g.fillRect(0,47,512,3);
+  ge.fillStyle='#000';ge.fillRect(0,0,512,64);for(let x=12;x<500;x+=44){g.fillStyle='#26303a';g.fillRect(x,12,30,20);ge.fillStyle='#fff3d8';ge.fillRect(x,12,30,20);}
+  g.fillStyle='#8d959e';for(const x of [60,250,440])g.fillRect(x,8,22,36);speckle(g,512,64,6);
+  const m=new THREE.CanvasTexture(c);m.encoding=THREE.sRGBEncoding;const em=new THREE.CanvasTexture(e);em.encoding=THREE.sRGBEncoding;return {m,em};})();
+const trainMat=new THREE.MeshStandardMaterial({map:trainTex.m,emissiveMap:trainTex.em,emissive:0xffffff,emissiveIntensity:0,roughness:0.35,metalness:0.5});
+const TRAINS=TRACKS.map((T,k)=>{const cars=[];for(let i=0;i<6;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(20,3.1,2.85),trainMat);m.castShadow=true;scene.add(m);cars.push(m);}
+  const stopS=(()=>{let best=0,bd=1e9;for(let s=0;s<T.L[T.L.length-1];s+=2){const p=trackAt(T,s);const d=Math.hypot(p.x+372,p.z+40);if(d<bd){bd=d;best=s;}}return best;})();
+  return {T,cars,dir:k===0?1:-1,s:k===0?200:T.L[T.L.length-1]-600,v:14,state:'run',wait:0,stopS,dwelt:false};});
+function updateTrains(dt){for(const tr of TRAINS){const end=tr.T.L[tr.T.L.length-1];
+  if(tr.state==='wait'){tr.wait-=dt;if(tr.wait<=0){tr.state='run';tr.s=tr.dir>0?0:end;tr.dwelt=false;tr.v=14;}}
+  else if(tr.state==='dwell'){tr.wait-=dt;if(tr.wait<=0){tr.state='run';tr.dwelt=true;}}
+  else{const d=tr.dir*(tr.stopS-tr.s);let tv=16;if(!tr.dwelt&&d>0&&d<160)tv=Math.max(0.6,Math.sqrt(2*0.8*d));
+    tr.v+=clamp(tv-tr.v,-1.2*dt,0.9*dt);tr.s+=tr.dir*tr.v*dt;
+    if(!tr.dwelt&&d<0.5){tr.state='dwell';tr.wait=22;tr.v=0;}
+    if(tr.s<-130||tr.s>end+130){tr.state='wait';tr.wait=40+R()*30;}}
+  tr.cars.forEach((m,i)=>{const s=tr.s-tr.dir*(i*20.4+10.2);if(s<0||s>end||tr.state==='wait'){m.visible=false;return;}m.visible=true;const p=trackAt(tr.T,s);
+    m.position.set(p.x,VIA_Y+0.25+1.55,p.z);m.rotation.set(0,Math.atan2(-p.dz,p.dx),0);});}}
+
+/* ================= navigation graph & elevators（経路・案内 §11） ================= */
+const NODES={};
+function N(id,x,y,z,label){NODES[id]={id,x,y,z,label,e:[]};}
+function E(a,b){const A=NODES[a],B=NODES[b];const w=Math.hypot(A.x-B.x,(A.y-B.y)*2,A.z-B.z);A.e.push({to:b,w});B.e.push({to:a,w});}
+const chain=(...ids)=>{for(let i=0;i<ids.length-1;i++)E(ids[i],ids[i+1]);};
+const pa=(a,r,y)=>[Math.cos(a*DEG)*r,y,Math.sin(a*DEG)*r];
+const gateX=-400+1.05*32+0.645,gateZ=173+1.05*6+0.645;
+N('tsky_pf',-318,8.5,-33,'とうきょうスカイツリー駅 ホーム');N('tsky_st_top',-336,8.5,-33);N('tsky_st_bot',-365,0,-33);N('tsky_gate',gateX,0,-22.1,'とうきょうスカイツリー駅 改札（模式）');N('tsky_out',gateX,0,-12);N('tsky_plaza',-366,0,40);
+chain('tsky_pf','tsky_st_top','tsky_st_bot','tsky_gate','tsky_out','tsky_plaza');
+N('p_-366',-366,0,82);N('p_-226',-226,0,82);N('p_0',0,0,82);N('p_45',45,0,82);N('p_90',90,0,82);N('p_243',243,0,82);N('etower',243,0,24,'イーストタワー前');
+chain('tsky_plaza','p_-366','p_-226','p_0','p_45','p_90','p_243','etower');
+N('w_bank',-557,0,80);N('nishi',-557,0,95,'西十間橋');N('nishi_s',-557,0,170);chain('p_-366','w_bank','nishi','nishi_s');
+N('tobu',-226,0,95,'東武橋');N('tobu_s',-226,0,170);chain('p_-226','tobu','tobu_s');
+N('kei',45,0,95,'京成橋');N('kei_s',45,0,170);chain('p_45','kei','kei_s');
+N('as_-300',-300,0,170,'業平橋');N('as_302',302,0,170);N('as_345',345.6,0,170);chain('nishi_s','as_-300','tobu_s','kei_s','as_302','as_345');
+N('park',-300,0,240,'大横川親水公園');E('as_-300','park');
+N('as_s_48',48.4,0,190);N('as_s_178',178.5,0,190);N('as_s_345',345.6,0,190);E('kei_s','as_s_48');chain('as_s_48','as_s_178','as_s_345');E('as_345','as_s_345');
+N('osh_n_top',301.5,0,167);N('osh_n_bot',276,OY,167);N('osh_land_n',274,OY,176);N('osh_c_e',274,OY,gateZ);
+N('osh_gate',225,OY,gateZ,'押上駅 改札（模式）');N('osh_c_s',206,OY,gateZ);N('osh_c_w',105,OY,gateZ);
+N('osh_s_top',178.5,0,193);N('osh_s_bot',204,OY,193);N('osh_land_s',206,OY,186.5);
+chain('as_302','osh_n_top','osh_n_bot','osh_land_n','osh_c_e','osh_gate','osh_c_s','osh_c_w');chain('as_s_178','osh_s_top','osh_s_bot','osh_land_s','osh_c_s');
+N('pass_s',105,OY,165);N('pass_n',105,OY,36);N('b3',90,OY,8,'東京スカイツリータウン B3 連絡口');chain('osh_c_w','pass_s','pass_n','b3');
+N('sol_1f',90,0,43.5,'ソラマチ連絡エレベーター 1F');E('sol_1f','p_90');
+N('st_top',0,15,42);N('plaza_s',-2.5,15,30,'4F 屋外広場');N('hall_door',-2.5,15,18.2);N('hall_in',-2.5,15,13.4);N('e4',-2.3,15,10.7,'4F 入口フロア（天望シャトル）');
+chain('p_0','st_top','plaza_s','hall_door','hall_in','e4');
+N('sol_4f',60,15,31,'ソラマチ連絡エレベーター 4F');E('plaza_s','sol_4f');
+N('plaza_e',45,15,25);N('f5_st_bot',45,15,3.5);N('f5_terr',28,20,3.5);N('f5_door',17.6,20,3.5);N('e5',10.0,20,1.0,'5F 出口フロア');
+chain('plaza_s','plaza_e','f5_st_bot','f5_terr','f5_door','e5');
+N('e350',...pa(30,10.4,350),'天望デッキ フロア350');N('d350_a',...pa(60,15,350));N('d350_b',...pa(120,15,350));N('d350_g',...pa(180,10.4,350),'天望回廊シャトル のりば');
+N('d350_r',...pa(195,11.4,350));N('d_r1',...pa(225,11.4,347.5));N('d345_r',...pa(255,11.4,345));N('d_r2',...pa(285,11.4,342.5));N('d340_r',...pa(315,11.4,340));
+chain('e350','d350_a','d350_b','d350_g','d350_r','d_r1','d345_r','d_r2','d340_r');
+N('e345',...pa(330,10.4,345),'天望デッキ フロア345');N('d345_p1',...pa(315,16,345));N('d345_p2',...pa(270,16,345));N('d345_p3',...pa(250,15,345));chain('e345','d345_p1','d345_p2','d345_p3','d345_r');
+N('d340_a',...pa(0,15,340));N('d340_b',...pa(60,15,340));N('d340_c',...pa(120,15,340));N('e340',...pa(150,10.4,340),'天望デッキ フロア340（下りシャトル）');chain('d340_r','d340_a','d340_b','d340_c','e340');
+{const ids=['g445'];N('g445',...pa(5,15.5,445),'天望回廊 フロア445');for(let a=50;a<=320;a+=45){N('g'+a,...pa(a,15.5,galY(a/360)));ids.push('g'+a);}
+  N('g_top',...pa(335,15.5,450));N('g_sora',...pa(352,14.6,451.2),'ソラカラポイント（451.2m）');ids.push('g_top','g_sora');chain(...ids);}
+const LINKS=[];
+function link(from,to,name,route,note,secs){const A=NODES[from],B=NODES[to];LINKS.push({from,to,name,route,note,secs,at:[A.x,A.y,A.z],r:from==='e4'?11.6:2.8});A.e.push({to,w:30,link:LINKS[LINKS.length-1]});}
+const bOut=(id)=>{const n=NODES[id];return brgAt(angOf(n.x,n.z));};
+link('e4','e350','天望シャトル','4F 入口フロア → 天望デッキ フロア350','分速600m・約50秒とされる（要確認）。画面では短縮しています。',50);
+link('d350_g','g445','天望回廊シャトル','天望デッキ フロア350 → 天望回廊 フロア445','乗り場の位置は推定です。',30);
+link('g_sora','e345','天望回廊シャトル（下り）','天望回廊 → 天望デッキ フロア345','到着階は推定です（公式フロアガイドで要確認）。',30);
+link('e340','e5','下りシャトル','天望デッキ フロア340 → 5F 出口フロア','発着階は推定です（公式フロアガイドで要確認）。',50);
+for(const [a,b] of [['b3','sol_1f'],['b3','sol_4f'],['sol_1f','b3'],['sol_1f','sol_4f'],['sol_4f','b3'],['sol_4f','sol_1f']])
+  link(a,b,'ソラマチ連絡エレベーター（推定）',`${({b3:'B3',sol_1f:'1F',sol_4f:'4F'})[a]} → ${({b3:'B3 押上駅連絡口',sol_1f:'1F 川沿い',sol_4f:'4F 屋外広場'})[b]}`,'エレベーターの位置・停止階は推定です。',12);
+{const l=LINKS.find(l=>l.from==='e4');l.at=[0,15,0];l.r=11.4;}
+const ARRIVE_HEAD={e350:bOut('e350'),g445:185,e345:bOut('e345'),e5:90,sol_1f:180,b3:180,sol_4f:180};
+const DESTS=[['天望デッキ フロア350','e350'],['天望回廊・ソラカラポイント','g_sora'],['4F 入口フロア','e4'],['5F 出口フロア','e5'],['4F 屋外広場','plaza_s'],
+  ['押上駅 改札（模式）','osh_gate'],['東京スカイツリータウン B3 連絡口','b3'],['とうきょうスカイツリー駅 改札','tsky_gate'],['とうきょうスカイツリー駅 ホーム','tsky_pf'],
+  ['京成橋','kei'],['西十間橋','nishi'],['東武橋','tobu'],['大横川親水公園','park'],['イーストタワー前','etower']];
+function routeTo(goal){const dist={},next={},nl={},rev={};for(const id in NODES){dist[id]=Infinity;rev[id]=[];}
+  for(const id in NODES)for(const e of NODES[id].e)rev[e.to].push({from:id,w:e.w,link:e.link});
+  dist[goal]=0;const open=new Set([goal]);
+  while(open.size){let u=null;for(const k of open)if(u==null||dist[k]<dist[u])u=k;open.delete(u);
+    for(const e of rev[u]){const d=dist[u]+e.w;if(d<dist[e.from]){dist[e.from]=d;next[e.from]=u;nl[e.from]=e.link||null;open.add(e.from);}}}
+  return {goal,dist,next,nl};}
+
+/* ================= player ================= */
+const P={x:45,y:0,z:98,yaw:352*DEG,pitch:0.42,fname:'bridge',eye:1.6,speed:1.4};
+let started=false,elevating=false,runToggle=false;
+function settle(x,y,z){const f=floorAt(x,z,y+0.5)||floorAt(x,z,y+3);return f?f:{y,name:'?'};}
+function teleport(x,y,z,headDeg,pitch){const f=settle(x,y,z);P.x=x;P.z=z;P.y=f.y;P.fname=f.name;camY=P.y;if(headDeg!=null)P.yaw=headDeg*DEG;if(pitch!=null)P.pitch=pitch;}
+let camY=P.y;
+function tryStep(nx,nz){const f=floorAt(nx,nz,P.y);if(!f)return false;if(blocked(nx,nz,f.y))return false;P.x=nx;P.z=nz;P.y=f.y;P.fname=f.name;return true;}
+let boundT=0;
+function moveBy(dx,dz){const n=Math.max(1,Math.ceil(Math.hypot(dx,dz)/0.22));dx/=n;dz/=n;let ok=true;
+  for(let i=0;i<n;i++){if(!tryStep(P.x+dx,P.z+dz)){ok=false;if(!tryStep(P.x+dx,P.z))tryStep(P.x,P.z+dz);}}
+  if(!ok&&Math.hypot(P.x,P.z)>WALK_R-3&&boundT<=0){toast('散策範囲の境界です（指示書の初期案：タワーから半径約1km）');boundT=4;}return ok;}
+
+/* ================= UI helpers ================= */
+const toastEl=$('toast');let toastT=0;
+function toast(m,s=3.2){toastEl.textContent=m;toastEl.hidden=false;toastT=s;}
+const fmtT=t=>{const h=Math.floor(t)%24,m=Math.floor((t-Math.floor(t))*60);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;};
+const ST={confirmed:'確認済み',estimated:'推定',insufficient:'資料不足',staged:'演出・仮配置'};
+const chip=s=>`<span class="chip ${s}">${ST[s]}</span>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const SRC={};for(const s of D.sources)SRC[s.id]=s;
+const srcLinks=ids=>ids.length?ids.map(id=>`<a href="${SRC[id].url}" target="_blank" rel="noopener">${id}</a>`).join(' '):'—';
+
+/* ----- environment state ----- */
+let timeH=15.5,weather='clear',lightMode='auto',reflOn=true,shadowsOn=true,labelsOn=true;
+const ENV={dayF:1,nightF:0,el:40,lit:false,pattern:'iki'};
+const C=(r,g,b)=>new THREE.Color(r,g,b);
+function sunAt(t){const el=52*Math.sin(Math.PI*(t-5.55)/11.9),az=90+180*(t-5.55)/11.9;return {el,az};}
+function dayPattern(){const doy=Math.floor((Date.UTC(2026,9,2)-Date.UTC(2026,0,0))/864e5);return doy%2?'iki':'miyabi';}
+function applyEnv(){
+  const {el,az}=sunAt(timeH),e=el*DEG,a=az*DEG;const dir=new THREE.Vector3(Math.sin(a)*Math.cos(e),Math.sin(e),-Math.cos(a)*Math.cos(e));
+  const dayF=smooth(-5,10,el),nightF=1-smooth(-7,3,el),gold=smooth(-4,3,el)*(1-smooth(4,16,el));
+  ENV.el=el;ENV.dayF=dayF;ENV.nightF=nightF;skyU.uSun.value.copy(dir);skyU.uNight.value=nightF;
+  const cl=weather==='cloud',hz=weather==='haze';
+  const top=C(0.012,0.016,0.045).lerp(C(0.16,0.33,0.72),dayF),hor=C(0.035,0.045,0.085).lerp(C(0.62,0.72,0.86),dayF).lerp(C(0.95,0.55,0.32),gold*0.85);
+  if(hz){top.lerp(C(0.42,0.5,0.62),0.45*dayF);hor.lerp(C(0.8,0.8,0.8),0.4*dayF);}
+  if(cl){const g=C(0.5,0.53,0.57).multiplyScalar(0.15+0.85*dayF);top.lerp(g,0.85);hor.lerp(g.clone().multiplyScalar(1.12),0.85);}
+  skyU.uTop.value.copy(top);skyU.uHor.value.copy(hor);skyU.uSunCol.value.setRGB(1,0.85+0.15*(1-gold),0.7+0.3*(1-gold)).multiplyScalar(cl?0:1);
+  sun.position.copy(dir);sun.intensity=2.2*smooth(-1,6,el)*(cl?0.22:hz?0.75:1);sun.color.setRGB(1,0.82+0.18*(1-gold),0.62+0.38*(1-gold));
+  hemi.intensity=0.07+0.45*dayF;hemi.color.copy(top).lerp(C(0.8,0.85,0.95),0.5);hemi.groundColor.setRGB(0.35,0.32,0.3).multiplyScalar(0.3+0.7*dayF);
+  scene.fog.color.copy(hor);scene.fog.density=cl?0.00042:hz?0.00024:0.000085;
+  renderer.toneMappingExposure=lerp(1.3,0.92,dayF);
+  waterU.fogC.value.copy(hor);waterU.fogD.value=scene.fog.density;waterU.uSky.value.copy(hor);waterU.uDeep.value.setRGB(0.04,0.07,0.1).lerp(C(0.13,0.2,0.26),dayF);
+  const wi=nightF*0.7;for(const k of ['res','com','cw'])MAT[k].emissiveIntensity=wi*(k==='cw'?0.8:1);farMat.emissiveIntensity=wi*0.8;trainMat.emissiveIntensity=nightF*1.2;
+  farLights.material.opacity=nightF;MAT.lamp.emissiveIntensity=nightF*3;hlMesh.visible=tlMesh.visible=nightF>0.3;
+  // ライティング：日没〜24時（自動）。粋・雅を選ぶと夜間は常に点灯
+  const pat=lightMode==='auto'?dayPattern():lightMode;ENV.pattern=pat;
+  const sched=lightMode==='auto'?(el<-2&&timeH>=12):lightMode!=='off';
+  const on=sched&&nightF>0.15,k=on?smooth(0.15,0.7,nightF):0;ENV.lit=on;
+  if(pat==='iki'){U.glowCol.value.setRGB(0.42,0.78,1.0);MAT.core.emissive.setRGB(0.75,0.88,1).multiplyScalar(0.55*k);}
+  else{U.glowCol.value.setRGB(0.52,0.22,0.95);MAT.core.emissive.setRGB(0.45,0.3,0.85).multiplyScalar(0.45*k);}
+  U.glowAmt.value=0.95*k;spkU.uAmt.value=pat==='miyabi'?k:0;
+  MAT.glass.emissive.setRGB(0.85,0.92,1).multiplyScalar(0.18*nightF);MAT.ceil.emissive.setRGB(1,0.97,0.92).multiplyScalar(0.55*nightF);
+  MAT.tt.emissiveIntensity=MAT.ttw.emissiveIntensity=nightF*0.9;
+  fujiMat.color.copy(hor).lerp(C(0.22,0.27,0.38),0.55*dayF);fujiMat.opacity=(weather==='clear'?0.9:weather==='haze'?0.22:0)*smooth(-8,4,el);
+}
+
+/* ================= interaction（エレベーター） ================= */
+const promptEl=$('prompt'),chooseEl=$('choose'),elevEl=$('elev');
+let nearLinks=[],ELV=null;
+function findLinks(){const o=[];for(const l of LINKS){if(Math.abs(P.y-l.at[1])>1.6)continue;if(Math.hypot(P.x-l.at[0],P.z-l.at[2])<l.r)o.push(l);}return o;}
+const altText=y=>y<-0.5?`地下 ${(-y).toFixed(0)} m`:`地上 ${y.toFixed(y>100?0:1)} m`;
+function doLink(l){if(elevating)return;chooseEl.hidden=true;elevating=true;const B=NODES[l.to];
+  ELV={l,t:0,dur:l.secs>40?3.0:2.0,y0:P.y,y1:B.y};$('elevName').textContent=l.name;$('elevRoute').textContent=l.route;$('elevNote').textContent=l.note;elevEl.hidden=false;
+  if(document.pointerLockElement)document.exitPointerLock();sfx('door');}
+function finishLink(){const l=ELV.l,B=NODES[l.to];teleport(B.x,B.y,B.z,ARRIVE_HEAD[l.to]??null,0);elevEl.hidden=true;elevating=false;ELV=null;sfx('chime');toast(`${B.label||'到着'}に到着しました`);}
+function act(){if(elevating)return;if(!chooseEl.hidden){chooseEl.hidden=true;return;}if(!nearLinks.length)return;
+  if(nearLinks.length===1)return doLink(nearLinks[0]);
+  chooseEl.innerHTML='<div style="font-size:12px;color:var(--muted)">行き先を選んでください</div>';
+  nearLinks.forEach(l=>{const b=document.createElement('button');b.textContent=`${l.route}`;b.onclick=()=>doLink(l);chooseEl.appendChild(b);});
+  const c=document.createElement('button');c.textContent='やめる';c.onclick=()=>{chooseEl.hidden=true;};chooseEl.appendChild(c);chooseEl.hidden=false;if(document.pointerLockElement)document.exitPointerLock();}
+promptEl.addEventListener('click',act);
+
+/* ================= guidance（目的地案内・自動歩行） ================= */
+let G=null,auto=false,autoStuck=0,autoLast=[0,0];
+const guideEl=$('guide'),gText=$('gText'),gArrow=$('gArrowG'),autoBtn=$('autoBtn');
+function startGuide(id,name){G={R:routeTo(id),id,name};guideEl.hidden=false;closePanels();}
+function endGuide(){G=null;auto=false;autoBtn.setAttribute('aria-pressed','false');guideEl.hidden=true;}
+$('gEnd').onclick=endGuide;autoBtn.onclick=()=>{auto=!auto;autoBtn.setAttribute('aria-pressed',String(auto));autoStuck=0;};
+function guideTarget(){let best=null,bs=Infinity;
+  for(const id in NODES){const n=NODES[id],dy=Math.abs(n.y-P.y);if(dy>9)continue;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d>160)continue;const sc=Math.hypot(d,dy*4)+G.R.dist[id];if(sc<bs){bs=sc;best=id;}}
+  if(best==null)return null;let cur=best;const n=NODES[cur],d=Math.hypot(n.x-P.x,n.z-P.z);
+  if(cur===G.id&&d<4&&Math.abs(n.y-P.y)<2)return {arrived:true};
+  if(d<3.2&&Math.abs(n.y-P.y)<2){if(G.R.nl[cur])return {node:cur,link:G.R.nl[cur],remain:G.R.dist[cur]};cur=G.R.next[cur]||cur;}
+  return {node:cur,link:null,remain:bs};}
+function updateGuide(dt){if(!G)return null;const T=guideTarget();
+  if(!T){gText.innerHTML=`<b>${esc(G.name)}</b><small>経路から離れています。案内できる通路まで戻ってください。</small>`;return null;}
+  if(T.arrived){toast(`${G.name}に到着しました`);endGuide();return null;}
+  const n=NODES[T.node],br=bearingOf(n.x-P.x,n.z-P.z),rel=br-P.yaw/DEG;gArrow.setAttribute('transform',`rotate(${rel.toFixed(1)} 15 15)`);
+  const walk=Math.round(T.remain);let sub=T.link?`${T.link.name}に乗ってください（E）`:`約${walk}m${walk>0&&G.R.dist[T.node]>=30?'（エレベーターを含む）':''}`;
+  gText.innerHTML=`<b>${esc(G.name)}</b>まで<small>${esc(sub)}</small>`;return T;}
+function autopilot(dt,T){if(!auto||!T||elevating)return [0,0];
+  if(T.link){if(nearLinks.includes(T.link)){doLink(T.link);return [0,0];}}
+  const n=NODES[T.node],br=Math.atan2(n.x-P.x,-(n.z-P.z));let d=br-P.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));P.yaw+=clamp(d,-2.4*dt,2.4*dt);P.pitch=lerp(P.pitch,0,dt*2);
+  autoStuck+=dt;if(autoStuck>2.5){if(Math.hypot(P.x-autoLast[0],P.z-autoLast[1])<0.4){teleport(n.x,n.y,n.z);toast('自動歩行：通れない箇所を飛ばしました');}autoStuck=0;autoLast=[P.x,P.z];}
+  return [Math.abs(d)<0.6?1:0.2,0];}
+
+/* ================= map ================= */
+const mapC=$('map'),mctx=mapC.getContext('2d'),MB=1100,MSC=2600/MB,mapBase=document.createElement('canvas');mapBase.width=mapBase.height=MB;
+const bx_=x=>(x+1300)/MSC,bz_=z=>(z+1300)/MSC;
+function buildMapBase(){const g=mapBase.getContext('2d');g.fillStyle='#252c3d';g.fillRect(0,0,MB,MB);
+  const poly=(pts,fill)=>{g.beginPath();pts.forEach((p,i)=>i?g.lineTo(bx_(p[0]),bz_(p[1])):g.moveTo(bx_(p[0]),bz_(p[1])));g.closePath();g.fillStyle=fill;g.fill();};
+  const W=[],Ee=[];for(let z=-1400;z<=1400;z+=50){W.push([sumidaX(z)-SUM_HW,z]);Ee.push([sumidaX(z)+SUM_HW,z]);}poly([...W,...Ee.reverse()],'#2e6694');poly(kjPoly,'#2e6694');
+  g.fillStyle='#2d5638';g.fillRect(bx_(-322),bz_(195),44/MSC,(1100-195)/MSC);
+  g.fillStyle='#4b546a';g.fillRect(bx_(-440),bz_(-88),(272+440)/MSC,(84+88)/MSC);
+  for(const r of ROADS){g.fillStyle=r.major?'#7b86a0':'#5f6981';if(r.ax==='x')g.fillRect(bx_(r.a0),bz_(r.c-r.w/2),(r.a1-r.a0)/MSC,r.w/MSC);else g.fillRect(bx_(r.c-r.w/2),bz_(r.a0),r.w/MSC,(r.a1-r.a0)/MSC);}
+  for(const b of BLDGS){g.fillStyle=b[5]==='com'?'#4d5874':b[5]==='res'?'#3c455b':'#8fa3c4';g.fillRect(bx_(b[0]),bz_(b[1]),(b[2]-b[0])/MSC,(b[3]-b[1])/MSC);}
+  g.strokeStyle='#b49a62';g.lineWidth=7/MSC;g.beginPath();VIA.forEach((p,i)=>i?g.lineTo(bx_(p[0]),bz_(p[1])):g.moveTo(bx_(p[0]),bz_(p[1])));g.stroke();
+  g.fillStyle='#e6f2ff';g.beginPath();for(let k=0;k<3;k++){const a=(-90+k*120)*DEG;const x=bx_(Math.cos(a)*39),z=bz_(Math.sin(a)*39);k?g.lineTo(x,z):g.moveTo(x,z);}g.closePath();g.fill();
+  g.strokeStyle='rgba(255,255,255,.18)';g.lineWidth=1;g.beginPath();g.arc(bx_(0),bz_(0),WALK_R/MSC,0,Math.PI*2);g.stroke();}
+const ZOOMS=[160,420,1100];let zi=1;mapC.addEventListener('click',()=>{zi=(zi+1)%3;});
+function drawMap(){const W=mapC.width,deck=P.y>300,rad=deck?1150:ZOOMS[zi],s=W/(2*rad),g=mctx;
+  g.fillStyle='#1d2333';g.fillRect(0,0,W,W);g.drawImage(mapBase,bx_(P.x-rad),bz_(P.z-rad),2*rad/MSC,2*rad/MSC,0,0,W,W);
+  const tx=x=>(x-P.x)*s+W/2,tz=z=>(z-P.z)*s+W/2;
+  if(P.y<-3){g.fillStyle='rgba(10,14,24,.55)';g.fillRect(0,0,W,W);g.strokeStyle='#bcd4ff';g.lineWidth=2;for(const [x0,z0,x1,z1] of [[95,172,330,188],[100,30,110,172],[60,0,120,30],[270,165.5,278,172],[202,186,210,194.5]])g.strokeRect(tx(x0),tz(z0),(x1-x0)*s,(z1-z0)*s);}
+  if(G){g.strokeStyle='#8fd3ff';g.lineWidth=3;g.setLineDash([6,4]);g.beginPath();let id=null,bd=1e9;for(const k in NODES){const n=NODES[k];const d=Math.hypot(n.x-P.x,n.z-P.z)+Math.abs(n.y-P.y)*4+G.R.dist[k];if(d<bd){bd=d;id=k;}}
+    g.moveTo(W/2,W/2);let guard=0;while(id&&guard++<80){const n=NODES[id];g.lineTo(tx(n.x),tz(n.z));if(id===G.id)break;id=G.R.next[id];}g.stroke();g.setLineDash([]);
+    const gn=NODES[G.id];g.fillStyle='#ffcf5a';g.beginPath();g.arc(clamp(tx(gn.x),6,W-6),clamp(tz(gn.z),6,W-6),6,0,Math.PI*2);g.fill();}
+  if(deck){g.font=`600 ${W*0.045}px ${FONT}`;g.textAlign='center';g.textBaseline='middle';
+    for(const k of ['東京タワー','富士山','浅草寺','新宿副都心','サンシャイン60','東京駅周辺']){const l=LM[k],b=bearingOf(l.x-P.x,l.z-P.z)*DEG,r=W*0.4;const x=W/2+Math.sin(b)*r,y=W/2-Math.cos(b)*r;g.fillStyle='rgba(10,15,28,.75)';const tw=g.measureText(k).width+8;g.fillRect(x-tw/2,y-W*0.03,tw,W*0.06);g.fillStyle='#ffe2a6';g.fillText(k,x,y);}}
+  g.save();g.translate(W/2,W/2);g.rotate(P.yaw);g.fillStyle='#8fd3ff';g.strokeStyle='#06121f';g.lineWidth=2;g.beginPath();g.moveTo(0,-11);g.lineTo(8,9);g.lineTo(0,4);g.lineTo(-8,9);g.closePath();g.fill();g.stroke();g.restore();
+  g.fillStyle='#fff';g.font=`700 ${W*0.05}px ${FONT}`;g.textAlign='center';g.fillText('N',W/2,W*0.06);
+  $('mapNote').textContent=deck?'天望からの方位':`${rad*2>=1000?(rad*2/1000).toFixed(1)+'km':rad*2+'m'}四方`;}
+
+/* ================= labels ================= */
+const labelsEl=$('labels'),lblPool=[],_lv=new THREE.Vector3();
+function updateLabels(){let n=0;const W=innerWidth,H=innerHeight;
+  if(labelsOn&&started){const items=[];
+    if(P.y>200){for(const k in LM){const l=LM[k];let x=l.x,z=l.z,y=l.h+25;if(l.far){const s=22000/Math.hypot(x,z);x*=s;z*=s;y=3776*s+60;}const d=Math.hypot(l.x-P.x,l.z-P.z);
+      items.push({x,y,z,t:k,sub:`${d>=1000?(d/1000).toFixed(1)+'km':Math.round(d)+'m'}・${dirName(bearingOf(l.x-P.x,l.z-P.z))}`});}}
+    else for(const f of D.facilities){const [x,y,z]=f.pos,d=Math.hypot(x-P.x,z-P.z);if(f.id==='F01'){if(d>120)items.push({x:0,y:TOWER_H+10,z:0,t:f.name,sub:`${Math.round(d)}m`});continue;}
+      if(d>380||d<f.r||Math.abs(y-P.y)>30)continue;items.push({x,y:y+7,z,t:f.name,sub:`${Math.round(d)}m`});}
+    for(const it of items){_lv.set(it.x,it.y,it.z).project(camera);if(_lv.z>1||_lv.z<-1||Math.abs(_lv.x)>1.02||Math.abs(_lv.y)>1.02)continue;
+      while(lblPool.length<=n){const d=document.createElement('div');d.className='lbl';labelsEl.appendChild(d);lblPool.push(d);}
+      const el=lblPool[n++],h=`${esc(it.t)}<small>${esc(it.sub)}</small>`;if(el._h!==h){el.innerHTML=h;el._h=h;}el.style.left=((_lv.x+1)/2*W).toFixed(0)+'px';el.style.top=((1-_lv.y)/2*H-10).toFixed(0)+'px';el.hidden=false;}}
+  for(let i=n;i<lblPool.length;i++)lblPool[i].hidden=true;}
+
+/* ================= place / floor / coords ================= */
+const FLOORNAME={deck350:'天望デッキ フロア350',deck345:'天望デッキ フロア345',deck340:'天望デッキ フロア340',deckstairs:'天望デッキ 階段',gallery:'天望回廊',f5:'5F 出口フロア',f5stairs:'5F→4F 屋外階段',plaza4f:'4F 屋外広場（タワーヤード）',stairs:'屋外大階段（推定）',oshiage:'押上駅 地下コンコース（模式）',passage:'押上駅〜スカイツリータウン 連絡通路',b3:'東京スカイツリータウン B3 連絡口',osh_stairs:'押上駅 出入口の階段',tsky_pf:'とうきょうスカイツリー駅 ホーム',tsky_stairs:'とうきょうスカイツリー駅 階段',bridge:'橋の上'};
+function placeName(){const f=P.fname;
+  if(f==='plaza4f'&&Math.hypot(P.x,P.z)<17)return '4F 入口フロア';
+  if(f==='gallery')return P.y>451?'ソラカラポイント（451.2m）':'天望回廊';
+  if(f==='bridge'){for(const r of NSs)if(Math.abs(P.x-r.c)<r.w/2+1)return BRIDGES[String(r.c)]||'北十間川の橋（橋名未確認）';}
+  if(FLOORNAME[f])return FLOORNAME[f];
+  for(const fc of D.facilities){if(['F01','F15'].includes(fc.id))continue;const d=Math.hypot(fc.pos[0]-P.x,fc.pos[2]-P.z);if(d<fc.r*0.8&&Math.abs(fc.pos[1]-P.y)<6)return fc.name;}
+  if(P.z>40&&P.z<84.5&&P.x>-300&&P.x<275)return 'スカイツリータウン 北十間川沿い';
+  if(P.x>-440&&P.x<-300&&P.z>-60&&P.z<84)return 'とうきょうスカイツリー駅前';
+  const r=roadAt(P.x,P.z);if(r)return r.n==='（道路名 未登録）'?'道路（名称未登録）':r.n;
+  if(Math.hypot(P.x,P.z)<120)return '東京スカイツリーの足元';
+  return P.x<-300?'業平・向島方面（周辺散策区域）':P.z>180?'押上・業平（周辺散策区域）':'押上（周辺散策区域）';}
+function floorLabel(){const f=P.fname,y=P.y;
+  if(/^deck/.test(f)||f==='gallery')return `地上 ${y.toFixed(1)} m（${f==='gallery'?'フロア445〜450のスロープ':FLOORNAME[f]||''}）`;
+  if(f==='plaza4f')return '4F（地上15m・階高は仮）';if(f==='f5')return '5F（地上20m・階高は仮）';
+  if(y<-0.5)return `地下 ${(-y).toFixed(1)} m（深さは仮）`;if(y>1)return `地上 ${y.toFixed(1)} m`;return '地上';}
+
+/* ================= panels ================= */
+const PANELS=['destPanel','facPanel','verPanel','setPanel'];
+function closePanels(){for(const p of PANELS)$(p).hidden=true;document.querySelectorAll('#dock [data-p]').forEach(b=>b.setAttribute('aria-expanded','false'));}
+document.querySelectorAll('#dock [data-p]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.p,open=$(id).hidden;closePanels();if(open){$(id).hidden=false;b.setAttribute('aria-expanded','true');if(id==='verPanel')renderVer();if(document.pointerLockElement)document.exitPointerLock();}}));
+function renderDest(){const el=$('destPanel');el.innerHTML='<h3>目的地</h3><p>「案内」で矢印と地図に経路を表示します。「自動歩行」で経路どおりに歩けます（確認動画の撮影用）。</p>';
+  for(const [nm,id] of DESTS){const n=NODES[id],row=document.createElement('div');row.className='item';
+    row.innerHTML=`<span class="nm">${esc(nm)}<span class="sub">${esc(altText(n.y))}</span></span>`;
+    const g=document.createElement('button');g.textContent='案内';g.onclick=()=>startGuide(id,nm);const w=document.createElement('button');w.textContent='ワープ';w.onclick=()=>{teleport(n.x,n.y,n.z,ARRIVE_HEAD[id]??null,0);closePanels();};
+    row.append(g,w);el.appendChild(row);}}
+function renderFac(){const el=$('facPanel');let h='<h3>施設情報</h3><p>名称・分類・階・入口・説明・資料・確認日・状態をデータとして持っています。営業時間・料金などの変動情報は未確認のため表示しません。</p><table><tr><th>施設</th><th>階・入口</th><th>資料</th></tr>';
+  for(const f of D.facilities){const ll=toLL(f.pos[0],f.pos[2]);h+=`<tr><td><b>${esc(f.name)}</b><br><span style="color:var(--muted)">${esc(f.cat)}</span><br>${chip(f.status)}<br><span style="color:var(--muted);font-size:10.5px">${ll.lat.toFixed(5)}, ${ll.lon.toFixed(5)}（概略）</span></td><td>${esc(f.floor)}<br><span style="color:var(--muted)">${esc(f.entrance)}</span><br><span style="font-size:10.5px">${esc(f.statusNote)}</span></td><td>${srcLinks(f.src)}<br><span style="color:var(--muted);font-size:10.5px">確認日 ${D.baseDate}</span></td></tr>`;}
+  el.innerHTML=h+'</table>';}
+let routeResults=null,overlayOn=false;
+function renderVer(){const el=$('verPanel'),cnt={confirmed:0,estimated:0,insufficient:0,staged:0};for(const v of D.verify)cnt[v[1]]++;
+  let h=`<h3>検証</h3><p>指示書 §14 の検査に向けた試作段階の記録です。資料不足の箇所を「完全再現」とはしていません。</p>
+  <div class="legend"><span><i style="background:var(--ok)"></i>確認済み ${cnt.confirmed}</span><span><i style="background:var(--est)"></i>推定 ${cnt.estimated}</span><span><i style="background:var(--ng)"></i>資料不足 ${cnt.insufficient}</span><span><i style="background:var(--stg)"></i>演出・仮配置 ${cnt.staged}</span></div>
+  <p style="margin-top:8px"><button class="btn" id="ovBtn">${overlayOn?'検証表示を解除':'検証表示（V）：モデルを状態別に色分け'}</button> <button class="btn" id="rtBtn">経路検査を実行</button> <button class="btn" id="repBtn">検査結果をダウンロード</button></p>
+  <div id="rtOut">${routeResults?routeSummary():''}</div>
+  <h4>実装と確認の状態</h4><table>${D.verify.map(v=>`<tr><td>${esc(v[0])}<br><span style="color:var(--muted);font-size:10.5px">${esc(v[3])}</span></td><td>${chip(v[1])}</td><td>${esc(v[2])}</td></tr>`).join('')}</table>
+  <h4>比較視点（§16・実写の基準写真は未取得）</h4>`;
+  for(const v of D.views)h+=`<div class="item"><span class="nm">${v.id} ${esc(v.name)}<span class="sub">位置 ${v.pos.map(n=>n.toFixed(0)).join(', ')}・方位 ${v.head}°・俯仰 ${v.pitch}°・画角 ${v.fov}°</span></span><button data-v="${v.id}">移動</button><span></span></div>`;
+  h+=`<h4>座標の基準（§6）</h4><p>原点：タワー中心（北緯${ORI.lat}°・東経${ORI.lon}°、概略）／+X＝東、−Z＝真北／1単位＝1m／高さは地面＝0m（T.P.未補正）。緯度経度⇔ゲーム座標は平面近似で変換。</p>
+  <h4>資料台帳（§4・§18）</h4><table><tr><th>ID</th><th>資料</th><th>反映箇所</th></tr>${D.sources.map(s=>`<tr><td>${s.id}</td><td><a href="${s.url}" target="_blank" rel="noopener">${esc(s.title)}</a><br><span style="color:var(--muted);font-size:10.5px">${esc(s.publisher)}・確認 ${s.checked}・利用条件 ${esc(s.terms)}</span></td><td>${esc(s.used)}</td></tr>`).join('')}</table>
+  <h4>性能（§15）</h4><p class="num" id="perfSum">${perfText().replace(/\n/g,'<br>')}</p>`;
+  el.innerHTML=h;
+  $('ovBtn').onclick=()=>{setOverlay(!overlayOn);renderVer();};$('rtBtn').onclick=()=>{routeResults=checkRoutes();$('rtOut').innerHTML=routeSummary();};$('repBtn').onclick=downloadReport;
+  el.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>gotoView(D.views.find(v=>v.id===b.dataset.v)));}
+function gotoView(v){teleport(v.pos[0],v.pos[1]-P.eye,v.pos[2],v.head,v.pitch*DEG);setFov(v.fov);closePanels();toast(`${v.id} ${v.name}（P で撮影）`);}
+const OVM={confirmed:0x4cc38a,estimated:0xe8b949,insufficient:0xf06c84,staged:0x9097ab};
+const ovMats={};for(const k in OVM)ovMats[k]=new THREE.MeshLambertMaterial({color:OVM[k]});
+function setOverlay(on){overlayOn=on;for(const m of TAGGED){m.material=on?ovMats[m.userData.tag]||ovMats.staged:m.userData.mat;}
+  for(const w of waters)w.material=on?ovMats.estimated:waterMat;toast(on?'検証表示：緑＝確認済み／黄＝推定／赤＝資料不足／灰＝演出・仮配置':'検証表示を解除しました');}
+function checkRoutes(){const res=[];
+  for(const id in NODES)for(const e of NODES[id].e){const A=NODES[id],B=NODES[e.to];
+    if(e.link){const fa=floorAt(A.x,A.z,A.y+0.5),fb=floorAt(B.x,B.z,B.y+0.5);res.push({a:id,b:e.to,ok:!!(fa&&fb&&Math.abs(fa.y-A.y)<1.2&&Math.abs(fb.y-B.y)<1.2),link:true});continue;}
+    let f0=floorAt(A.x,A.z,A.y+0.5);if(!f0){res.push({a:id,b:e.to,ok:false,why:'起点に床がない'});continue;}
+    let y=f0.y,ok=true,why='';const L=Math.hypot(B.x-A.x,B.z-A.z),n=Math.max(1,Math.ceil(L/0.2));
+    for(let i=1;i<=n;i++){const x=lerp(A.x,B.x,i/n),z=lerp(A.z,B.z,i/n),f=floorAt(x,z,y);if(!f){ok=false;why=`床なし (${x.toFixed(1)}, ${z.toFixed(1)})`;break;}if(blocked(x,z,f.y)){ok=false;why=`障害物 (${x.toFixed(1)}, ${z.toFixed(1)})`;break;}y=f.y;}
+    if(ok&&Math.abs(y-B.y)>1.2){ok=false;why=`到達高さ ${y.toFixed(1)}m`;}res.push({a:id,b:e.to,ok,why});}
+  return res;}
+function routeSummary(){const ok=routeResults.filter(r=>r.ok).length,ng=routeResults.filter(r=>!r.ok);
+  return `<p><b>経路検査：${ok} / ${routeResults.length} 区間が到達可能</b>（徒歩区間は0.2m刻みで床と障害物を判定、エレベーターは発着点の床を判定）</p>`+(ng.length?`<table>${ng.map(r=>`<tr><td>${r.a} → ${r.b}</td><td style="color:var(--ng)">${esc(r.why||'発着点の床なし')}</td></tr>`).join('')}</table>`:'');}
+function downloadReport(){if(!routeResults)routeResults=checkRoutes();
+  const L=['# 東京スカイツリー散策 試作版 検査記録',`作成：${new Date().toLocaleString('ja-JP')}　基準日：${D.baseDate}`,'','## 実装した内容','- 一人称散策（歩行・視点・現在地表示・目的地案内・自動歩行・写真撮影）','- タワー本体（634m）、天望デッキ（フロア340/345/350）、天望回廊（445〜450）、4F入口・5F出口フロア','- 押上駅（地下・模式）、とうきょうスカイツリー駅（高架・模式）、北十間川と橋、周辺道路・街並み（仮配置）','- 昼夜・天候・ライティング（粋・雅）、水面反射、人・車・列車、環境音','','## 検査した内容と結果',
+    `- 経路検査：${routeResults.filter(r=>r.ok).length} / ${routeResults.length} 区間が到達可能`,...routeResults.filter(r=>!r.ok).map(r=>`  - NG ${r.a} → ${r.b}：${r.why||''}`),`- 性能：${perfText().replace(/\n/g,' / ')}`,'','## 未完了の内容（確認状態）',...D.verify.filter(v=>v[1]!=='confirmed').map(v=>`- [${ST[v[1]]}] ${v[0]}：${v[3]}`),'','## 確認済みの内容',...D.verify.filter(v=>v[1]==='confirmed').map(v=>`- ${v[0]}（${v[2]}）：${v[3]}`),'','## 資料台帳',...D.sources.map(s=>`- ${s.id} ${s.title} ${s.url}（${s.publisher}・確認 ${s.checked}・利用条件 ${s.terms}）`)];
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/markdown'}));a.download='skytree_inspection.md';a.click();}
+
+/* ================= settings ================= */
+function setFov(h){$('sFov').value=h;$('oFov').textContent=h+'°';fovH=h;resize();}
+let fovH=75;
+$('sEye').oninput=e=>{P.eye=+e.target.value;$('oEye').textContent=P.eye.toFixed(2)+'m';};
+$('sSpd').oninput=e=>{P.speed=+e.target.value;$('oSpd').textContent=P.speed.toFixed(1)+'m/s';};
+$('sCrowd').oninput=e=>{crowd=+e.target.value;$('oCrowd').textContent=Math.round(crowd*100)+'%';};
+$('sCars').oninput=e=>{carDensity=+e.target.value;$('oCars').textContent=Math.round(carDensity*100)+'%';};
+$('sFov').oninput=e=>setFov(+e.target.value);
+function segBind(attr,fn){const bs=document.querySelectorAll(`[data-${attr}]`);bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(o=>o.setAttribute('aria-pressed',String(o===b)));fn(b.dataset[attr]);}));}
+segBind('w',v=>{weather=v;applyEnv();});segBind('l',v=>{lightMode=v;applyEnv();if(v==='auto')toast(`自動：日没〜24時に点灯。本日の${ENV.pattern==='iki'?'粋':'雅'}は日付からの仮決め（公式の点灯予定で要確認）`,5);});
+segBind('r',v=>{reflOn=v==='1';waterU.uRefl.value=reflOn?1:0;});segBind('sh',v=>{shadowsOn=v==='1';sun.castShadow=shadowsOn;});
+segBind('snd',v=>{if(v==='1')initAudio();if(AU)AU.master.gain.value=v==='1'?0.8:0;});segBind('lb',v=>{labelsOn=v==='1';});
+const timeIn=$('time');timeIn.addEventListener('input',()=>{timeH=+timeIn.value;$('timeOut').textContent=fmtT(timeH);applyEnv();});
+
+/* ================= audio（演出上の環境音） ================= */
+let AU=null;
+function initAudio(){if(AU)return;try{const ac=new (window.AudioContext||window.webkitAudioContext)();const sr=ac.sampleRate,nb=ac.createBuffer(1,sr*2,sr),d=nb.getChannelData(0);let b=0;for(let i=0;i<d.length;i++){const w=Math.random()*2-1;b=(b+0.02*w)/1.02;d[i]=b*3.5+w*0.15;}
+  const master=ac.createGain();master.gain.value=0.8;const dry=ac.createGain(),wet=ac.createGain(),conv=ac.createConvolver();
+  const ir=ac.createBuffer(2,sr*2.2,sr);for(let c=0;c<2;c++){const x=ir.getChannelData(c);for(let i=0;i<x.length;i++)x[i]=(Math.random()*2-1)*Math.pow(1-i/x.length,3);}conv.buffer=ir;
+  master.connect(dry);master.connect(conv);conv.connect(wet);dry.connect(ac.destination);wet.connect(ac.destination);wet.gain.value=0;
+  const mk=(type,f,q)=>{const s=ac.createBufferSource();s.buffer=nb;s.loop=true;s.playbackRate.value=0.8+Math.random()*0.4;const fl=ac.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q||0.7;const g=ac.createGain();g.gain.value=0;s.connect(fl);fl.connect(g);g.connect(master);s.start();return g;};
+  AU={ac,master,wet,traffic:mk('lowpass',420),river:mk('bandpass',1100,0.5),wind:mk('highpass',1500),hum:mk('lowpass',160),train:mk('lowpass',260,1.2),chirpT:0};}catch(e){AU=null;}}
+function sfx(kind){if(!AU)return;const ac=AU.ac,t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(AU.master);
+  if(kind==='chime'){o.frequency.setValueAtTime(880,t);o.frequency.setValueAtTime(660,t+0.22);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.18,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.9);o.start(t);o.stop(t+1);}
+  else if(kind==='chirp'){o.type='sine';o.frequency.setValueAtTime(2300,t);o.frequency.exponentialRampToValueAtTime(3400,t+0.07);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.05,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+0.1);o.start(t);o.stop(t+0.12);}
+  else{o.type='triangle';o.frequency.setValueAtTime(520,t);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.06,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);o.start(t);o.stop(t+0.35);}}
+function updateAudio(dt,ph){if(!AU)return;const set=(g,v)=>g.gain.setTargetAtTime(v,AU.ac.currentTime,0.25);
+  const ug=P.y<-3,high=P.y>300,inside=high||ug||(P.fname==='plaza4f'&&Math.hypot(P.x,P.z)<17);
+  let dr=1e9;for(const r of ROADS)if(r.cw>=7){const d=r.ax==='x'?Math.max(0,Math.abs(P.z-r.c)-r.cw/2)+Math.max(0,r.a0-P.x,P.x-r.a1):Math.max(0,Math.abs(P.x-r.c)-r.cw/2)+Math.max(0,r.a0-P.z,P.z-r.a1);dr=Math.min(dr,d*(r.major?0.6:1));}
+  set(AU.traffic,ug||high?0.0:carDensity*0.5/(1+dr/25)*(P.y>30?0.3:1));
+  set(AU.river,ug||high?0:0.25/(1+Math.max(0,kjDist(P.x,P.z)-KJ_HW)/12));
+  set(AU.wind,high?0.03:0);set(AU.hum,inside?0.12:0);AU.wet.gain.setTargetAtTime(ug?0.55:inside?0.25:0,AU.ac.currentTime,0.4);
+  let td=1e9;for(const tr of TRAINS)for(const m of tr.cars)if(m.visible)td=Math.min(td,m.position.distanceTo(camera.position));set(AU.train,ug?0:0.8/(1+td/40));
+  // 視覚障害者用の音響信号（演出）
+  AU.chirpT-=dt;if(AU.chirpT<=0){AU.chirpT=0.55;const nearI=SIGS.some(s=>Math.hypot(s.x-P.x,s.z-P.z)<35);if(nearI&&!ug&&(ph.pe==='g'||ph.pn==='g'))sfx('chirp');}}
+
+/* ================= perf（§15） ================= */
+const PF={frames:0,acc:0,fps:0,minFps:999,worst:0,hist:[],walk:0,since:0,loadMs:0};
+function perfText(){const mem=performance.memory?(performance.memory.usedJSHeapSize/1048576).toFixed(0)+' MB':'取得不可（ブラウザ非対応）';const i=renderer.info;
+  const h=PF.hist.slice().sort((a,b)=>a-b),low=h.length?h[Math.floor(h.length*0.01)]:0;
+  return `平均 ${PF.fps.toFixed(0)} fps ・ 1%低下時 ${low?(1000/low).toFixed(0):'-'}→${h.length?(1000/h[h.length-1-Math.floor(h.length*0.01)]).toFixed(0):'-'} fps\n最遅フレーム ${PF.worst.toFixed(1)} ms ・ 描画コール ${i.render.calls} ・ 三角形 ${(i.render.triangles/1000).toFixed(0)}k\nJSヒープ ${mem} ・ 読込み ${(PF.loadMs/1000).toFixed(1)} 秒\n連続歩行 ${(PF.since/60).toFixed(1)} 分・${PF.walk.toFixed(0)} m ・ 建物 ${bldgCount} 棟`;}
+let perfOn=false;
+
+/* ================= input ================= */
+const keys={};const isTouch=matchMedia('(pointer:coarse)').matches;
+let locked=false,dragging=false,lx=0,ly=0;
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;keys[e.code]=true;
+  if(e.code==='KeyE'||e.code==='Enter')act();
+  if(e.code==='KeyM')zi=(zi+1)%3;if(e.code==='KeyP')photo();if(e.code==='KeyL'){labelsOn=!labelsOn;document.querySelectorAll('[data-lb]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.lb==='1')===labelsOn)));}
+  if(e.code==='KeyV')setOverlay(!overlayOn);if(e.code==='KeyG'){document.querySelector('[data-p="destPanel"]').click();}
+  if(e.code==='F3'){e.preventDefault();perfOn=!perfOn;$('perf').hidden=!perfOn;}
+  if(e.code==='Escape'){closePanels();chooseEl.hidden=true;}
+  if(['ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();});
+addEventListener('keyup',e=>{keys[e.code]=false;});addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===canvas;$('cross').hidden=!locked;});
+function look(dx,dy,s){P.yaw+=dx*s;P.pitch=clamp(P.pitch-dy*s,-1.45,1.45);}
+canvas.addEventListener('mousedown',e=>{if(!started)return;closePanels();if(!locked&&!isTouch){try{const r=canvas.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}dragging=true;lx=e.clientX;ly=e.clientY;});
+addEventListener('mouseup',()=>{dragging=false;});
+addEventListener('mousemove',e=>{if(locked)look(e.movementX,e.movementY,0.0022);else if(dragging){look(e.clientX-lx,e.clientY-ly,0.0045);lx=e.clientX;ly=e.clientY;}});
+const joy=$('joy'),knob=$('knob');let joyId=null,joyV={x:0,y:0},lookId=null;
+function joyPos(t){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=t.clientX-cx,dy=t.clientY-cy;const l=Math.hypot(dx,dy),m=r.width/2-12;if(l>m){dx*=m/l;dy*=m/l;}knob.style.transform=`translate(${dx}px,${dy}px)`;joyV={x:dx/m,y:dy/m};}
+joy.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];joyId=t.identifier;joyPos(t);},{passive:false});
+canvas.addEventListener('touchstart',e=>{for(const t of e.changedTouches)if(lookId==null){lookId=t.identifier;lx=t.clientX;ly=t.clientY;}},{passive:true});
+addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===joyId){e.preventDefault();joyPos(t);}else if(t.identifier===lookId){look(t.clientX-lx,t.clientY-ly,0.006);lx=t.clientX;ly=t.clientY;}}},{passive:false});
+function endT(e){for(const t of e.changedTouches){if(t.identifier===joyId){joyId=null;joyV={x:0,y:0};knob.style.transform='';}if(t.identifier===lookId)lookId=null;}}
+addEventListener('touchend',endT);addEventListener('touchcancel',endT);
+$('runBtn').onclick=()=>{runToggle=!runToggle;$('runBtn').setAttribute('aria-pressed',String(runToggle));};$('actBtn').onclick=act;
+let photoPending=false;function photo(){photoPending=true;document.body.classList.add('photo');}
+$('photoBtn').onclick=photo;
+
+/* ================= resize / reflection ================= */
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=2*Math.atan(Math.tan(fovH*DEG/2)/camera.aspect)/DEG;camera.fov=Math.min(camera.fov,95);camera.updateProjectionMatrix();
+  const pr=renderer.getPixelRatio();reflRT.setSize(Math.max(256,w*pr/2|0),Math.max(256,h*pr/2|0));}
+addEventListener('resize',resize);
+const clipPlane=new THREE.Plane(new THREE.Vector3(0,1,0),-WATER_Y),_rv=new THREE.Vector3(),_ru=new THREE.Vector3(),_rt=new THREE.Vector3();
+function renderReflection(){const cp=camera.position;if(!reflOn||overlayOn||cp.y<WATER_Y+0.3)return;
+  if(Math.min(kjDist(cp.x,cp.z),Math.abs(cp.x-sumidaX(cp.z)))>1400&&cp.y<200)return;if(P.y<-3)return;
+  mirrorCam.position.set(cp.x,2*WATER_Y-cp.y,cp.z);_rv.set(0,0,-1).applyQuaternion(camera.quaternion).add(cp);_rt.set(_rv.x,2*WATER_Y-_rv.y,_rv.z);
+  _ru.set(0,1,0).applyQuaternion(camera.quaternion);mirrorCam.up.set(_ru.x,-_ru.y,_ru.z);mirrorCam.lookAt(_rt);
+  mirrorCam.fov=camera.fov;mirrorCam.aspect=camera.aspect;mirrorCam.near=camera.near;mirrorCam.far=camera.far;mirrorCam.updateProjectionMatrix();mirrorCam.updateMatrixWorld();mirrorCam.matrixWorldInverse.copy(mirrorCam.matrixWorld).invert();
+  waterU.textureMatrix.value.set(0.5,0,0,0.5,0,0.5,0,0.5,0,0,0.5,0.5,0,0,0,1).multiply(mirrorCam.projectionMatrix).multiply(mirrorCam.matrixWorldInverse);
+  for(const w of waters)w.visible=false;labelsEl.style.visibility='';
+  renderer.setRenderTarget(reflRT);renderer.clippingPlanes=[clipPlane];renderer.clear();renderer.render(scene,mirrorCam);renderer.setRenderTarget(null);renderer.clippingPlanes=[];
+  for(const w of waters)w.visible=true;}
+renderer.shadowMap.autoUpdate=false;
+
+/* ================= main loop ================= */
+let last=performance.now(),frame=0,envT=0,mapT=0,poiId=null;
+const poiEl=$('poi');
+function updatePOI(){let best=null;for(const f of D.facilities){const d=Math.hypot(f.pos[0]-P.x,f.pos[2]-P.z);if(d<f.r&&Math.abs(f.pos[1]-P.y)<8&&(!best||d/f.r<best.d)){best={f,d:d/f.r};}}
+  const f=best&&best.f;if((f&&f.id)===poiId)return;poiId=f&&f.id;if(!f){poiEl.hidden=true;return;}
+  poiEl.querySelector('.cat').textContent=f.cat;poiEl.querySelector('h2').textContent=f.name;poiEl.querySelector('p').textContent=f.desc;
+  poiEl.querySelector('.meta').innerHTML=`${chip(f.status)}${esc(f.statusNote)}<br>階：${esc(f.floor)}　資料：${srcLinks(f.src)}　確認日：${D.baseDate}`;poiEl.hidden=false;}
+function tick(now){const dt=Math.min(0.05,(now-last)/1000);last=now;frame++;U.time.value+=dt;
+  if(toastT>0){toastT-=dt;if(toastT<=0)toastEl.hidden=true;}if(boundT>0)boundT-=dt;
+  const simT=performance.now()/1000,ph=phase(simT);
+  let T=null;
+  if(started&&!elevating){
+    nearLinks=findLinks();T=updateGuide(dt);const ap=autopilot(dt,T);
+    let f=ap[0],s=0;if(keys.KeyW||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;if(keys.KeyD)s+=1;if(keys.KeyA)s-=1;if(keys.ArrowRight)P.yaw+=1.6*dt;if(keys.ArrowLeft)P.yaw-=1.6*dt;
+    if(joyId!=null){f-=joyV.y;s+=joyV.x;}const l=Math.hypot(f,s);if(l>1){f/=l;s/=l;}
+    const run=keys.ShiftLeft||keys.ShiftRight||runToggle,sp=P.speed*(run?2.5:1);
+    const fx=Math.sin(P.yaw),fz=-Math.cos(P.yaw),rx=Math.cos(P.yaw),rz=Math.sin(P.yaw);
+    if(l>0.02){const ox=P.x,oz=P.z;moveBy((fx*f+rx*s)*sp*dt,(fz*f+rz*s)*sp*dt);const md=Math.hypot(P.x-ox,P.z-oz);PF.walk+=md;bob+=md*3.6;}
+    PF.since+=dt;
+    if(nearLinks.length){const l0=nearLinks[0];promptEl.innerHTML=`<kbd>${isTouch?'乗る':'E'}</kbd>${esc(nearLinks.length>1?l0.name+'（行き先を選択）':l0.name+'：'+l0.route)}`;promptEl.hidden=false;$('actBtn').hidden=!isTouch;}
+    else{promptEl.hidden=true;$('actBtn').hidden=true;chooseEl.hidden=true;}
+    updatePOI();
+  }
+  if(ELV){ELV.t+=dt;const k=clamp(ELV.t/ELV.dur,0,1),e=k*k*(3-2*k);$('elevAlt').textContent=altText(lerp(ELV.y0,ELV.y1,e));if(k>=1)finishLink();}
+  camY+=(P.y-camY)*Math.min(1,dt*12);if(Math.abs(P.y-camY)>6)camY=P.y;
+  camera.position.set(P.x,camY+P.eye+Math.sin(bob)*0.03,P.z);
+  if(!started){P.yaw=352*DEG+Math.sin(now/1000*0.08)*0.1;}
+  camera.rotation.set(P.pitch,-P.yaw,0);sky.position.copy(camera.position);
+  envT-=dt;if(envT<=0){applyEnv();envT=1;}
+  const blink=Math.sin(now/1000*Math.PI*1.2)>0.2;avMat.color.setRGB(1,0.16,0.1).multiplyScalar(blink&&ENV.nightF>0.25?1:0.12);
+  for(const ax of ['e','n']){const st=ph[ax];for(const s of ['g','y','r'])SIGM[ax+s].emissiveIntensity=st===s?2.4:0;const p=ax==='e'?ph.pe:ph.pn;SIGM['p'+ax+'g'].emissiveIntensity=p==='g'||(p==='b'&&blink)?2.2:0;SIGM['p'+ax+'r'].emissiveIntensity=p==='r'?2.2:0;}
+  updateCars(dt,ph);updatePeds(dt,ENV.nightF>0.6);updateTrains(dt);updateAudio(dt,ph);
+  // lights
+  const ug=P.y<-3;for(const L of ugLights)L.intensity=ug?1.5:0;
+  const indoorish=P.y>300||(P.fname==='plaza4f'&&Math.hypot(P.x,P.z)<17)||P.fname==='f5';indoor.intensity=indoorish?(0.25+ENV.nightF*0.45):0;indoor.position.set(P.x,P.y+2.6,P.z);
+  sun.target.position.set(P.x,P.y,P.z);sun.position.copy(skyU.uSun.value).multiplyScalar(1200).add(sun.target.position);sun.target.updateMatrixWorld();
+  mapT-=dt;if(mapT<=0){drawMap();mapT=0.1;}
+  if(frame%2===0)updateLabels();
+  if(frame%10===0){$('place').textContent=placeName();$('floorL').textContent=floorLabel();const ll=toLL(P.x,P.z),b=((P.yaw/DEG)%360+360)%360;$('coord').textContent=`${ll.lat.toFixed(5)}N ${ll.lon.toFixed(5)}E（概略）・${Math.round(b)}° ${dirName(b)}向き`;}
+  renderReflection();
+  renderer.shadowMap.needsUpdate=shadowsOn&&ENV.dayF>0.02;
+  renderer.render(scene,camera);
+  if(photoPending){photoPending=false;try{const url=canvas.toDataURL('image/png'),a=document.createElement('a');a.href=url;const d=new Date();a.download=`skytree_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}.png`;a.click();}catch(e){}
+    document.body.classList.remove('photo');const fl=$('flash');fl.style.transition='none';fl.style.opacity='0.7';requestAnimationFrame(()=>{fl.style.transition='';fl.style.opacity='0';});toast('写真を保存しました');}
+  // perf
+  PF.frames++;PF.acc+=dt;const ms=dt*1000;if(started){PF.hist.push(ms);if(PF.hist.length>1800)PF.hist.shift();if(PF.since>3)PF.worst=Math.max(PF.worst,ms);}
+  if(PF.acc>=1){PF.fps=PF.frames/PF.acc;PF.frames=0;PF.acc=0;if(perfOn)$('perf').textContent=perfText();}
+  requestAnimationFrame(tick);}
+let bob=0;
+
+/* ================= boot ================= */
+resize();applyEnv();renderDest();renderFac();buildMapBase();
+teleport(45,0,98,352,0.42);
+const go=$('go');
+if(isTouch){$('joy').hidden=false;$('runBtn').hidden=false;document.body.classList.add('touch');$('keys').hidden=true;}
+go.addEventListener('click',()=>{started=true;$('start').hidden=true;P.pitch=0.12;canvas.focus();PF.since=0;PF.walk=0;
+  if(!isTouch){try{const r=canvas.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(_){}}
+  toast('京成橋の上から出発します。G で目的地、E でエレベーターに乗れます。',5);});
+const fontsReady=document.fonts&&document.fonts.load?Promise.race([Promise.all([document.fonts.load(`700 40px "Zen Kaku Gothic New"`,'押上駅'),document.fonts.load(`500 20px "Zen Kaku Gothic New"`,'押上駅')]),new Promise(r=>setTimeout(r,3500))]):Promise.resolve();
+function boot(data){
+  fontsReady.catch(()=>{}).then(()=>{buildSigns();PF.loadMs=performance.now()-T0;go.disabled=false;go.textContent='散策をはじめる';
+    if(data&&data.P){Object.assign(P,data.P);camY=P.y;timeH=data.timeH??timeH;timeIn.value=timeH;$('timeOut').textContent=fmtT(timeH);if(data.started){started=true;$('start').hidden=true;}applyEnv();}
+    requestAnimationFrame(t=>{last=t;tick(t);});});}
+const hot=window.claude&&window.claude.hot;
+if(hot&&hot.snapshot)hot.snapshot(()=>({P:{x:P.x,y:P.y,z:P.z,yaw:P.yaw,pitch:P.pitch,fname:P.fname,eye:P.eye,speed:P.speed},timeH,started}));
+hot&&hot.ready?hot.ready(boot):boot((hot&&hot.data)||{});
+window.__SKY={P,NODES,LINKS,floors,checkRoutes,teleport,floorAt,blocked,doLink,startGuide,setTime:t=>{timeH=t;timeIn.value=t;$('timeOut').textContent=fmtT(t);applyEnv();},setLight:m=>{lightMode=m;applyEnv();},setWeather:w=>{weather=w;applyEnv();},renderer,perfText,start:()=>go.click(),get started(){return started;},bldgCount};
+})();
+</script>
+</body>
+</html>
