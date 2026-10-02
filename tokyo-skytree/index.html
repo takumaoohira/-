@@ -1071,7 +1071,7 @@ function signTex(lines,o){const w=o.w||512,h=o.h||128,[c,g]=cv(w,h);
   const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=ANISO;return t;}
 const signBack=new THREE.MeshStandardMaterial({color:0x3a3f47,roughness:0.6});
 function sign(lines,o,x,y,z,bearing,wm,hm,back=true){const tex=signTex(lines,o),th=Math.PI-bearing*DEG;
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(wm,hm),new THREE.MeshBasicMaterial({map:tex,toneMapped:false,transparent:o.bg==='none',side:back?THREE.FrontSide:THREE.DoubleSide}));
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(wm,hm),new THREE.MeshBasicMaterial({map:tex,toneMapped:false,transparent:o.bg==='none'}));
   m.position.set(x,y,z);m.rotation.y=th;scene.add(m);
   if(back){const b=new THREE.Mesh(new THREE.PlaneGeometry(wm,hm),signBack);b.position.set(x-Math.sin(th)*0.03,y,z-Math.cos(th)*0.03);b.rotation.y=th+Math.PI;scene.add(b);}return m;}
 const brgAt=a=>((Math.atan2(Math.cos(a*DEG),-Math.sin(a*DEG))/DEG)+360)%360;
@@ -1276,7 +1276,7 @@ function routeTo(goal){const dist={},next={},nl={},rev={};for(const id in NODES)
 /* ================= player ================= */
 const P={x:45,y:0,z:98,yaw:352*DEG,pitch:0.42,fname:'bridge',eye:1.6,speed:1.4};
 let started=false,elevating=false,runToggle=false;
-function settle(x,y,z){const f=floorAt(x,z,y+0.5)||floorAt(x,z,y+3);return f?f:{y,name:'?'};}
+function settle(x,y,z){for(const o of [0.5,-0.5,1.5,-1.5,3,-3,6])  {const f=floorAt(x,z,y+o);if(f)return f;}return {y,name:'?'};}
 function teleport(x,y,z,headDeg,pitch){const f=settle(x,y,z);P.x=x;P.z=z;P.y=f.y;P.fname=f.name;camY=P.y;if(headDeg!=null)P.yaw=headDeg*DEG;if(pitch!=null)P.pitch=pitch;}
 let camY=P.y;
 function tryStep(nx,nz){const f=floorAt(nx,nz,P.y);if(!f)return false;if(blocked(nx,nz,f.y))return false;P.x=nx;P.z=nz;P.y=f.y;P.fname=f.name;return true;}
@@ -1402,8 +1402,8 @@ function updateLabels(){let n=0;const W=innerWidth,H=innerHeight;
   if(labelsOn&&started){const items=[];
     if(P.y>200){for(const k in LM){const l=LM[k];let x=l.x,z=l.z,y=l.h+25;if(l.far){const s=22000/Math.hypot(x,z);x*=s;z*=s;y=3776*s+60;}const d=Math.hypot(l.x-P.x,l.z-P.z);
       items.push({x,y,z,t:k,sub:`${d>=1000?(d/1000).toFixed(1)+'km':Math.round(d)+'m'}・${dirName(bearingOf(l.x-P.x,l.z-P.z))}`});}}
-    else for(const f of D.facilities){const [x,y,z]=f.pos,d=Math.hypot(x-P.x,z-P.z);if(f.id==='F01'){if(d>120)items.push({x:0,y:TOWER_H+10,z:0,t:f.name,sub:`${Math.round(d)}m`});continue;}
-      if(d>380||d<f.r||Math.abs(y-P.y)>30)continue;items.push({x,y:y+7,z,t:f.name,sub:`${Math.round(d)}m`});}
+    else for(const f of D.facilities){const [x,y,z]=f.pos,d=Math.hypot(x-P.x,z-P.z);if(f.id==='F01'){if(d>120&&P.y>-3)items.push({x:0,y:TOWER_H+10,z:0,t:f.name,sub:`${Math.round(d)}m`});continue;}
+      if(d>380||d<f.r||Math.abs(y-P.y)>30||(P.y<-3)!==(y<-3))continue;items.push({x,y:y+7,z,t:f.name,sub:`${Math.round(d)}m`});}
     for(const it of items){_lv.set(it.x,it.y,it.z).project(camera);if(_lv.z>1||_lv.z<-1||Math.abs(_lv.x)>1.02||Math.abs(_lv.y)>1.02)continue;
       while(lblPool.length<=n){const d=document.createElement('div');d.className='lbl';labelsEl.appendChild(d);lblPool.push(d);}
       const el=lblPool[n++],h=`${esc(it.t)}<small>${esc(it.sub)}</small>`;if(el._h!==h){el.innerHTML=h;el._h=h;}el.style.left=((_lv.x+1)/2*W).toFixed(0)+'px';el.style.top=((1-_lv.y)/2*H-10).toFixed(0)+'px';el.hidden=false;}}
@@ -1457,7 +1457,7 @@ function renderVer(){const el=$('verPanel'),cnt={confirmed:0,estimated:0,insuffi
 function gotoView(v){teleport(v.pos[0],v.pos[1]-P.eye,v.pos[2],v.head,v.pitch*DEG);setFov(v.fov);closePanels();toast(`${v.id} ${v.name}（P で撮影）`);}
 const OVM={confirmed:0x4cc38a,estimated:0xe8b949,insufficient:0xf06c84,staged:0x9097ab};
 const ovMats={};for(const k in OVM)ovMats[k]=new THREE.MeshLambertMaterial({color:OVM[k]});
-function setOverlay(on){overlayOn=on;for(const m of TAGGED){m.material=on?ovMats[m.userData.tag]||ovMats.staged:m.userData.mat;}
+function setOverlay(on){overlayOn=on;for(const m of TAGGED){if(on&&!m.userData.ov)m.userData.ov=(ovMats[m.userData.tag]||ovMats.staged).clone();m.material=on?m.userData.ov:m.userData.mat;}
   for(const w of waters)w.material=on?ovMats.estimated:waterMat;toast(on?'検証表示：緑＝確認済み／黄＝推定／赤＝資料不足／灰＝演出・仮配置':'検証表示を解除しました');}
 function checkRoutes(){const res=[];
   for(const id in NODES)for(const e of NODES[id].e){const A=NODES[id],B=NODES[e.to];
