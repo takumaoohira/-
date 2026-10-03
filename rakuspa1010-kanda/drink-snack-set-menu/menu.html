@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>ドリンク＆おつまみセット A4</title>
+<title>湯上がり ちょい呑みセット A4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Playfair+Display:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
 <style>
@@ -33,30 +33,22 @@
   }
   .noise { position: absolute; inset: 0; opacity: .22; pointer-events: none; }
 
-  /* ---------- キャッチコピー ---------- */
-  .catch {
-    position: relative; z-index: 2; height: 64px;
-    display: flex; align-items: center; justify-content: center; gap: 18px;
-    background: linear-gradient(180deg, #151312 0%, #1d1a18 100%);
-    border-bottom: 2px solid var(--gold);
-  }
-  .catch .orn { width: 70px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold)); }
-  .catch .orn.r { background: linear-gradient(90deg, var(--gold), transparent); }
-  .catch .copy {
-    font-weight: 800; font-size: 36px; letter-spacing: .08em; line-height: 1;
-    color: #f6cb45; text-shadow: 0 1px 0 #8a5d0c, 0 0 14px rgba(246,203,69,.25);
-  }
-  .catch .copy small { font-size: 26px; }
-
   /* ---------- ヘッダー写真 ---------- */
-  .hero { position: relative; height: 150px; }
-  .hero img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
-  .hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 90px; background: linear-gradient(180deg, rgba(42,39,37,0) 0%, rgba(42,39,37,.75) 60%, var(--bg) 100%); }
+  .hero { position: relative; height: 236px; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
+  .hero > img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
+  .hero::before { content: ""; position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(90deg, rgba(22,20,19,.92) 0%, rgba(22,20,19,.8) 36%, rgba(22,20,19,.2) 60%, rgba(22,20,19,.05) 100%); }
+  .menu-name { position: absolute; z-index: 2; left: 36px; top: 38px; }
+  .menu-name .en { font-family: "Playfair Display", serif; font-style: italic; font-weight: 700; color: var(--gold); font-size: 12px; letter-spacing: .32em; }
+  .menu-name .pre { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-weight: 800; font-size: 25px; letter-spacing: .3em; color: var(--gold); line-height: 1; }
+  .menu-name .pre::after { content: ""; width: 120px; height: 1px; background: linear-gradient(90deg, var(--gold), transparent); }
+  .menu-name .main { margin-top: 8px; font-weight: 800; font-size: 56px; letter-spacing: .08em; line-height: 1.1; color: #fbf6ec; text-shadow: 0 2px 10px rgba(0,0,0,.55); }
+  .menu-name .main em { font-style: normal; font-size: 40px; margin-left: 2px; }
 
   /* ---------- タイトル ---------- */
-  .title { position: relative; padding: 4px 36px 0; }
+  .title { position: relative; margin-top: -30px; padding: 0 36px; }
   .eyebrow { font-family: "Playfair Display", serif; font-style: italic; font-weight: 700; color: var(--gold); font-size: 12px; letter-spacing: .32em; }
-  .headline { font-weight: 800; font-size: 44px; letter-spacing: .06em; margin-top: 4px; line-height: 1.15; }
+  .headline { font-weight: 800; font-size: 40px; letter-spacing: .06em; margin-top: 0; line-height: 1.15; }
   .headline .plus { font-size: 22px; color: var(--muted); font-weight: 500; margin: 0 4px; vertical-align: middle; }
   .price-row { display: flex; align-items: center; gap: 16px; margin-top: 2px; }
   .price-label { font-size: 12px; letter-spacing: .25em; padding: 4px 0; border-top: 1px solid var(--text); border-bottom: 1px solid var(--text); }
@@ -64,10 +56,10 @@
   .price .yen { font-size: 22px; margin-left: 2px; }
   .price .tax { font-size: 12px; font-weight: 500; margin-left: 10px; color: var(--muted); }
 
-  .badge { position: absolute; right: 22px; top: -88px; width: 228px; height: 228px; z-index: 3; }
+  .badge { position: absolute; right: 22px; top: -96px; width: 228px; height: 228px; z-index: 3; }
 
   /* ---------- セクション見出し ---------- */
-  .sec { margin: 22px 36px 0; display: flex; align-items: baseline; gap: 22px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .sec { margin: 26px 36px 0; display: flex; align-items: baseline; gap: 22px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
   .sec h2 { font-weight: 700; font-size: 30px; letter-spacing: .28em; line-height: 1; }
   .sec p { font-size: 14px; font-weight: 700; letter-spacing: .12em; }
   .sec .note { margin-left: auto; font-size: 11px; font-weight: 500; color: var(--muted); }
@@ -84,7 +76,7 @@
   .or { font-family: sans-serif; color: var(--gold); font-size: 24px; width: 70px; text-align: center; flex: none; }
 
   /* ---------- SNACK ---------- */
-  .snacks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 12px; padding: 16px 36px 0; }
+  .snacks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px 12px; padding: 18px 36px 0; }
   .snack .ph { width: 100%; aspect-ratio: 1.55; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.45); }
   .snack .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .snack h4 { font-weight: 800; font-size: 14.5px; letter-spacing: .1em; margin-top: 8px; }
@@ -93,14 +85,14 @@
   .snack .fee.opt span { font-family: "Shippori Mincho B1", serif; font-style: normal; font-size: 10px; margin-left: 1px; }
 
   /* ---------- Example ---------- */
-  .example { margin: 22px 36px 0; border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; display: flex; align-items: center; gap: 14px; font-size: 11.5px; }
+  .example { margin: 30px 36px 0; border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; display: flex; align-items: center; gap: 14px; font-size: 11.5px; }
   .example .ex { font-family: "Playfair Display", serif; font-style: italic; color: var(--gold); font-size: 13px; letter-spacing: .1em; }
   .example .calc { margin-left: auto; color: var(--muted); }
   .example s { color: var(--muted); }
   .example .save { color: var(--gold); font-weight: 800; font-size: 15px; margin-left: 8px; }
 
   /* ---------- 注釈 ---------- */
-  .notes { margin: 10px 36px 0; font-size: 10px; line-height: 1.75; color: var(--muted); letter-spacing: .02em; }
+  .notes { margin: 14px 36px 0; font-size: 10px; line-height: 1.75; color: var(--muted); letter-spacing: .02em; }
 </style>
 </head>
 <body>
@@ -110,17 +102,16 @@
     <rect width="100%" height="100%" filter="url(#n)"/>
   </svg>
 
-  <!-- キャッチコピー -->
-  <div class="catch">
-    <span class="orn"></span>
-    <span class="copy">湯上がり<small>、</small>ちょい呑みセット<small>！</small></span>
-    <span class="orn r"></span>
+  <div class="hero">
+    <img src="img/header-clean.jpg" alt="">
+    <div class="menu-name">
+      <div class="en">DRINK &amp; 2 SNACKS SET</div>
+      <div class="pre">湯上がり</div>
+      <div class="main">ちょい呑み<em>セット</em></div>
+    </div>
   </div>
 
-  <div class="hero"><img src="img/header.jpg" alt=""></div>
-
   <div class="title">
-    <div class="eyebrow">DRINK &amp; 2 SNACKS SET</div>
     <div class="headline">1杯<span class="plus">＋</span>おつまみ2品</div>
     <div class="price-row">
       <span class="price-label">セット価格</span>
