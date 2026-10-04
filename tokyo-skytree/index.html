@@ -174,7 +174,7 @@ body.photo #tl,body.photo #mapBox,body.photo #dock,body.photo #keys,body.photo #
 <div id="prompt" class="plate" hidden></div>
 <div id="poi" class="plate" hidden><div class="cat"></div><h2></h2><p></p><div class="meta"></div></div>
 <div id="toast" role="status" hidden></div>
-<div id="keys"><b>W A S D</b> 移動　<b>Shift</b> 走る　<b>E</b> 乗る・操作<br><b>G</b> 目的地　<b>P</b> 写真　<b>L</b> 眺望ラベル　<b>V</b> 検証表示　<b>F3</b> 性能<br>マウス 視点　<b>Esc</b> カーソル解放</div>
+<div id="keys"><b>W A S D</b> 移動　<b>Shift</b> 走る　<b>E</b> 乗る・操作　<b>F</b> 飛行／着地<br><b>G</b> 目的地　<b>P</b> 写真　<b>L</b> 眺望ラベル　<b>V</b> 検証表示　<b>F3</b> 性能<br>マウス 視点　<b>Esc</b> カーソル解放</div>
 
 <div id="dock">
   <button class="plate" data-p="destPanel" aria-expanded="false">目的地</button>
@@ -567,14 +567,22 @@ function rampSolid(x0,z0,x1,z1,axis,ya,yb,base){
 }
 
 /* ================= sky & light ================= */
-const skyU={uSun:{value:new THREE.Vector3(0,1,0)},uTop:{value:new THREE.Color()},uHor:{value:new THREE.Color()},uSunCol:{value:new THREE.Color()},uNight:{value:0}};
+const skyU={uCloud:{value:0.35},uCT:{value:0},uSun:{value:new THREE.Vector3(0,1,0)},uTop:{value:new THREE.Color()},uHor:{value:new THREE.Color()},uSunCol:{value:new THREE.Color()},uNight:{value:0}};
 const sky=new THREE.Mesh(new THREE.SphereGeometry(50000,32,16),new THREE.ShaderMaterial({uniforms:skyU,side:THREE.BackSide,depthWrite:false,depthTest:false,fog:false,
   vertexShader:'varying vec3 vDir;void main(){vDir=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-  fragmentShader:`uniform vec3 uSun,uTop,uHor,uSunCol;uniform float uNight;varying vec3 vDir;
+  fragmentShader:`uniform vec3 uSun,uTop,uHor,uSunCol;uniform float uNight,uCloud,uCT;varying vec3 vDir;
+  float hn(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+  float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hn(i),hn(i+vec2(1,0)),f.x),mix(hn(i+vec2(0,1)),hn(i+vec2(1,1)),f.x),f.y);}
+  float fbm(vec2 p){float a=0.5,s=0.;for(int i=0;i<5;i++){s+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=0.5;}return s;}
   float h3(vec3 p){p=fract(p*0.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
   void main(){vec3 d=normalize(vDir);float h=d.y;vec3 col=mix(uHor,uTop,pow(clamp(h,0.,1.),0.55));if(h<0.)col=mix(uHor,uHor*0.6,clamp(-h*5.,0.,1.));
   float s=max(dot(d,normalize(uSun)),0.);col+=uSunCol*(pow(s,1200.)*40.+pow(s,12.)*0.3);
   if(uNight>0.01&&h>0.08){float st=h3(floor(d*520.));if(st>0.9994)col+=vec3(0.8,0.85,1.)*uNight*(st-0.9994)*900.;}
+  // 雲：雲底を平面とみなして方向を投影し、ノイズで濃淡（量は天候、流れは時刻で変える。形は演出）
+  if(h>0.0){vec2 cp=d.xz/(h+0.06)*1.6+vec2(uCT*0.004,uCT*0.0015);float n=fbm(cp*0.9)+0.35*fbm(cp*3.1);
+    float cov=smoothstep(1.0-uCloud*0.9,1.25-uCloud*0.7,n);cov*=smoothstep(0.0,0.12,h);
+    float lit=0.75+0.35*max(dot(normalize(uSun),vec3(0.,1.,0.)),0.)+0.25*pow(s,4.);vec3 cc=mix(uHor*1.05,vec3(1.0)*lit,0.7*(1.0-uNight))*(1.0-0.93*uNight);
+    float shade=0.82+0.18*fbm(cp*2.3+3.0);col=mix(col,cc*shade,cov*0.92);}
   gl_FragColor=vec4(col,1.);
   #include <tonemapping_fragment>
   #include <encodings_fragment>
@@ -595,7 +603,7 @@ scene.fog=new THREE.FogExp2(0xc8d6e6,0.0001);
 /* ================= 実データの読み込み（PLATEAU・国土地理院） ================= */
 const goBtn=$('go');goBtn.textContent='地理データを読み込み中…';
 const QUALITY=(()=>{try{return localStorage.getItem('skytree_quality')||'standard';}catch(e){return 'standard';}})();
-const QP={high:{near:1550,farMin:15,trees:1,shadow:4096,pr:1.75},standard:{near:950,farMin:24,trees:0.75,shadow:2048,pr:1.5},low:{near:480,farMin:45,trees:0.4,shadow:1024,pr:1}}[QUALITY]||{near:950,farMin:24,trees:0.75,shadow:2048,pr:1.5};
+const QP={high:{near:1750,farMin:15,trees:1,shadow:4096,pr:1.75},standard:{near:1450,farMin:24,trees:0.75,shadow:2048,pr:1.5},low:{near:900,farMin:45,trees:0.4,shadow:1024,pr:1}}[QUALITY]||{near:950,farMin:24,trees:0.75,shadow:2048,pr:1.5};
 
 /* ================= 質感（色・凹凸〈法線〉・粗さ/金属の3枚のテクスチャ。手続き生成で作成、tools/gen_tex.py） ================= */
 await (async()=>{
@@ -617,15 +625,46 @@ await (async()=>{
   apply(MAT.cw,T.f_cw,8,8,{metal:true,env:1.25,ns:1.0});
   apply(MAT.sola,T.f_sola,16,11,{metal:true,env:1.0,ns:1.2});
   window.__TEX=T;
+  // 窓の奥の部屋（ガラス面の後ろに床・天井・奥の壁・側壁・カーテンを視線に合わせて描く。夜は部屋ごとに点灯・色温度・明るさを変える）
+  const addInterior=(m,W,H,D)=>{if(!m)return;m.customProgramCacheKey=()=>'int'+W+'_'+H+'_'+D;
+    m.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vUvR;').replace('#include <uv_vertex>','#include <uv_vertex>\nvUvR=uv;');
+      sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
+varying vec2 vUvR;float hh(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+vec3 roomCol(vec2 uvm,vec3 vN,vec3 vV,out float lit,out vec3 lcol){
+  vec3 B=normalize((viewMatrix*vec4(0.,1.,0.,0.)).xyz);vec3 N=normalize(vN);vec3 T=normalize(cross(B,N));
+  vec3 r=-normalize(vV);float rx=dot(r,T),ry=dot(r,B),rz=max(dot(r,-N),1e-3);
+  vec2 cell=floor(uvm/vec2(${W.toFixed(2)},${H.toFixed(2)}));vec2 c=fract(uvm/vec2(${W.toFixed(2)},${H.toFixed(2)}));
+  float px=c.x*${W.toFixed(2)},py=c.y*${H.toFixed(2)};
+  float tx=rx>0.?(${W.toFixed(2)}-px)/rx:-px/min(rx,-1e-4);float ty=ry>0.?(${H.toFixed(2)}-py)/ry:-py/min(ry,-1e-4);float tz=${D.toFixed(2)}/rz;
+  float t=min(tx,min(ty,tz));vec3 hp=vec3(px+rx*t,py+ry*t,rz*t);
+  float h1=hh(cell),h2=hh(cell+17.3),h3=hh(cell+41.7);
+  vec3 wall=mix(vec3(0.78,0.74,0.66),vec3(0.62,0.66,0.7),h2);vec3 col;
+  if(t==tz){col=wall*0.9;if(hp.y<0.9&&h3>0.35)col*=0.55;}                       // 奥の壁（下は家具の影）
+  else if(t==ty){col=ry>0.?vec3(0.86,0.86,0.84):mix(vec3(0.32,0.26,0.2),vec3(0.42,0.42,0.44),h3);}  // 天井／床
+  else col=wall*0.78;                                                           // 側壁
+  col*=mix(1.0,0.55,clamp(hp.z/${D.toFixed(2)},0.,1.));
+  float cur=step(0.55,h2)*smoothstep(0.0,0.02,c.y-(1.-0.35*h3));                  // カーテン・ブラインド
+  col=mix(col,mix(vec3(0.85,0.82,0.74),vec3(0.55,0.6,0.66),h1),cur);
+  lit=step(0.42,h1);lcol=mix(vec3(1.0,0.82,0.6),vec3(0.92,0.96,1.0),h3)*(0.5+0.9*h2);
+  float lamp=(t==ty&&ry>0.)?smoothstep(0.35,0.0,abs(fract(hp.x/2.)-0.5)):0.;
+  lcol*=(0.55+0.6*lamp+0.4*cur);return col;}`);
+      sh.fragmentShader=sh.fragmentShader.replace('#include <metalnessmap_fragment>',`#include <metalnessmap_fragment>
+float glassM=1.0-smoothstep(0.07,0.15,roughnessFactor);float rLit;vec3 rL;vec3 rc=roomCol(vUvR,vNormal,vViewPosition,rLit,rL);
+float fres=pow(1.0-clamp(dot(normalize(vViewPosition)*-1.,normalize(vNormal)),0.,1.),4.);
+diffuseColor.rgb=mix(diffuseColor.rgb,rc*0.55,glassM*(1.0-fres)*0.9);metalnessFactor=mix(metalnessFactor,0.0,glassM);roughnessFactor=mix(roughnessFactor,0.03,glassM);`);
+      sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+totalEmissiveRadiance=emissive*rc*rL*rLit*glassM*2.2;`);};m.needsUpdate=true;};
+  addInterior(MAT.res,3,3,4);addInterior(MAT.com,3.5,3.5,5);addInterior(MAT.cw,4,4,7);addInterior(MAT.sola,4,5.5,8);
+  if(T.f_cw&&T.f_cw.c)for(const k of ['c','n','r'])if(T.f_cw[k])T.f_cw[k].repeat.set(1/16,1/16);
 })();
 renderer.setPixelRatio(Math.min(devicePixelRatio,QP.pr));sun.shadow.mapSize.set(QP.shadow,QP.shadow);
 const b64i16=t=>{const s=atob(t.trim()),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Int16Array(u.buffer);};
-const WD=await (async()=>{const b='data/';const [w,bl,fa,l2,tw]=await Promise.all([fetch(b+'world.json').then(r=>r.json()),fetch(b+'bldg.b64.txt').then(r=>r.text()),fetch(b+'far.b64.txt').then(r=>r.text()),fetch(b+'l2.b64.txt').then(r=>r.text()),fetch(b+'town.json').then(r=>r.json())]);return {w,b:b64i16(bl),f:b64i16(fa),l2:b64i16(l2),town:tw};})();
+const WD=await (async()=>{const b='data/';const [w,bl,fa,l2,tw,xw]=await Promise.all([fetch(b+'world.json').then(r=>r.json()),fetch(b+'bldg.b64.txt').then(r=>r.text()),fetch(b+'far.b64.txt').then(r=>r.text()),fetch(b+'l2.b64.txt').then(r=>r.text()),fetch(b+'town.json').then(r=>r.json()),fetch(b+'xway.json').then(r=>r.json()).catch(()=>[])]);return {w,b:b64i16(bl),f:b64i16(fa),l2:b64i16(l2),town:tw,xway:xw};})();
 const W=WD.w;
 const texLoader=new THREE.TextureLoader();
 const loadTex=u=>new Promise((res,rej)=>texLoader.load(u,t=>{t.encoding=THREE.sRGBEncoding;t.flipY=false;t.anisotropy=ANISO;t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;res(t);},undefined,rej));
 goBtn.textContent='航空写真を読み込み中…';
-const [A18,A16,A14]=await Promise.all(['data/aerial18.jpg','data/aerial16.jpg','data/aerial14.jpg'].map(loadTex));
+const [A18,A16,A14,A18W]=await Promise.all(['data/aerial18.jpg','data/aerial16.jpg','data/aerial14.jpg','data/aerial18w.jpg'].map(loadTex));
 
 /* ----- polygon helpers ----- */
 function pip(P,x,z){let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const a=P[i],b=P[j];if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])c=!c;}return c;}
@@ -644,7 +683,7 @@ const BRIDGES=W.bridges.map(b=>({p:b.p,l:b.l,w:b.w,bb:bbOf(b.p)}));
 function inWater(x,z){for(const w of WATERS){const b=w.bb;if(x<b[0]||x>b[2]||z<b[1]||z>b[3])continue;if(pip(w.r[0],x,z)){let hole=false;for(let k=1;k<w.r.length;k++)if(pip(w.r[k],x,z))hole=true;if(!hole)return true;}}return false;}
 function onBridge(x,z){for(const b of BRIDGES){const q=b.bb;if(x<q[0]||x>q[2]||z<q[1]||z>q[3])continue;if(pip(b.p,x,z))return true;}return false;}
 const HOLES=[];
-const WALK_R=1000;
+const WALK_R=1450;
 function groundAt(x,z){
   if(x*x+z*z>WALK_R*WALK_R)return null;
   for(const h of HOLES)if(x>h[0]&&x<h[2]&&z>h[1]&&z<h[3])return null;
@@ -663,15 +702,16 @@ const detTex=(()=>{const [c,g]=cv(256,256);const id=g.createImageData(256,256);f
   for(let i=0;i<180;i++){g.fillStyle=`rgba(${Math.random()<0.5?40:200},${Math.random()<0.5?40:200},${Math.random()<0.5?40:200},0.05)`;g.beginPath();g.arc(Math.random()*256,Math.random()*256,4+Math.random()*20,0,Math.PI*2);g.fill();}
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=ANISO;return t;})();
 const AM=W.aerial;
-const groundU={tA18:{value:A18},tA16:{value:A16},tA14:{value:A14},tDet:{value:detTex},tAsph:{value:(window.__TEX&&__TEX.asphalt&&__TEX.asphalt.c)||detTex},tPave:{value:(window.__TEX&&__TEX.paving&&__TEX.paving.c)||detTex},
+const groundU={tA18W:{value:A18W},b18w:{value:new THREE.Vector4(AM['18w'].x0,AM['18w'].z0,AM['18w'].x1,AM['18w'].z1)},tA18:{value:A18},tA16:{value:A16},tA14:{value:A14},tDet:{value:detTex},tAsph:{value:(window.__TEX&&__TEX.asphalt&&__TEX.asphalt.c)||detTex},tPave:{value:(window.__TEX&&__TEX.paving&&__TEX.paving.c)||detTex},
   b18:{value:new THREE.Vector4(AM['18'].x0,AM['18'].z0,AM['18'].x1,AM['18'].z1)},b16:{value:new THREE.Vector4(AM['16'].x0,AM['16'].z0,AM['16'].x1,AM['16'].z1)},b14:{value:new THREE.Vector4(AM['14'].x0,AM['14'].z0,AM['14'].x1,AM['14'].z1)}};
 MAT.ground=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.93,metalness:0,envMapIntensity:0.55});
 if(QUALITY!=='low'&&window.__TEX&&__TEX.asphalt&&__TEX.asphalt.n){const t=__TEX.asphalt.n.clone();t.needsUpdate=true;t.repeat.set(1/1.6,1/1.6);MAT.ground.normalMap=t;MAT.ground.normalScale=new THREE.Vector2(0.45,0.45);}
 MAT.ground.onBeforeCompile=sh=>{Object.assign(sh.uniforms,groundU);
   sh.vertexShader='varying vec3 vGW;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvGW=(modelMatrix*vec4(position,1.0)).xyz;');
-  sh.fragmentShader='uniform sampler2D tA18,tA16,tA14,tDet,tAsph,tPave;uniform vec4 b18,b16,b14;varying vec3 vGW;\nfloat eW(vec2 u){return smoothstep(0.,0.025,u.x)*smoothstep(0.,0.025,1.-u.x)*smoothstep(0.,0.025,u.y)*smoothstep(0.,0.025,1.-u.y);}\nvec3 lin(vec3 c){return pow(c,vec3(2.2));}\n'+
+  sh.fragmentShader='uniform sampler2D tA18,tA16,tA14,tDet,tAsph,tPave,tA18W;uniform vec4 b18,b16,b14,b18w;varying vec3 vGW;\nfloat eW(vec2 u){return smoothstep(0.,0.025,u.x)*smoothstep(0.,0.025,1.-u.x)*smoothstep(0.,0.025,u.y)*smoothstep(0.,0.025,1.-u.y);}\nvec3 lin(vec3 c){return pow(c,vec3(2.2));}\n'+
   sh.fragmentShader.replace('#include <map_fragment>',`{vec2 p=vGW.xz;vec2 u14=(p-b14.xy)/(b14.zw-b14.xy),u16=(p-b16.xy)/(b16.zw-b16.xy),u18=(p-b18.xy)/(b18.zw-b18.xy);
-    vec3 c=lin(texture2D(tA14,u14).rgb);c=mix(c,lin(texture2D(tA16,u16).rgb),eW(u16));c=mix(c,lin(texture2D(tA18,u18).rgb),eW(u18));
+    vec3 c=lin(texture2D(tA14,u14).rgb);c=mix(c,lin(texture2D(tA16,u16).rgb),eW(u16));{vec2 uw=(p-b18w.xy)/(b18w.zw-b18w.xy);float ew=smoothstep(0.,0.02,uw.x)*smoothstep(0.,0.003,1.-uw.x)*smoothstep(0.,0.02,uw.y)*smoothstep(0.,0.02,1.-uw.y);c=mix(c,lin(texture2D(tA18W,uw).rgb),ew);}
+    {float e18=smoothstep(0.,0.002,u18.x)*smoothstep(0.,0.025,1.-u18.x)*smoothstep(0.,0.025,u18.y)*smoothstep(0.,0.025,1.-u18.y);c=mix(c,lin(texture2D(tA18,u18).rgb),e18);}
     float d=texture2D(tDet,p*0.45).r*0.55+texture2D(tDet,p*0.061).r*0.45;c*=0.78+0.44*d;
     float l=max(dot(c,vec3(0.299,0.587,0.114)),1e-3);
     c=mix(vec3(l),c,1.25);c=c/l*(0.03+0.17*l);   // 航空写真の明るさを、実際の路面の反射率の範囲（約3〜20%）に収める
@@ -1026,6 +1066,72 @@ if(STN25){PF25=STN25.p.filter(p=>p[0]<=103.3);const RY=STN25.h;
   quadH('inner',[118,0,-66],[118,0,-75],[118,6.2,-75],[118,6.2,-66],[-1,0,0]);}
 flush('estimated');
 
+/* ================= 浅草通り〜吾妻橋・アサヒビール本社周辺（外形は PLATEAU 2025、外観は自由利用できる写真〈S15〉で確認。寸法の一部は推定） ================= */
+const SPEC=W.special||{};
+const srgbM=(hex,o)=>{const m=new THREE.MeshStandardMaterial(o);m.color.setHex(hex).convertSRGBToLinear();return m;};
+function centroid(P){let x=0,z=0;for(const p of P){x+=p[0];z+=p[1];}return [x/P.length,z/P.length];}
+function insetPoly(P,d){const c=centroid(P);return P.map(p=>{const dx=p[0]-c[0],dz=p[1]-c[1],l=Math.hypot(dx,dz)||1;return [p[0]-dx/l*d,p[1]-dz/l*d];});}
+function prismMesh(P,y0,y1,mat,P0){const g=new THREE.BufferGeometry(),pos=[],n=P.length,B=P0||P;   // 下面 B、上面 P（台形の側面）
+  for(let i=0;i<n;i++){const a=B[i],b=B[(i+1)%n],c=P[(i+1)%n],d=P[i];pos.push(a[0],y0,a[1],b[0],y0,b[1],c[0],y1,c[1],a[0],y0,a[1],c[0],y1,c[1],d[0],y1,d[1]);}
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  // 外向きにそろえる
+  {const p=g.attributes.position.array,c=centroid(P);const ax=p[3]-p[0],ay=p[4]-p[1],az=p[5]-p[2],bx_=p[6]-p[0],by=p[7]-p[1],bz=p[8]-p[2];const nx=ay*bz-az*by,nz=ax*by-ay*bx_;
+    const mx=(p[0]+p[3]+p[6])/3-c[0],mz=(p[2]+p[5]+p[8])/3-c[1];if(nx*mx+nz*mz<0)for(let i=0;i<p.length;i+=9)for(let j=0;j<3;j++){const t=p[i+3+j];p[i+3+j]=p[i+6+j];p[i+6+j]=t;}}
+  g.computeVertexNormals();const uv=[];const pa=g.attributes.position.array;for(let i=0;i<pa.length;i+=3)uv.push(pa[i]+pa[i+2],pa[i+1]);g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  const m=new THREE.Mesh(g,mat);m.castShadow=true;m.receiveShadow=true;scene.add(m);
+  const top=new THREE.ShapeGeometry(shapeFrom(P));top.rotateX(-Math.PI/2);top.translate(0,y1,0);const mt=new THREE.Mesh(top,mat);mt.receiveShadow=true;scene.add(mt);return m;}
+// アサヒビールタワー：金色の反射ガラスの本体と、上部の白い「泡」の冠（のこぎり状の頂部）。高さは PLATEAU の実測 95.6m、冠の高さは写真からの推定
+if(SPEC.asahi_tower){const T=SPEC.asahi_tower,P=T.p,H=T.h,crown=H-15.5;
+  const gold=new THREE.MeshStandardMaterial({map:MAT.cw.map,normalMap:MAT.cw.normalMap,roughness:0.22,metalness:0.7,envMapIntensity:1.7});gold.color.setHex(0xf2c66a).convertSRGBToLinear();
+  prismMesh(P,0,crown,gold);
+  const white=srgbM(0xeef0f0,{roughness:0.55,metalness:0.05});
+  prismMesh(P,crown,H-4,white);
+  const c=centroid(P);for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],L=Math.hypot(b[0]-a[0],b[1]-a[1]);const n=Math.max(1,Math.round(L/2.2));
+    for(let k=0;k<n;k++){const t=(k+0.5)/n,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t,h=(k%2)?2.6:4.0;const g=new THREE.BoxGeometry(L/n*0.9,h,0.5);g.rotateY(-Math.atan2(b[1]-a[1],b[0]-a[0]));g.translate(x,H-4+h/2,z);addGeo('ceil',g);}
+    for(let y=crown+2.2;y<H-4;y+=2.4){beam('rail',[a[0],y,a[1]],[b[0],y,b[1]],0.12);}}
+  wAdd({t:'p',P,bb:bbOf(P),y0:-1,y1:H},...bbOf(P));}
+// スーパードライホール：黒い逆台形の建物（上が広い）と、屋上の金色の炎のオブジェ（頭が北北西、先端が南南東で上へ反る）
+if(SPEC.superdry){const S=SPEC.superdry,P=S.p,Hb=22.5;
+  const black=srgbM(0x0e0f11,{roughness:0.25,metalness:0.0,envMapIntensity:0.8});
+  prismMesh(P,0,Hb,black,insetPoly(P,3.2));
+  wAdd({t:'p',P,bb:bbOf(P),y0:-1,y1:Hb},...bbOf(P));
+  // 炎：太い頭から先端へ細くなる管。長軸は建物の長辺の向き
+  let best=0,ax=null;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L>best){best=L;ax=[(b[0]-a[0])/L,(b[1]-a[1])/L];}}
+  if(ax[1]>0)ax=[-ax[0],-ax[1]];   // 頭（始点）を北側に
+  const c=centroid(P),len=Math.max(30,best*1.15);const pts=[];
+  for(let i=0;i<=40;i++){const t=i/40,s=(t-0.42)*len;const lift=Math.pow(Math.max(0,t-0.6)/0.4,2.0)*7;pts.push(new THREE.Vector3(c[0]-ax[0]*s,Hb+5.2+lift-Math.sin(t*Math.PI)*0.8,c[1]-ax[1]*s));}
+  const curve=new THREE.CatmullRomCurve3(pts);const tube=new THREE.TubeGeometry(curve,80,1,20,false);
+  const ps=tube.attributes.position,nm=tube.attributes.normal;const ctr=new THREE.Vector3(),q=new THREE.Vector3();
+  for(let i=0;i<ps.count;i++){const ring=Math.floor(i/21),t=ring/80;const r=t<0.12?5.6*Math.sqrt(Math.sin(t/0.12*Math.PI/2)):5.6*Math.pow(1-(t-0.12)/0.88,1.1)+0.05;
+    curve.getPointAt(Math.min(1,t),ctr);q.set(ps.getX(i),ps.getY(i),ps.getZ(i)).sub(ctr);ps.setXYZ(i,ctr.x+q.x*r,ctr.y+q.y*r*0.92,ctr.z+q.z*r);}
+  tube.computeVertexNormals();
+  const goldM=srgbM(0xe0b23a,{roughness:0.28,metalness:1.0,envMapIntensity:1.3});const fm=new THREE.Mesh(tube,goldM);fm.castShadow=true;scene.add(fm);
+  const head=new THREE.SphereGeometry(5.6,24,16);head.scale(1,0.92,1);head.translate(pts[5].x,pts[5].y,pts[5].z);const hm=new THREE.Mesh(head,goldM);hm.castShadow=true;scene.add(hm);
+  const fp=[];for(const s of [-1,1])for(const t of [0,1]){const p=pts[t?40:0];fp.push([p.x+ax[1]*6*s,p.z-ax[0]*6*s]);}
+  const fpo=[fp[0],fp[1],fp[3],fp[2]];wAdd({t:'p',P:fpo,bb:bbOf(fpo),y0:Hb,y1:Hb+18},...bbOf(fpo));}
+// 吾妻橋：赤い3連のアーチ（桁の下の両側）と赤い欄干・灯柱（写真から。アーチの高さは水面との高低差に合わせて縮めた推定）
+{const nb=BRIDGES.reduce((a,b)=>{const d=polyD(b.l,-1060,-5);return !a||d<a.d?{b,d}:a;},null);
+  if(nb&&nb.d<40){const B=nb.b,L=B.l,A=L[0],E=L[L.length-1],dx=E[0]-A[0],dz=E[1]-A[1],len=Math.hypot(dx,dz),ux=dx/len,uz=dz/len,nx=-uz,nz=ux,hw=B.w/2;
+    const red=srgbM(0xb3262a,{roughness:0.45,metalness:0.3});const RED='__red';MAT[RED]=red;
+    for(const s of [-1,1])for(let sp=0;sp<3;sp++){const s0=4+sp*(len-8)/3,s1=4+(sp+1)*(len-8)/3,N=16;
+      for(let k=0;k<N;k++){const t0=k/N,t1=(k+1)/N,y0=-0.4-Math.sin(t0*Math.PI)*-0+(-2.0)*(1-Math.sin(t0*Math.PI)),y1=-0.4+(-2.0)*(1-Math.sin(t1*Math.PI));
+        const p0=[A[0]+ux*lerp(s0,s1,t0)+nx*s*(hw-0.4),A[1]+uz*lerp(s0,s1,t0)+nz*s*(hw-0.4)],p1=[A[0]+ux*lerp(s0,s1,t1)+nx*s*(hw-0.4),A[1]+uz*lerp(s0,s1,t1)+nz*s*(hw-0.4)];
+        beam(RED,[p0[0],y0,p0[1]],[p1[0],y1,p1[1]],0.7);
+        for(const tt of [t0])if(k%2===0){beam(RED,[p0[0],y0,p0[1]],[p0[0],-0.35,p0[1]],0.18);}}}
+    // 欄干と灯柱
+    for(const s of [-1,1]){const a=[A[0]+nx*s*hw,A[1]+nz*s*hw],b=[E[0]+nx*s*hw,E[1]+nz*s*hw];beam(RED,[a[0],1.1,a[1]],[b[0],1.1,b[1]],0.16);beam(RED,[a[0],0.15,a[1]],[b[0],0.15,b[1]],0.2);
+      for(let t=0;t<=len;t+=2.2){const x=a[0]+ux*t,z=a[1]+uz*t;beam(RED,[x,0.1,z],[x,1.1,z],0.06);}
+      for(let t=6;t<len;t+=18){const x=a[0]+ux*t,z=a[1]+uz*t;beam(RED,[x,0,z],[x,6.2,z],0.22);const g=new THREE.SphereGeometry(0.35,10,8);g.translate(x,6.4,z);addGeo('lamp',g);}}}}
+// 首都高速6号向島線（国土地理院の道路中心線〈高架〉から。高さ約9.5m・幅16mは写真からの推定）
+{const XW=WD.xway||[];const XH=9.5;
+  for(const e of XW){if(e.ft===2701)continue;const L=e.l;for(let i=0;i<L.length-1;i++){const A=L[i],B=L[i+1],l=Math.hypot(B[0]-A[0],B[1]-A[1]);if(l<0.5)continue;
+      slab('conc',A,B,16,XH-1.4,XH);const dx=(B[0]-A[0])/l,dz=(B[1]-A[1])/l,nx=-dz,nz=dx;
+      for(const s of [-1,1])slab('conc',[A[0]+nx*s*7.9,A[1]+nz*s*7.9],[B[0]+nx*s*7.9,B[1]+nz*s*7.9],0.25,XH,XH+1.1);
+      for(let t=0;t<l;t+=30){const x=A[0]+dx*t,z=A[1]+dz*t;if(Math.hypot(x,z)>2200)continue;if(inWater(x,z))continue;box('conc',x-1.1,x+1.1,0,XH-1.4,z-1.1,z+1.1,{top:false});if(Math.hypot(x,z)<WALK_R+60)wCirc(x,z,1.3,0,XH-1.4);}
+      // 飛行時の当たり判定（桁の高さだけ）
+      const P4=[[A[0]+nx*8,A[1]+nz*8],[B[0]+nx*8,B[1]+nz*8],[B[0]-nx*8,B[1]-nz*8],[A[0]-nx*8,A[1]-nz*8]];wAdd({t:'p',P:P4,bb:bbOf(P4),y0:XH-1.4,y1:XH+1.1},...bbOf(P4));}}}
+flush('estimated');
+
 /* ================= 押上駅（地下。構内図未照合のため模式。B3出口＝イーストタワー地下3階直結は資料で確認） ================= */
 const OY=-14,OC=-9.5;
 function wallX(x,z0,z1,y0,y1,k='inner'){quad(k,[x,y0,z0],[x,y0,z1],[x,y1,z1],[x,y1,z0],[[z0,y0],[z1,y0],[z1,y1],[z0,y1]]);}
@@ -1244,155 +1350,300 @@ function geoFromBuf(k){const B=BUF[k];const g=new THREE.BufferGeometry();g.setAt
 function polyLen(P){const L=[0];for(let i=1;i<P.length;i++)L.push(L[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));return L;}
 function offsetLine(P,o){const out=[];for(let i=0;i<P.length;i++){const a=P[Math.max(0,i-1)],b=P[Math.min(P.length-1,i+1)],dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz)||1;out.push([P[i][0]+dz/l*o,P[i][1]-dx/l*o]);}return out;}
 function along(T,s){s=clamp(s,0,T.L[T.L.length-1]);let i=1;while(i<T.L.length-1&&T.L[i]<s)i++;const a=T.P[i-1],b=T.P[i],l=(T.L[i]-T.L[i-1])||1,t=(s-T.L[i-1])/l;return {x:lerp(a[0],b[0],t),z:lerp(a[1],b[1],t),dx:(b[0]-a[0])/l,dz:(b[1]-a[1])/l};}
-// 車種ごとの形（側面形状を押し出し、角を丸める。寸法は一般的な国産車の目安で、特定の車種ではない）
+/* ================= 車（車種ごとの断面を前後方向につないだ曲面の車体。寸法は国産車の一般的な目安で、特定の車種ではない） ================= */
+// 断面の位置ごとに［前後位置x, 半幅, 腰線の高さ, 屋根の高さ, 窓の有無(0なし/1側窓/2前後ガラス)］を与えて車体を作る
 const CAR_TYPES=[
-  {k:'sedan',p:0.30,L:4.7,W:1.78,H:1.45,body:[[0,.32],[.1,.62],[.75,.78],[1.5,.92],[3.45,.95],[4.25,.86],[4.62,.72],[4.7,.36]],cab:[[1.35,.9],[1.95,1.4],[3.2,1.42],[3.85,.94]],wb:[.85,3.75],wr:.31,cols:[0xf2f2f0,0xf2f2f0,0x1a1a1c,0xb9bec4,0x8b9096,0x6e1f22,0x1f3a6b]},
-  {k:'kei',p:0.22,L:3.4,W:1.48,H:1.75,body:[[0,.3],[.05,.75],[.45,.92],[3.32,.98],[3.4,.36]],cab:[[.55,.92],[.95,1.66],[3.3,1.7],[3.36,.98]],wb:[.6,2.9],wr:.28,cols:[0xf2f2f0,0xe9e2d0,0x9fc2d6,0xd9b9b2,0x1a1a1c,0xb9bec4,0xe5e0a8]},
-  {k:'van',p:0.18,L:4.7,W:1.7,H:1.88,body:[[0,.34],[.08,.82],[.6,1.0],[4.62,1.02],[4.7,.38]],cab:[[.75,1.0],[1.3,1.8],[4.62,1.84],[4.66,1.02]],wb:[.8,3.85],wr:.32,cols:[0xf2f2f0,0xf2f2f0,0x1a1a1c,0xb9bec4,0x2b2f3a]},
-  {k:'taxi',p:0.12,L:4.4,W:1.7,H:1.75,body:[[0,.34],[.08,.74],[.7,.92],[3.9,.98],[4.36,.8],[4.4,.38]],cab:[[1.0,.94],[1.55,1.62],[3.75,1.66],[4.05,.98]],wb:[.75,3.5],wr:.3,cols:[0x1c2438,0x1c2438,0xe9dfc6,0x2a2e33],lamp:true},
-  {k:'truck',p:0.10,L:6.2,W:2.0,H:2.95,body:[[0,.5],[.05,1.25],[.35,1.6],[1.75,1.62],[1.78,.5]],cab:[[.4,1.6],[.7,2.35],[1.7,2.38],[1.74,1.6]],box:[1.9,6.2,.75,2.95],wb:[1.0,4.6],wr:.4,cols:[0xf2f2f0,0xf2f2f0,0xd8dde2]},
-  {k:'bus',p:0.08,L:10.5,W:2.48,H:3.1,body:[[0,.45],[.05,2.9],[.25,3.1],[10.3,3.1],[10.5,2.9],[10.5,.45]],cab:[[.1,1.25],[.12,2.75],[10.38,2.75],[10.4,1.25]],wb:[2.3,7.9],wr:.48,cols:[0xf0f2ee,0xe8ece4]}
+  {k:'sedan',p:0.30,L:4.69,W:1.79,ride:0.17,wb:[0.95,3.78],wr:0.32,
+   st:[[0,.66,.62,.62,0],[.12,.84,.72,.74,0],[.5,.88,.82,.86,0],[1.25,.895,.9,.95,0],[1.55,.895,.92,1.0,2],[2.05,.885,.93,1.43,1],[2.5,.88,.93,1.45,1],[3.25,.885,.93,1.42,1],[3.75,.89,.93,1.08,2],[4.15,.89,.9,.98,0],[4.5,.86,.84,.9,0],[4.69,.72,.66,.66,0]],
+   paints:[['solid',0xf4f4f2],['solid',0xf4f4f2],['solid',0x111214],['metal',0xa9aeb4],['metal',0x5d6268],['solid',0x7a1418],['metal',0x1d3560],['metal',0x2a2c30]]},
+  {k:'kei',p:0.22,L:3.39,W:1.47,ride:0.16,wb:[0.62,3.05],wr:0.28,
+   st:[[0,.6,.62,.62,0],[.1,.72,.74,.76,0],[.35,.735,.86,.9,0],[.62,.735,.9,.98,2],[1.05,.725,.95,1.62,1],[1.6,.72,.95,1.68,1],[2.6,.72,.95,1.68,1],[3.25,.725,.95,1.64,2],[3.33,.72,.92,1.3,0],[3.39,.66,.8,.8,0]],
+   paints:[['solid',0xf4f4f2],['solid',0xe9e1cc],['solid',0x9cc0d4],['solid',0xd6b2ab],['solid',0x111214],['metal',0xa9aeb4],['solid',0xe0d89a],['solid',0x6b8f6e]]},
+  {k:'van',p:0.18,L:4.69,W:1.70,ride:0.17,wb:[0.92,3.73],wr:0.32,
+   st:[[0,.66,.66,.66,0],[.12,.8,.8,.82,0],[.55,.845,.95,1.0,0],[.95,.85,1.0,1.1,2],[1.5,.845,1.02,1.8,1],[2.2,.84,1.02,1.86,1],[4.3,.84,1.02,1.86,1],[4.6,.84,1.0,1.8,2],[4.69,.78,.9,.9,0]],
+   paints:[['solid',0xf4f4f2],['solid',0xf4f4f2],['solid',0x111214],['metal',0xa9aeb4],['metal',0x2a2e3a],['metal',0x4a2f2a]]},
+  {k:'taxi',p:0.12,L:4.40,W:1.70,ride:0.17,wb:[0.85,3.6],wr:0.31,
+   st:[[0,.64,.66,.66,0],[.12,.8,.76,.78,0],[.5,.84,.88,.92,0],[1.0,.85,.95,1.02,2],[1.55,.845,.97,1.62,1],[2.4,.84,.97,1.66,1],[3.75,.845,.97,1.62,1],[4.05,.85,.96,1.18,2],[4.3,.84,.9,.95,0],[4.4,.74,.72,.72,0]],
+   paints:[['solid',0x1c2438],['solid',0x1c2438],['solid',0xe8dcc0],['solid',0x2a2e33]],lamp:true},
+  {k:'truck',p:0.10,L:6.2,W:2.0,ride:0.3,wb:[1.05,4.55],wr:0.4,
+   st:[[0,.96,.75,.75,0],[.05,1.0,1.3,1.32,0],[.35,1.0,1.38,1.55,2],[.55,1.0,1.4,2.3,1],[1.75,1.0,1.4,2.35,1],[1.85,1.0,1.4,1.4,0]],box:[1.95,6.2,0.95,2.95],
+   paints:[['solid',0xf4f4f2],['solid',0xf4f4f2],['solid',0xd8dde2],['solid',0x2f5d9a]]},
+  {k:'bus',p:0.08,L:10.5,W:2.49,ride:0.3,wb:[2.35,7.95],wr:0.48,
+   st:[[0,1.2,1.05,1.1,0],[.06,1.245,1.12,2.9,2],[.3,1.245,1.12,3.05,1],[10.25,1.245,1.12,3.05,1],[10.45,1.245,1.12,2.8,2],[10.5,1.2,1.05,1.05,0]],
+   paints:[['solid',0xf0f2ee],['solid',0xe6ebe2]]}
 ];
-function extrudeProfile(pts,w,bev){const s=new THREE.Shape();pts.forEach((p,i)=>i?s.lineTo(p[0],p[1]):s.moveTo(p[0],p[1]));
-  const g=new THREE.ExtrudeGeometry(s,{depth:w-2*bev,bevelEnabled:bev>0,bevelThickness:bev,bevelSize:bev,bevelSegments:2,curveSegments:1});g.translate(0,0,-(w-2*bev)/2);return g;}
-function mergeG(list){const out=[];for(const g of list){const n=g.index?g.toNonIndexed():g;out.push(n);}
-  let tot=0;for(const g of out)tot+=g.attributes.position.count;const P=new Float32Array(tot*3),N=new Float32Array(tot*3);let o=0;
-  for(const g of out){P.set(g.attributes.position.array,o*3);N.set(g.attributes.normal.array,o*3);o+=g.attributes.position.count;}
+function lerpSt(st,x){let i=0;while(i<st.length-2&&st[i+1][0]<x)i++;const a=st[i],b=st[i+1],t=clamp((x-a[0])/(b[0]-a[0]||1),0,1);return [x,lerp(a[1],b[1],t),lerp(a[2],b[2],t),lerp(a[3],b[3],t),t<0.5?a[4]:b[4],a[4],b[4]];}
+// 断面の輪郭（片側）：下面→裾→ドア面のふくらみ→腰線→窓の付け根→屋根の端→屋根中央
+function section(s,T){const [x,hw,yb,yr]=s,r=T.ride;const tum=Math.min(0.17,hw*0.18);
+  return [[0,r],[hw*0.86,r],[hw*0.98,r+0.12],[hw,r+(yb-r)*0.55],[hw*0.985,yb],[hw-0.035,yb+0.02],[hw-tum,Math.max(yb+0.03,yr-0.08)],[hw-tum-0.07,yr],[0,yr+0.02]];}
+function loft(T){const xs=[];for(let x=0;x<=T.L+1e-6;x+=Math.min(0.12,T.L/40))xs.push(Math.min(x,T.L));if(xs[xs.length-1]<T.L)xs.push(T.L);
+  const B={body:[],glass:[],dark:[]};const push=(arr,a,b,c)=>{arr.push(a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);};
+  const rings=xs.map(x=>{const s=lerpSt(T.st,x);const sec=section(s,T);return {s,L:sec.map(p=>[x,p[1],p[0]]),R:sec.map(p=>[x,p[1],-p[0]])};});
+  for(let i=0;i<rings.length-1;i++){const A=rings[i],C=rings[i+1];const wa=A.s[4],wc=C.s[4];
+    for(let k=0;k<A.L.length-1;k++){const band=k;let tgt=B.body;
+      if(band===5&&wa>=1&&wc>=1)tgt=B.glass;                   // 側窓
+      if((band===6||band===7)&&(wa===2||wc===2))tgt=B.glass;   // 前後ガラス
+      if(band===0)tgt=B.dark;                                   // 下面
+      if(band===1&&true)tgt=B.dark;                             // 裾（黒い樹脂）
+      for(const [S,sg] of [['L',1],['R',-1]]){const a=A[S][k],b=A[S][k+1],c=C[S][k+1],d=C[S][k];
+        if(sg>0){push(tgt,a,d,c);push(tgt,a,c,b);}else{push(tgt,a,b,c);push(tgt,a,c,d);}}}}
+  // 前後の面（扇形に閉じる）
+  for(const [R,front] of [[rings[0],false],[rings[rings.length-1],true]]){const P=R.L.concat(R.R.slice().reverse());const c=[R.s[0],T.ride+0.3,0];
+    for(let k=0;k<P.length-1;k++){if(front)push(B.body,c,P[k+1],P[k]);else push(B.body,c,P[k],P[k+1]);}}
+  const g=k=>{const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(B[k],3));geo.computeVertexNormals();return geo;};
+  return {body:g('body'),glass:g('glass'),dark:g('dark')};}
+function smoothNormals(g,crease=0.55){const p=g.attributes.position.array,n=g.attributes.normal.array,map=new Map(),key=i=>Math.round(p[i]*500)+','+Math.round(p[i+1]*500)+','+Math.round(p[i+2]*500);
+  for(let i=0;i<p.length;i+=3){const k=key(i);let l=map.get(k);if(!l)map.set(k,l=[]);l.push(i);}
+  const out=new Float32Array(n.length);for(const l of map.values())for(const i of l){let x=0,y=0,z=0;for(const j of l){const d=n[i]*n[j]+n[i+1]*n[j+1]+n[i+2]*n[j+2];if(d>crease){x+=n[j];y+=n[j+1];z+=n[j+2];}}const m=Math.hypot(x,y,z)||1;out[i]=x/m;out[i+1]=y/m;out[i+2]=z/m;}
+  g.setAttribute('normal',new THREE.BufferAttribute(out,3));return g;}
+function bx(w,h,d,x,y,z,ry=0){const g=new THREE.BoxGeometry(w,h,d);if(ry)g.rotateY(ry);g.translate(x,y,z);return g;}
+function mergeG(list){const out=list.map(g=>{g=g.index?g.toNonIndexed():g;if(!g.attributes.normal)g.computeVertexNormals();return g;});let tot=0;for(const g of out)tot+=g.attributes.position.count;
+  const P=new Float32Array(tot*3),N=new Float32Array(tot*3);let o=0;for(const g of out){P.set(g.attributes.position.array,o*3);N.set(g.attributes.normal.array,o*3);o+=g.attributes.position.count;}
   const m=new THREE.BufferGeometry();m.setAttribute('position',new THREE.BufferAttribute(P,3));m.setAttribute('normal',new THREE.BufferAttribute(N,3));return m;}
-const carPaint=new THREE.MeshPhysicalMaterial({roughness:0.28,metalness:0.35,clearcoat:1,clearcoatRoughness:0.08,envMapIntensity:1.1});
-const carGlass=new THREE.MeshStandardMaterial({color:0x1b2329,roughness:0.06,metalness:0.6,envMapIntensity:1.4});
-const carTrim=new THREE.MeshStandardMaterial({color:0x202224,roughness:0.6,metalness:0.2});
-const tireMat=new THREE.MeshStandardMaterial({color:0x161616,roughness:0.85});
-const hubMat=new THREE.MeshStandardMaterial({color:0xb8bcc0,roughness:0.3,metalness:0.9});
-const hlMat=new THREE.MeshBasicMaterial({color:0xfff4d6,toneMapped:false}),tlMat=new THREE.MeshBasicMaterial({color:0xff2a2a,toneMapped:false});
-const tireGeo=(()=>{const g=new THREE.CylinderGeometry(1,1,1,18);g.rotateX(Math.PI/2);return g;})(),hubGeo=(()=>{const g=new THREE.CylinderGeometry(0.62,0.62,1.04,12);g.rotateX(Math.PI/2);return g;})();
-for(const T of CAR_TYPES){const bev=T.k==='bus'||T.k==='truck'?0.06:0.09;
-  const parts=[extrudeProfile(T.body,T.W,bev)];if(T.box){const [x0,x1,y0,y1]=T.box;const g=new THREE.BoxGeometry(x1-x0,y1-y0,T.W);g.translate((x0+x1)/2,(y0+y1)/2,0);parts.push(g);}
-  if(T.lamp){const g=new THREE.BoxGeometry(0.42,0.16,0.22);g.translate(2.6,1.74,0);parts.push(g);}
-  T.bodyG=mergeG(parts);
-  T.glassG=extrudeProfile(T.cab,T.W-0.14,0.05);
-  // 屋根（車体色）・バンパーとタイヤハウス（黒）
-  const roofY=Math.max(...T.cab.map(p=>p[1]));const xs=T.cab.map(p=>p[0]);const rx0=T.cab[1][0],rx1=T.cab[2][0];
-  {const g=new THREE.BoxGeometry(rx1-rx0-0.1,0.05,T.W-0.22);g.translate((rx0+rx1)/2,roofY+0.02,0);T.bodyG=mergeG([T.bodyG,g]);}
-  const tr=[];{const g=new THREE.BoxGeometry(0.12,0.22,T.W+0.02);g.translate(0.05,0.42,0);tr.push(g);const g2=g.clone();g2.translate(T.L-0.1,0,0);tr.push(g2);}
-  for(const wx of T.wb)for(const sd of [-1,1]){const g=new THREE.BoxGeometry(T.wr*2.3,0.08,0.06);g.translate(wx,T.wr*1.95,sd*(T.W/2+0.01));tr.push(g);}
-  T.trimG=mergeG(tr);
-  const hl=[],tl=[];for(const sd of [-1,1]){const y=T.k==='bus'?0.75:T.k==='truck'?0.9:Math.max(0.62,T.body[1][1]-0.05);
-    const a=new THREE.BoxGeometry(0.04,0.14,0.32);a.translate(T.L+0.01,y,sd*(T.W/2-0.28));hl.push(a);const b=new THREE.BoxGeometry(0.04,0.16,0.26);b.translate(-0.01,y+0.05,sd*(T.W/2-0.24));tl.push(b);}
-  T.hlG=mergeG(hl);T.tlG=mergeG(tl);
-  for(const g of [T.bodyG,T.glassG,T.trimG,T.hlG,T.tlG])g.translate(-T.L/2,0,0);}
+// 素材：塗装（ソリッド／メタリック）は下地＋クリア層、樹脂・ゴム・金属・ガラスを分ける
+const paintSolid=new THREE.MeshPhysicalMaterial({roughness:0.38,metalness:0.0,clearcoat:1,clearcoatRoughness:0.06,envMapIntensity:1.0});
+const paintMetal=new THREE.MeshPhysicalMaterial({roughness:0.32,metalness:0.55,clearcoat:1,clearcoatRoughness:0.06,envMapIntensity:1.0});
+const carGlass=new THREE.MeshPhysicalMaterial({color:0x0e1418,roughness:0.04,metalness:0.0,transmission:0,transparent:true,opacity:0.62,envMapIntensity:1.3,clearcoat:1,clearcoatRoughness:0.02,side:THREE.DoubleSide,depthWrite:false});
+const carPlastic=new THREE.MeshStandardMaterial({color:0x1d1f21,roughness:0.62,metalness:0.0});
+const carChrome=new THREE.MeshStandardMaterial({color:0xd8dadc,roughness:0.12,metalness:1.0});
+const carInterior=new THREE.MeshStandardMaterial({color:0x2b2b2d,roughness:0.85});
+const tireMat=new THREE.MeshStandardMaterial({color:0x151515,roughness:0.88});
+const rimMat=new THREE.MeshStandardMaterial({color:0xb4b8bc,roughness:0.28,metalness:0.9});
+const lightMat=new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false});
+for(const m of [carGlass,carPlastic,carChrome,carInterior,tireMat,rimMat])m.color.convertSRGBToLinear();   // 色の値は sRGB で指定しているため、描画用の線形値へ変換（未変換だと全体が白っぽく見える）
+// タイヤ（側面のふくらみと接地面）とホイール（スポーク）
+const tireGeo=(()=>{const pr=[];const R=1,w=0.5,s=0.62;for(let i=0;i<=10;i++){const a=-Math.PI/2+i/10*Math.PI;pr.push(new THREE.Vector2(s+ (R-s)*(0.5+0.5*Math.cos(a))*0+ (R-s*0) * 0 + (s+(R-s)*Math.cos(a)*0.0), 0));}
+  const pts=[new THREE.Vector2(0.62,-0.5),new THREE.Vector2(0.86,-0.5),new THREE.Vector2(0.97,-0.42),new THREE.Vector2(1.0,-0.25),new THREE.Vector2(1.0,0.25),new THREE.Vector2(0.97,0.42),new THREE.Vector2(0.86,0.5),new THREE.Vector2(0.62,0.5)];
+  const g=new THREE.LatheGeometry(pts,24);g.rotateX(Math.PI/2);return g;})();   // 軸はz方向
+const rimGeo=(()=>{const parts=[];const d=new THREE.CylinderGeometry(0.64,0.64,0.62,20);d.rotateX(Math.PI/2);parts.push(d);
+  for(let k=0;k<5;k++){const s=bx(0.13,0.5,0.06,0,0.3,0.33);s.rotateZ(k*Math.PI*2/5);parts.push(s);}const c=new THREE.CylinderGeometry(0.12,0.12,0.7,10);c.rotateX(Math.PI/2);parts.push(c);return mergeG(parts);})();
+for(const T of CAR_TYPES){const S=loft(T);T.bodyG=S.body;T.glassG=S.glass;
+  const hw=x=>lerpSt(T.st,x)[1],yb=x=>lerpSt(T.st,x)[2],yr=x=>lerpSt(T.st,x)[3];
+  const dark=[S.dark];const chrome=[],light=[],inter=[];
+  // バンパー（樹脂部の下端）・タイヤハウスの黒いふち
+  dark.push(bx(0.14,0.2,T.W*0.92,0.04,T.ride+0.18,0),bx(0.14,0.2,T.W*0.92,T.L-0.04,T.ride+0.18,0));
+  for(const wx of T.wb)for(const sg of [-1,1]){const a=new THREE.TorusGeometry(T.wr*1.12,0.035,4,16,Math.PI);a.translate(wx,T.ride+T.wr*0.75-0.05,0);a.translate(0,0,sg*(hw(wx)+0.005));dark.push(a);}
+  // ドアの境目・ピラー・ミラー・グリル・ライト
+  const cab=T.st.filter(s=>s[4]===1);if(cab.length){const c0=cab[0][0],c1=cab[cab.length-1][0];
+    const doors=T.k==='bus'?[c0+0.9,c0+1.9]:T.k==='truck'?[c0+0.1,c1-0.05]:T.k==='van'?[c0,(c0+c1)/2-0.1,(c0+c1)/2+0.2,c1]:[c0+0.02,(c0+c1)/2,c1+0.05];
+    for(const dx of doors)for(const sg of [-1,1])dark.push(bx(0.012,yb(dx)-T.ride-0.12,0.01,dx,(yb(dx)+T.ride)/2+0.06,sg*(hw(dx)+0.004)));
+    for(const sg of [-1,1]){dark.push(bx(0.02,0.01,0.01,0,0,0));
+      const mx=c0+0.1;const m=bx(0.22,0.12,0.16,mx,yb(mx)+0.08,sg*(hw(mx)+0.1));dark.push(m);
+      if(T.k!=='bus'&&T.k!=='truck'){const bp=(c0+c1)/2;dark.push(bx(0.08,yr(bp)-yb(bp)-0.06,0.03,bp,(yr(bp)+yb(bp))/2,sg*(hw(bp)-0.12)));}}
+    // 室内：座席とダッシュボード（窓から見える）
+    if(T.k!=='bus'){const s1=c0+0.55,s2=Math.min(c1-0.35,c0+1.45);for(const sx of [s1,s2])for(const sg of [-1,1]){inter.push(bx(0.5,0.12,0.5,sx,yb(sx)-0.18,sg*0.38),bx(0.12,0.55,0.5,sx+0.25,yb(sx)+0.08,sg*0.38));}
+      inter.push(bx(0.35,0.18,T.W*0.86,c0+0.05,yb(c0)-0.02,0));}}
+  const fy=yb(0)*0.8;
+  dark.push(bx(0.02,0.16,T.W*0.42,-0.004,fy,0));chrome.push(bx(0.024,0.025,T.W*0.42,-0.006,fy+0.05,0));
+  for(const sg of [-1,1]){light.push({g:bx(0.03,0.11,0.3,-0.012,fy+0.12,sg*(T.W/2-0.24)),k:'head',side:sg});   // 前（x=0 が前）
+    light.push({g:bx(0.03,0.05,0.12,-0.014,fy+0.03,sg*(T.W/2-0.2)),k:'turnF',side:sg});
+    light.push({g:bx(0.03,0.13,0.26,T.L+0.012,yb(T.L)*0.9,sg*(T.W/2-0.22)),k:'tail',side:sg});
+    light.push({g:bx(0.03,0.05,0.12,T.L+0.014,yb(T.L)*0.9-0.1,sg*(T.W/2-0.22)),k:'turnR',side:sg});
+    chrome.push(bx(0.02,0.16,0.4,-0.002,fy+0.12,sg*(T.W/2-0.24)));}
+  if(T.box){const [x0,x1,y0,y1]=T.box;T.bodyG=mergeG([T.bodyG,bx(x1-x0,y1-y0,T.W,(x0+x1)/2,(y0+y1)/2,0)]);dark.push(bx(x1-x0,0.12,T.W*0.98,(x0+x1)/2,y0-0.06,0));}
+  if(T.lamp)T.bodyG=mergeG([T.bodyG,bx(0.42,0.16,0.22,2.5,yr(2.5)+0.08,0)]);
+  // 車体の向き：x=0 が前、+x が後ろ → ゲームでは +x 方向が進行方向なので反転
+  const flip=g=>{g.scale(-1,1,1);g.translate(T.L/2,0,0);const p=g.attributes.position.array;for(let i=0;i<p.length;i+=9){for(let j=0;j<3;j++){const t=p[i+3+j];p[i+3+j]=p[i+6+j];p[i+6+j]=t;}}g.attributes.position.needsUpdate=true;g.computeVertexNormals();return g;};
+  T.bodyG=smoothNormals(flip(T.bodyG));T.glassG=smoothNormals(flip(T.glassG));T.darkG=flip(mergeG(dark));T.chromeG=flip(mergeG(chrome));T.interG=inter.length?flip(mergeG(inter)):null;
+  T.lightG={};for(const k of ['head','tail','turnF','turnR'])for(const sg of [-1,1]){const L=light.filter(l=>l.k===k&&l.side===sg);T.lightG[k+sg]=flip(mergeG(L.map(l=>l.g)));}
+  T.wheels=[];for(const wx of T.wb)for(const sg of [-1,1])T.wheels.push({x:T.L/2-wx,z:sg*(T.W/2-0.16),front:wx===T.wb[0],sg});}
+/* ----- 走行：道路中心線の車線をつなぎ、交差点の信号で止まる ----- */
 const LANES=[];
 for(const ch of W.chains){const w=ch.w;const offs=w>=30?[2.0,5.4]:w>=20?[1.9,5.0]:w>=13?[1.8]:[];if(!offs.length)continue;
-  const P=ch.l.filter(p=>Math.hypot(p[0],p[1])<1500);if(P.length<2)continue;
-  for(const dir of [1,-1]){const base=dir>0?P:P.slice().reverse();for(const o of offs){const LP=offsetLine(base,o);LANES.push({P:LP,L:polyLen(LP),cars:[]});}}}
-const MAXC=300;const CARS=[];
-for(const L of LANES){const len=L.L[L.L.length-1],n=Math.floor(len/42);for(let i=0;i<n;i++){if(CARS.length>=MAXC)break;
+  const P=ch.l.filter(p=>Math.hypot(p[0],p[1])<1700);if(P.length<2)continue;
+  for(const dir of [1,-1]){const base=dir>0?P:P.slice().reverse();for(const o of offs){const LP=offsetLine(base,o);LANES.push({P:LP,L:polyLen(LP),cars:[],next:[],end:LP[LP.length-1],w,o});}}}
+for(const A of LANES){const e=A.P[A.P.length-1],e0=A.P[A.P.length-2],dx=e[0]-e0[0],dz=e[1]-e0[1],l=Math.hypot(dx,dz)||1;
+  for(const B of LANES){if(B===A)continue;const s=B.P[0],s1=B.P[1];if(Math.hypot(s[0]-e[0],s[1]-e[1])>9)continue;const bx_=s1[0]-s[0],bz=s1[1]-s[1],bl=Math.hypot(bx_,bz)||1;const dot=(dx*bx_+dz*bz)/(l*bl);if(dot<-0.3)continue;A.next.push(B);}}
+// 信号：車線の終点が集まる場所（3方向以上）を交差点とし、東西／南北の2現示で切り替える（周期・位置は演出）
+const SIGNALS=[];{const pts=[];for(const A of LANES){const e=A.end;let s=SIGNALS.find(S=>Math.hypot(S.x-e[0],S.z-e[1])<14);if(!s){s={x:e[0],z:e[1],n:0,off:R()*60};SIGNALS.push(s);}s.n++;A.sig=s;
+    const e0=A.P[A.P.length-2];A.axis=Math.abs(e[0]-e0[0])>Math.abs(e[1]-e0[1])?0:1;}
+  for(const A of LANES)if(A.sig&&A.sig.n<3)A.sig=null;}
+const sigState=(S,axis,t)=>{const c=((t+S.off)%60);const g=axis===0?c<26:(c>=30&&c<56);const y=axis===0?(c>=26&&c<30):(c>=56);return g?'g':y?'y':'r';};
+const MAXC=320;const CARS=[];
+for(const L of LANES){const len=L.L[L.L.length-1],n=Math.floor(len/40);for(let i=0;i<n;i++){if(CARS.length>=MAXC)break;
   let t=R(),T=CAR_TYPES[0];for(const q of CAR_TYPES){if(t<q.p){T=q;break;}t-=q.p;}
-  const c={L,s:(i+R())*len/n,v:8,vmax:(T.k==='bus'||T.k==='truck'?7:8)+R()*4,on:R(),T,col:T.cols[R()*T.cols.length|0],spin:0,brake:0};CARS.push(c);L.cars.push(c);}}
-for(const T of CAR_TYPES){T.list=CARS.filter(c=>c.T===T);const n=Math.max(1,T.list.length);
-  const mk=(g,m,k=1)=>{const im=new THREE.InstancedMesh(g,m,n*k);im.frustumCulled=false;im.castShadow=m!==hlMat&&m!==tlMat;im.receiveShadow=true;scene.add(im);return im;};
-  T.mB=mk(T.bodyG,carPaint);T.mG=mk(T.glassG,carGlass);T.mT=mk(T.trimG,carTrim);T.mH=mk(T.hlG,hlMat);T.mL=mk(T.tlG,tlMat);T.mW=mk(tireGeo,tireMat,4);T.mHub=mk(hubGeo,hubMat,4);
-  T.mB.userData.tag='staged';T.mB.userData.mat=carPaint;TAGGED.push(T.mB);
-  T.list.forEach((c,i)=>T.mB.setColorAt(i,new THREE.Color(c.col)));if(T.mB.instanceColor)T.mB.instanceColor.needsUpdate=true;}
-const hlMesh={set visible(v){for(const T of CAR_TYPES)T.mH.visible=v;}},tlMesh={set visible(v){for(const T of CAR_TYPES)tlMat.color.setHex(v?0xff2a2a:0x7a1414);}};
+  const pt=T.paints[R()*T.paints.length|0];
+  const c={L,s:(i+R())*len/n,v:8,vmax:(T.k==='bus'||T.k==='truck'?7:8.5)+R()*3.5,on:R(),T,paint:pt[0],col:pt[1],spin:0,brake:0,steer:0,turn:0,hd:null};CARS.push(c);L.cars.push(c);}}
+const carMeshes=[];
+for(const T of CAR_TYPES){const n=Math.max(1,CARS.filter(c=>c.T===T).length);T.n=n;
+  const mk=(g,m,k=1,cast=true)=>{const im=new THREE.InstancedMesh(g,m,n*k);im.setColorAt(0,new THREE.Color(1,1,1));im.frustumCulled=false;im.castShadow=cast;im.receiveShadow=true;scene.add(im);carMeshes.push(im);return im;};
+  T.mS=mk(T.bodyG,paintSolid);T.mM=mk(T.bodyG,paintMetal);T.mG=mk(T.glassG,carGlass,1,false);T.mD=mk(T.darkG,carPlastic);T.mC=mk(T.chromeG,carChrome,1,false);T.mI=T.interG?mk(T.interG,carInterior,1,false):null;
+  T.mW=mk(tireGeo,tireMat,4);T.mR=mk(rimGeo,rimMat,4,false);T.mL={};for(const k in T.lightG)T.mL[k]=mk(T.lightG[k],lightMat,1,false);
+  T.mS.userData.tag='staged';T.mS.userData.mat=paintSolid;TAGGED.push(T.mS);}
+let headOn=false;
+const hlMesh={set visible(v){headOn=v;}},tlMesh={set visible(v){}};
 const _cm=new THREE.Matrix4(),_cq=new THREE.Quaternion(),_cp=new THREE.Vector3(),_cs=new THREE.Vector3(1,1,1),_cy=new THREE.Vector3(0,1,0),_hide=new THREE.Matrix4().makeScale(0,0,0);
 const _wm=new THREE.Matrix4(),_wl=new THREE.Matrix4(),_wr=new THREE.Matrix4(),_ws=new THREE.Vector3();
-let carDensity=0.6;const _PCc=new THREE.Color();
-function updateCars(dt){
+let carDensity=0.6;const _PCc=new THREE.Color();let simT=0;
+const LC={head:[1.6,1.55,1.4],headOff:[0.75,0.75,0.72],tail:[0.55,0.04,0.04],brake:[2.2,0.12,0.1],turnOn:[2.0,0.9,0.1],turnOff:[0.35,0.18,0.05]};
+function heading(L,s){const p=along(L,s);return Math.atan2(-p.dz,p.dx);}
+function updateCars(dt){simT+=dt;
   for(const L of LANES){const len=L.L[L.L.length-1];L.cars.sort((a,b)=>a.s-b.s);
     for(let i=0;i<L.cars.length;i++){const c=L.cars[i];c.hidden=c.on>carDensity;if(c.hidden)continue;let target=c.vmax;
-      for(let k=1;k<L.cars.length;k++){const o=L.cars[(i+k)%L.cars.length];if(o.hidden)continue;let gap=o.s-c.s;if(gap<=0)gap+=len;const need=(o.T.L+c.T.L)/2+2.5;if(gap<need)target=0;else if(gap<need+15)target=Math.min(target,(gap-need)*0.7);break;}
-      const dv=clamp(target-c.v,-6*dt,2.5*dt);c.brake=dv<-0.5*dt||c.v<0.3?1:0;c.v+=dv;c.s+=c.v*dt;c.spin+=c.v*dt/c.T.wr;if(c.s>len)c.s-=len;}}
-  const cx=camera.position.x,cz=camera.position.z;
-  for(const T of CAR_TYPES){let i=0;
-    for(const c of T.list){if(c.hidden)continue;const p=along(c.L,c.s);if(Math.hypot(p.x-cx,p.z-cz)>700)continue;
-      _cq.setFromAxisAngle(_cy,Math.atan2(-p.dz,p.dx));_cm.compose(_cp.set(p.x,0.03,p.z),_cq,_cs);for(const m of [T.mB,T.mG,T.mT,T.mH,T.mL])m.setMatrixAt(i,_cm);
-      T.mB.setColorAt(i,_PCc.setHex(c.col));
-      let w=0;for(const wx of T.wb)for(const sd of [-1,1]){_wl.makeRotationZ(-c.spin);_wl.scale(_ws.set(T.wr,T.wr,0.2));_wl.setPosition(wx-T.L/2,T.wr,sd*(T.W/2-0.14));_wm.multiplyMatrices(_cm,_wl);T.mW.setMatrixAt(i*4+w,_wm);T.mHub.setMatrixAt(i*4+w,_wm);w++;}
+      const nxt=L.cars.slice(i+1).find(o=>!o.hidden);if(nxt){const gap=nxt.s-c.s,need=(nxt.T.L+c.T.L)/2+2.2;if(gap<need)target=0;else if(gap<need+16)target=Math.min(target,(gap-need)*0.65);}
+      const toEnd=len-c.s;
+      if(L.sig&&toEnd<45){const st=sigState(L.sig,L.axis,simT);if(st!=='g'){const stopAt=toEnd-c.T.L/2-1.5;if(stopAt>-0.5)target=Math.min(target,Math.max(0,stopAt*0.45));}}
+      if(toEnd<20&&L.next.length){if(c.nextL===undefined)c.nextL=L.next[R()*L.next.length|0];const a1=heading(L,len-0.5),a2=heading(c.nextL,1.5);let d=a2-a1;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;c.turn=Math.abs(d)>0.35?Math.sign(d):0;if(c.turn)target=Math.min(target,4.5);}
+      const dv=clamp(target-c.v,-5.5*dt,2.2*dt);c.brake=(dv<-0.4*dt||c.v<0.4)?1:0;c.v=Math.max(0,c.v+dv);c.s+=c.v*dt;c.spin+=c.v*dt/c.T.wr;
+      if(c.s>len){const nl=c.nextL||(L.next.length?L.next[R()*L.next.length|0]:null);c.s-=len;c.nextL=undefined;c.turn=0;
+        if(nl){L.cars.splice(i,1);i--;nl.cars.push(c);c.L=nl;}else{c.s=0;}}}}
+  const cx=camera.position.x,cz=camera.position.z,blink=(simT*1.6)%1<0.5;
+  for(const T of CAR_TYPES){let iS=0,iM=0,i=0;
+    for(const c of CARS){if(c.T!==T||c.hidden)continue;const p=along(c.L,c.s);if(Math.hypot(p.x-cx,p.z-cz)>650)continue;
+      const hd=Math.atan2(-p.dz,p.dx);if(c.hd==null)c.hd=hd;let dd=hd-c.hd;while(dd>Math.PI)dd-=2*Math.PI;while(dd<-Math.PI)dd+=2*Math.PI;c.hd+=dd*Math.min(1,dt*6);
+      const yawRate=dd*6;c.steer=lerp(c.steer,clamp(yawRate*(T.wb[1]-T.wb[0])/Math.max(c.v,1.5),-0.5,0.5),Math.min(1,dt*5));
+      _cq.setFromAxisAngle(_cy,c.hd);_cm.compose(_cp.set(p.x,0.0,p.z),_cq,_cs);
+      if(c.paint==='metal'){T.mM.setMatrixAt(iM,_cm);T.mM.setColorAt(iM,_PCc.setHex(c.col).convertSRGBToLinear());iM++;}else{T.mS.setMatrixAt(iS,_cm);T.mS.setColorAt(iS,_PCc.setHex(c.col).convertSRGBToLinear());iS++;}
+      for(const m of [T.mG,T.mD,T.mC,T.mI])if(m)m.setMatrixAt(i,_cm);
+      for(const k in T.mL){const m=T.mL[k];m.setMatrixAt(i,_cm);let col;
+        if(k.startsWith('head'))col=headOn?LC.head:LC.headOff;else if(k.startsWith('tail'))col=c.brake?LC.brake:(headOn?LC.tail:[0.3,0.03,0.03]);
+        else{const on=c.turn!==0&&((k.endsWith('-1')?-1:1)===-c.turn)&&blink;col=on?LC.turnOn:LC.turnOff;}
+        m.setColorAt(i,_PCc.setRGB(col[0],col[1],col[2]));}
+      T.wheels.forEach((w,j)=>{_wl.makeRotationZ(-c.spin);if(w.front)_wl.premultiply(_wr.makeRotationY(c.steer));_wl.scale(_ws.set(T.wr,T.wr,0.24));_wl.setPosition(w.x,T.wr,w.z);_wm.multiplyMatrices(_cm,_wl);T.mW.setMatrixAt(i*4+j,_wm);T.mR.setMatrixAt(i*4+j,_wm);});
       i++;}
-    for(const m of [T.mB,T.mG,T.mT,T.mH,T.mL])m.count=i;T.mW.count=T.mHub.count=i*4;
-    if(T.mB.instanceColor)T.mB.instanceColor.needsUpdate=true;
-    for(const m of [T.mB,T.mG,T.mT,T.mH,T.mL,T.mW,T.mHub])m.instanceMatrix.needsUpdate=true;}
+    T.mS.count=iS;T.mM.count=iM;for(const m of [T.mG,T.mD,T.mC,T.mI])if(m)m.count=i;for(const k in T.mL)T.mL[k].count=i;T.mW.count=T.mR.count=i*4;
+    for(const m of [T.mS,T.mM,T.mG,T.mD,T.mC,T.mI,T.mW,T.mR,...Object.values(T.mL)]){if(!m)continue;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;}}
 }
+// 色と素材の比較用：同じ光の下に白・黒・赤・青・シルバーの車を並べる（確認用の機能）
+function carShowcase(x,z,ang,y=0){const cols=[['solid',0xf4f4f2,'白'],['solid',0x111214,'黒'],['solid',0x9a1a1c,'赤'],['metal',0x1d3560,'青'],['metal',0xa9aeb4,'シルバー']];const T=CAR_TYPES[0];const grp=new THREE.Group();
+  cols.forEach(([pt,col],k)=>{const m=new THREE.Mesh(T.bodyG,(pt==='metal'?paintMetal:paintSolid).clone());m.material.color.setHex(col).convertSRGBToLinear();m.castShadow=true;
+    const g=new THREE.Group();g.add(m);for(const [geo,mat] of [[T.glassG,carGlass],[T.darkG,carPlastic],[T.chromeG,carChrome],[T.interG,carInterior]])if(geo){const mm=new THREE.Mesh(geo,mat);mm.castShadow=mat!==carGlass;g.add(mm);}
+    for(const k2 in T.lightG){const mm=new THREE.Mesh(T.lightG[k2],new THREE.MeshBasicMaterial({color:k2.startsWith('head')?0xbfbfb8:k2.startsWith('tail')?0x4a0606:0x5a2e0a,toneMapped:false}));g.add(mm);}
+    T.wheels.forEach(w=>{for(const [geo,mat] of [[tireGeo,tireMat],[rimGeo,rimMat]]){const mm=new THREE.Mesh(geo,mat);mm.scale.set(T.wr,T.wr,0.24);mm.position.set(w.x,T.wr,w.z);mm.castShadow=true;g.add(mm);}});
+    g.position.set(0,0,k*2.7);grp.add(g);});
+  grp.position.set(x,y+0.02,z);grp.rotation.y=ang;scene.add(grp);return grp;}
 function phase(){return {pe:'r',pn:'r'};}
 
 /* ================= pedestrians（人の配置・密度は演出） ================= */
 const PATHS=[];
 for(const ch of W.chains){if(ch.w<20)continue;for(const sd of [-1,1]){const LP=offsetLine(ch.l,sd*(ch.w/2-2.2));
-  for(let i=0;i<LP.length-1;i++){const a=LP[i],b=LP[i+1];if(Math.hypot(a[0],a[1])>650)continue;if(Math.hypot(b[0]-a[0],b[1]-a[1])<12)continue;PATHS.push({x0:a[0],z0:a[1],x1:b[0],z1:b[1],y:0.02,w:2.4});}}}
+  for(let i=0;i<LP.length-1;i++){const a=LP[i],b=LP[i+1];if(Math.hypot(a[0],a[1])>1450)continue;if(Math.hypot(b[0]-a[0],b[1]-a[1])<12)continue;PATHS.push({x0:a[0],z0:a[1],x1:b[0],z1:b[1],y:0.02,w:2.4});}}}
 PATHS.push({x0:-110,z0:52,x1:30,z1:42,y:0.02,w:3,wt:3},{x0:52,z0:20,x1:96,z1:24,y:0.02,w:10,wt:3},{x0:-60,z0:-44,x1:0,z1:-52,y:0.02,w:4,wt:2},
   {x0:-40,z0:-36,x1:60,z1:-38,y:F4,w:8,wt:3},{x0:10,z0:-46,x1:90,z1:-28,y:F4,w:6,wt:2},{x0:30,z0:-7.2,x1:80,z1:-12.6,y:F5,w:2,wt:1},{x0:237,z0:-60,x1:237,z1:25,y:OY,w:8,wt:2});
 {const a=stWorld(4,0),b=stWorld(STN.L-4,0);PATHS.push({x0:a[0],z0:a[1],x1:b[0],z1:b[1],y:STN.y,w:3,wt:2});}
 for(const y of [350,345,340])PATHS.push({ring:true,r:17.5,y,w:5,wt:3});
 PATHS.push({ring:true,r:15.8,y:447,w:3,wt:2,gal:true});
 
-const MAXP=420;
-// 体の部位ごとに描き、歩くときは腰・膝・肩で手足を振る（体型・服装・人数は演出）
-const pg=(g,fn)=>{fn&&fn(g);return g;};
-const PED_PARTS={
-  torso:pg(new THREE.CylinderGeometry(0.17,0.145,0.58,10),g=>{g.scale(1,1,0.62);g.translate(0,0.29,0);}),          // 肩(1.45)〜腰(0.88)
-  pelvis:pg(new THREE.CylinderGeometry(0.15,0.14,0.2,10),g=>{g.scale(1,1,0.68);g.translate(0,-0.06,0);}),
-  head:pg(new THREE.SphereGeometry(0.1,10,7),g=>{g.scale(0.92,1.08,1);g.translate(0,0.12,0);}),
-  hair:pg(new THREE.SphereGeometry(0.107,10,5,0,Math.PI*2,0,Math.PI*0.55),g=>{g.scale(0.94,1.05,1.04);g.translate(0,0.135,-0.008);}),
-  neck:pg(new THREE.CylinderGeometry(0.045,0.05,0.09,6,1,true),g=>g.translate(0,0.03,0)),
-  thigh:pg(new THREE.CylinderGeometry(0.075,0.06,0.44,6),g=>g.translate(0,-0.22,0)),
-  shin:pg(new THREE.CylinderGeometry(0.058,0.045,0.42,6),g=>g.translate(0,-0.21,0)),
-  shoe:pg(new THREE.BoxGeometry(0.1,0.07,0.25),g=>g.translate(0,-0.43,0.05)),
-  upperArm:pg(new THREE.CylinderGeometry(0.048,0.042,0.3,5),g=>g.translate(0,-0.15,0)),
-  foreArm:pg(new THREE.CylinderGeometry(0.04,0.034,0.3,5),g=>g.translate(0,-0.15,0)),
-  bag:pg(new THREE.BoxGeometry(0.1,0.26,0.3),g=>g.translate(0,-0.05,0))
-};
-const fabric=new THREE.MeshStandardMaterial({roughness:0.9}),skinM=new THREE.MeshStandardMaterial({roughness:0.6}),hairM=new THREE.MeshStandardMaterial({roughness:0.55,metalness:0.05}),shoeM=new THREE.MeshStandardMaterial({roughness:0.5}),bagM=new THREE.MeshStandardMaterial({roughness:0.5,metalness:0.05});
-const PM={};
-const pm=(k,geo,mat,mult=1)=>{const m=new THREE.InstancedMesh(geo,mat,MAXP*mult);m.castShadow=['torso','thigh','shin','pelvis'].includes(k);m.frustumCulled=false;scene.add(m);PM[k]=m;return m;};
-pm('torso',PED_PARTS.torso,fabric);pm('pelvis',PED_PARTS.pelvis,fabric);pm('head',PED_PARTS.head,skinM);pm('neck',PED_PARTS.neck,skinM);pm('hair',PED_PARTS.hair,hairM);
-pm('thigh',PED_PARTS.thigh,fabric,2);pm('shin',PED_PARTS.shin,fabric,2);pm('shoe',PED_PARTS.shoe,shoeM,2);pm('upperArm',PED_PARTS.upperArm,fabric,2);pm('foreArm',PED_PARTS.foreArm,skinM,2);pm('bag',PED_PARTS.bag,bagM);
+const MAXP=460;
+/* ----- 人物：近く（約35m以内）は顔・髪・衣服の縫い目まで作った詳細形、遠くは軽い形（体型・服装・人数は演出） ----- */
+const vcol=(g,fn)=>{const p=g.attributes.position,c=new Float32Array(p.count*3);for(let i=0;i<p.count;i++){const v=fn(p.getX(i),p.getY(i),p.getZ(i));c[i*3]=v[0];c[i*3+1]=v[1];c[i*3+2]=v[2];}g.setAttribute('color',new THREE.BufferAttribute(c,3));return g;};
+const lathe=(pts,seg=14)=>new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])),seg);
+const W1c=[1,1,1];
+function mergeC(list){const out=list.map(g=>{g=g.index?g.toNonIndexed():g;if(!g.attributes.color)vcol(g,()=>W1c);if(!g.attributes.uv){g.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));}return g;});
+  let tot=0;for(const g of out)tot+=g.attributes.position.count;const P=new Float32Array(tot*3),N=new Float32Array(tot*3),C=new Float32Array(tot*3),U=new Float32Array(tot*2);let o=0;
+  for(const g of out){P.set(g.attributes.position.array,o*3);N.set(g.attributes.normal.array,o*3);C.set(g.attributes.color.array,o*3);U.set(g.attributes.uv.array,o*2);o+=g.attributes.position.count;}
+  const m=new THREE.BufferGeometry();m.setAttribute('position',new THREE.BufferAttribute(P,3));m.setAttribute('normal',new THREE.BufferAttribute(N,3));m.setAttribute('color',new THREE.BufferAttribute(C,3));m.setAttribute('uv',new THREE.BufferAttribute(U,2));return m;}
+const sph=(r,x,y,z,sx=1,sy=1,sz=1,ws=10,hs=8)=>{const g=new THREE.SphereGeometry(r,ws,hs);g.scale(sx,sy,sz);g.translate(x,y,z);return g;};
+// 胴：腰→くびれ→胸→肩→首の付け根を滑らかにつなぐ。襟・裾・脇の縫い目・前の合わせを色の濃淡で表す
+const torsoG=(()=>{const g=lathe([[0.001,0],[0.158,0.0],[0.15,0.08],[0.136,0.18],[0.15,0.3],[0.166,0.4],[0.176,0.47],[0.16,0.53],[0.11,0.575],[0.06,0.6],[0.001,0.605]],16);g.scale(1.08,1,0.64);
+  return vcol(g,(x,y,z)=>{let v=1;if(y>0.54)v=0.78;if(y<0.035)v=0.8;if(Math.abs(z)<0.035&&Math.abs(x)>0.15)v*=0.86;if(z>0&&Math.abs(x)<0.006&&y<0.54)v*=0.7;if(y>0.44&&y<0.46&&Math.abs(x)>0.12)v*=0.85;return [v,v,v];});})();
+const pelvisG=(()=>{const g=lathe([[0.001,-0.13],[0.15,-0.13],[0.162,-0.04],[0.158,0.02],[0.001,0.02]],14);g.scale(1.06,1,0.68);return vcol(g,(x,y,z)=>{const v=y>0.0?0.75:(Math.abs(x)<0.006&&z>0?0.7:1);return [v,v,v];});})();
+// 頭：頭蓋〜あごの輪郭、目・眉・鼻・口・耳（肌色に掛け合わせる色で表す）
+const headG=(()=>{const skull=lathe([[0.001,-0.115],[0.045,-0.112],[0.068,-0.085],[0.082,-0.04],[0.092,0.01],[0.095,0.055],[0.086,0.1],[0.058,0.132],[0.001,0.142]],14);skull.scale(0.92,1,1.06);
+  const L=[vcol(skull,()=>W1c)];
+  for(const s of [-1,1]){L.push(vcol(sph(0.0125,s*0.032,0.018,0.083,1,0.75,0.6,8,6),()=>[0.06,0.05,0.05]));L.push(vcol(sph(0.017,s*0.032,0.018,0.079,1.1,0.6,0.5,8,6),()=>[1.08,1.08,1.08]));
+    const br=new THREE.BoxGeometry(0.03,0.006,0.008);br.rotateZ(-s*0.12);br.translate(s*0.033,0.042,0.086);L.push(vcol(br,()=>[0.25,0.2,0.18]));
+    L.push(vcol(sph(0.022,s*0.088,0.01,-0.004,0.45,1,0.75,8,6),()=>[0.93,0.88,0.86]));}
+  const nose=new THREE.ConeGeometry(0.013,0.04,6);nose.rotateX(-Math.PI/2+0.35);nose.translate(0,-0.008,0.098);L.push(vcol(nose,()=>[0.97,0.9,0.88]));
+  const m=new THREE.BoxGeometry(0.03,0.006,0.008);m.translate(0,-0.05,0.084);L.push(vcol(m,()=>[0.72,0.42,0.4]));
+  return mergeC(L);})();
+// 髪型4種：輪郭の段差と、色の濃淡の筋で束感を出す
+function hairStyle(k){const L=[];const strand=(x,y,z)=>{const a=Math.atan2(x,z);const v=0.85+0.22*Math.sin(a*26+y*30)*0.5+0.08*Math.sin(a*61);return [v,v,v];};
+  const cap=new THREE.SphereGeometry(0.103,18,10,0,Math.PI*2,0,Math.PI*(k==='short'?0.5:0.56));cap.scale(1.0,1.12,1.14);cap.translate(0,0.03,-0.008);
+  {const p=cap.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const a=Math.atan2(x,z);const d=1+0.035*Math.max(0,Math.sin(a*9+y*40))+(z>0.05&&y<0.08?-0.02:0);p.setXYZ(i,x*d,y,z*d);}cap.computeVertexNormals();}
+  L.push(vcol(cap,strand));
+  if(k==='long'||k==='bob'){const bot=k==='long'?-0.2:-0.07;const sh=new THREE.CylinderGeometry(0.1,k==='long'?0.11:0.106,0.08-bot,16,4,true,Math.PI*0.62,Math.PI*1.76);sh.scale(1,1,1.05);sh.translate(0,(0.08+bot)/2,-0.008);
+    {const p=sh.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const a=Math.atan2(x,z);const d=1+0.04*Math.sin(a*14+y*8);p.setXYZ(i,x*d,y,z*d);}sh.computeVertexNormals();}
+    L.push(vcol(sh,strand));}
+  if(k==='pony'){const t=new THREE.CylinderGeometry(0.03,0.012,0.2,8);t.rotateX(0.35);t.translate(0,-0.02,-0.12);L.push(vcol(t,strand));L.push(vcol(sph(0.035,0,0.05,-0.1),strand));}
+  if(k!=='short'){const bang=new THREE.SphereGeometry(0.1,14,4,-Math.PI*0.32,Math.PI*0.64,Math.PI*0.18,Math.PI*0.2);bang.scale(0.98,1.0,1.16);bang.translate(0,0.03,0.0);L.push(vcol(bang,strand));}
+  return mergeC(L);}
+const HAIR_K=['short','short','long','bob','pony'];const hairG={};for(const k of new Set(HAIR_K))hairG[k]=hairStyle(k);
+// 手足：関節の位置で太さを合わせ、ひじ・ひざの周りに服のしわ（濃淡）、袖口・裾の縁
+const limb=(r0,r1,len,cuff,wr)=>{const g=lathe([[0.001,0],[r0*0.85,-0.005],[r0,-0.03],[(r0+r1)/2,-len*0.5],[r1,-len+0.02],[r1*0.8,-len],[0.001,-len]],10);
+  return vcol(g,(x,y,z)=>{let v=1;if(cuff&&y<-len+0.03)v=0.78;if(wr&&Math.abs(y+len*wr)<0.03)v*=0.84+0.1*Math.sin(Math.atan2(x,z)*5);return [v,v,v];});};
+const NEAR={torso:torsoG,pelvis:pelvisG,head:headG,neck:vcol(new THREE.CylinderGeometry(0.043,0.05,0.1,10).translate(0,0.03,0),()=>W1c),
+  thigh:limb(0.078,0.058,0.44,false,0.95),shin:limb(0.056,0.042,0.42,true,0.05),upperArm:limb(0.05,0.043,0.29,false,0.95),foreArm:limb(0.042,0.034,0.27,true,0),
+  hand:vcol(sph(0.045,0,-0.05,0,0.55,1,0.85,8,6),()=>W1c),shoe:(()=>{const g=sph(0.055,0,-0.43,0.045,0.95,0.6,2.3,10,6);return g;})(),
+  bag:mergeC([new THREE.BoxGeometry(0.1,0.27,0.32).translate(0,-0.06,0),new THREE.BoxGeometry(0.015,0.5,0.03).translate(0,0.2,0.05)])};
+const FAR={torso:new THREE.CylinderGeometry(0.17,0.145,0.6,7).scale(1,1,0.62).translate(0,0.3,0),pelvis:new THREE.CylinderGeometry(0.15,0.14,0.16,7).scale(1,1,0.68).translate(0,-0.06,0),
+  head:new THREE.SphereGeometry(0.1,8,6).translate(0,0.13,0),thigh:new THREE.CylinderGeometry(0.075,0.058,0.44,5).translate(0,-0.22,0),shin:new THREE.CylinderGeometry(0.056,0.042,0.42,5).translate(0,-0.21,0),
+  upperArm:new THREE.CylinderGeometry(0.048,0.04,0.29,4).translate(0,-0.145,0),foreArm:new THREE.CylinderGeometry(0.04,0.034,0.27,4).translate(0,-0.135,0),shoe:new THREE.BoxGeometry(0.1,0.07,0.24).translate(0,-0.43,0.05)};
+// 素材：布（細かな織り目の凹凸）、肌、髪（やや艶）、革靴、鞄を分ける
+const weaveN=(()=>{const [c,g]=cv(64,64);const id=g.createImageData(64,64);for(let y=0;y<64;y++)for(let x=0;x<64;x++){const a=Math.sin(x*Math.PI/2)*0.5,b=Math.sin(y*Math.PI/2)*0.5,i=(y*64+x)*4;id.data[i]=128+60*a;id.data[i+1]=128+60*b;id.data[i+2]=255;id.data[i+3]=255;}g.putImageData(id,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(6,6);return t;})();
+const fabric=new THREE.MeshStandardMaterial({roughness:0.93,vertexColors:true,normalMap:weaveN,normalScale:new THREE.Vector2(0.35,0.35)});
+const skinM=new THREE.MeshStandardMaterial({roughness:0.5,vertexColors:true}),hairM=new THREE.MeshStandardMaterial({roughness:0.42,metalness:0.0,vertexColors:true});
+const shoeM=new THREE.MeshStandardMaterial({roughness:0.32,metalness:0.0}),bagM=new THREE.MeshStandardMaterial({roughness:0.45,vertexColors:true});
+const farFab=new THREE.MeshStandardMaterial({roughness:0.9}),farSkin=new THREE.MeshStandardMaterial({roughness:0.6});
+const NN=70;   // 詳細形で描く人数（近い順）
+const PM={},PFAR={};
+const mkI=(geo,mat,n,cast)=>{const m=new THREE.InstancedMesh(geo,mat,n);m.setColorAt(0,new THREE.Color(1,1,1));m.castShadow=cast;m.receiveShadow=true;m.frustumCulled=false;scene.add(m);return m;};
+for(const [k,mat,mult] of [['torso',fabric,1],['pelvis',fabric,1],['head',skinM,1],['neck',skinM,1],['thigh',fabric,2],['shin',fabric,2],['upperArm',fabric,2],['foreArm',fabric,2],['hand',skinM,2],['shoe',shoeM,2],['bag',bagM,1]])PM[k]=mkI(NEAR[k],mat,NN*mult,true);
+for(const k in hairG)PM['hair_'+k]=mkI(hairG[k],hairM,NN,true);
+for(const [k,mat,mult] of [['torso',farFab,1],['pelvis',farFab,1],['head',farSkin,1],['thigh',farFab,2],['shin',farFab,2],['upperArm',farFab,2],['foreArm',farSkin,2],['shoe',farFab,2]])PFAR[k]=mkI(FAR[k],mat,MAXP*mult,k==='torso'||k==='thigh');
 PM.torso.userData.tag='staged';PM.torso.userData.mat=fabric;TAGGED.push(PM.torso);
-const TOPS=[0x22252b,0x3b4250,0xe6e2da,0xf2f2ef,0x5a6b80,0x7a3b3b,0x2f4f4f,0xc9b79c,0x1c2c4c,0x8a8f99,0xb5463a,0xd9c27a,0x6b7f5a,0xa7b9cc];
-const BOTS=[0x1e2126,0x2b3240,0x3a4a66,0x50483e,0x8c8577,0x1a1a1a,0x6a6f78,0xc8bfae];
-const SKIN=[0xe8c4a6,0xdcb393,0xcfa384,0xf0d2b8,0xc29070],HAIR=[0x14100c,0x1d1712,0x2b2017,0x4a3a2a,0x8a8a8a,0x5e4632];
-const PEDS=[];{const totW=PATHS.reduce((s,p)=>s+(p.wt||1)*(p.ring?60:Math.hypot(p.x1-p.x0,p.z1-p.z0)),0);const C=new THREE.Color();
+const TOPS=[0x22252b,0x3b4250,0xe6e2da,0xf2f2ef,0x5a6b80,0x7a3b3b,0x2f4f4f,0xc9b79c,0x1c2c4c,0x8a8f99,0xb5463a,0xd9c27a,0x6b7f5a,0xa7b9cc,0x101114,0x4a4038];
+const BOTS=[0x1e2126,0x2b3240,0x3a4a66,0x50483e,0x8c8577,0x1a1a1a,0x6a6f78,0xc8bfae,0x2a3a5c];
+const SKIN=[0xd9a98a,0xcf9c7c,0xc28c6c,0xe0b294,0xb27f60,0xa9755a],HAIR=[0x14100c,0x1d1712,0x2b2017,0x4a3a2a,0x5e4632,0x7a5a3a];
+// 横断歩道：信号のある交差点で、車線の手前に横断路を置き、車が赤の間だけ渡る
+const CROSS=[];for(const A of LANES){if(!A.sig||CROSS.length>140)continue;const e=A.end;if(Math.hypot(e[0],e[1])>1500)continue;const s=A.L[A.L.length-1]-5;if(s<8)continue;const p=along(A,s);
+  const nx=-p.dz,nz=p.dx,hw=(A.w||14)/2+1.2,c=[p.x+nx*A.o,p.z+nz*A.o];if(CROSS.some(q=>Math.hypot(q.cx-c[0],q.cz-c[1])<10))continue;
+  CROSS.push({cx:c[0],cz:c[1],x0:c[0]-nx*hw,z0:c[1]-nz*hw,x1:c[0]+nx*hw,z1:c[1]+nz*hw,y:0.02,w:2.6,cross:true,sig:A.sig,axis:A.axis});}
+for(const c of CROSS)PATHS.push(Object.assign(c,{wt:1.5}));
+const PEDS=[];{const totW=PATHS.reduce((s,p)=>s+(p.wt||1)*(p.ring?60:Math.hypot(p.x1-p.x0,p.z1-p.z0)),0);
   for(let i=0;i<MAXP;i++){let t=R()*totW,p=PATHS[0];for(const q of PATHS){const w=(q.wt||1)*(q.ring?60:Math.hypot(q.x1-q.x0,q.z1-q.z0));if(t<w){p=q;break;}t-=w;}
     const kid=R()<0.07,old=!kid&&R()<0.15,fem=R()<0.5,sc=kid?0.68+R()*0.1:(fem?0.93:1.0)*(0.95+R()*0.09),skirt=fem&&!kid&&R()<0.3;
-    const stand=R()<0.12;
-    const q={p,s:R(),dir:R()<0.5?1:-1,off:(R()-0.5)*p.w,v:stand?0:(old?0.85:1.05)+R()*0.4,ph:R()*6,on:R(),sc,fem,skirt,bag:R()<0.35,stand,look:R()*6.28,wide:fem?0.9:1.05};
-    PEDS.push(q);
-    const top=TOPS[R()*TOPS.length|0],bot=skirt?TOPS[R()*TOPS.length|0]:BOTS[R()*BOTS.length|0],sk=SKIN[R()*SKIN.length|0],hr=old&&R()<0.6?0x9a9a9a:HAIR[R()*HAIR.length|0];
-    const longSleeve=R()<0.55;
-    const shoe=[0x1a1a1a,0xf0f0f0,0x5a4030,0x30343a][(i*7)%4],shin2=skirt||R()<0.1?sk:bot;
-    q.col={torso:top,pelvis:bot,head:sk,neck:sk,hair:hr,bag:[0x2a2420,0x5a3b28,0x1c1c1c,0xb9a58a][R()*4|0],thigh:skirt?sk:bot,shin:shin2,shoe,upperArm:top,foreArm:longSleeve?top:sk};}
-  for(const k in PM)PM[k].setColorAt(0,C.setHex(0xffffff));  for(const k in PM)if(PM[k].instanceColor)PM[k].instanceColor.needsUpdate=true;}
+    const stand=!p.cross&&R()<0.1;
+    const q={p,s:R(),dir:R()<0.5?1:-1,off:(R()-0.5)*p.w*0.8,vt:stand?0:(old?0.95:1.15)+R()*0.4,v:0,ph:R()*6,on:R(),sc,fem,skirt,bag:R()<0.35,stand,look:R()*6.28,wide:fem?0.92:1.04,
+      hair:fem?['long','bob','pony','long','short'][R()*5|0]:'short',lean:(old?0.12:0.03)+R()*0.03,pause:0,hd:null,arm:0.85+R()*0.3};
+    const top=TOPS[R()*TOPS.length|0],bot=skirt?TOPS[R()*TOPS.length|0]:BOTS[R()*BOTS.length|0],sk=SKIN[R()*SKIN.length|0],hr=old&&R()<0.6?0x9a9a9a:HAIR[R()*HAIR.length|0],longSleeve=R()<0.55;
+    q.col={torso:top,pelvis:bot,head:sk,neck:sk,hand:sk,hair:hr,bag:[0x2a2420,0x5a3b28,0x1c1c1c,0xb9a58a][R()*4|0],thigh:skirt?sk:bot,shin:skirt||R()<0.1?sk:bot,shoe:[0x1a1a1a,0xf0f0f0,0x5a4030,0x30343a][(i*7)%4],upperArm:top,foreArm:longSleeve?top:sk};
+    PEDS.push(q);}}
 let crowd=0.5;
-const _B=new THREE.Matrix4(),_J=new THREE.Matrix4(),_K=new THREE.Matrix4(),_T=new THREE.Matrix4(),_R=new THREE.Matrix4();
-function partAt(mesh,idx,base,px,py,pz,rx,rz=0){_J.makeRotationX(rx);if(rz)_J.multiply(_R.makeRotationZ(rz));_J.setPosition(px,py,pz);_T.multiplyMatrices(base,_J);mesh.setMatrixAt(idx,_T);return _T;}
+const _B=new THREE.Matrix4(),_J=new THREE.Matrix4(),_T=new THREE.Matrix4(),_R=new THREE.Matrix4();
 const _PC=new THREE.Color();
-function updatePeds(dt,night){const lim=crowd*(night?0.55:1),cx=camera.position.x,cy=camera.position.y,cz=camera.position.z;let k=0;
-  PEDS.forEach(q=>{if(q.on>lim)return;
-    const p=q.p;let x,z,y=p.y,ang;
+const setC=(m,i,hex)=>m.setColorAt(i,_PC.setHex(hex).convertSRGBToLinear());
+function partAt(mesh,idx,base,px,py,pz,rx,rz=0){_J.makeRotationX(rx);if(rz)_J.multiply(_R.makeRotationZ(rz));_J.setPosition(px,py,pz);_T.multiplyMatrices(base,_J);mesh.setMatrixAt(idx,_T);return _T;}
+const pedGrid=new Map();
+function updatePeds(dt,night){const lim=crowd*(night?0.55:1),cx=camera.position.x,cy=camera.position.y,cz=camera.position.z;
+  pedGrid.clear();const vis=[];
+  for(const q of PEDS){if(q.on>lim)continue;const p=q.p;let x,z,y=p.y,ang;
+    // 速度：立ち止まり・歩き出しをなめらかに。横断歩道は車が赤の間だけ渡る
+    let vt=q.vt;if(q.pause>0){q.pause-=dt;vt=0;}else if(!q.stand&&!p.cross&&R()<dt*0.01){q.pause=2+R()*5;}
+    if(p.cross){const carSt=sigState(p.sig,p.axis,simT);const atEnd=q.s<=0.02||q.s>=0.98;if(atEnd&&carSt!=='r')vt=0;}
+    q.v+=clamp(vt-q.v,-1.6*dt,1.0*dt);
     if(p.ring){q.s+=q.dir*q.v*dt/(2*Math.PI*p.r);const a=q.s*2*Math.PI,r=p.r+q.off*0.4;x=Math.cos(a)*r;z=Math.sin(a)*r;
-      if(p.gal){const A=((a/(2*Math.PI))%1+1)%1;y=galY(Math.min(A,0.89));}ang=Math.atan2(-Math.cos(a)*q.dir,-Math.sin(a)*q.dir);}
-    else{const L=Math.hypot(p.x1-p.x0,p.z1-p.z0);q.s+=q.dir*q.v*dt/L;if(q.s>1){q.s=1;q.dir=-1;}if(q.s<0){q.s=0;q.dir=1;}
-      const ux=(p.x1-p.x0)/L,uz=(p.z1-p.z0)/L;x=lerp(p.x0,p.x1,q.s)-uz*q.off;z=lerp(p.z0,p.z1,q.s)+ux*q.off;ang=q.stand?q.look:Math.atan2(-ux*q.dir,-uz*q.dir);}
-    const d=Math.hypot(x-cx,z-cz,(y-cy)*0.5);if(d>260)return;
-    const i=k++;
-    for(const n of ['torso','pelvis','head','neck','hair','bag'])PM[n].setColorAt(i,_PC.setHex(q.col[n]));
-    for(const n of ['thigh','shin','shoe','upperArm','foreArm'])for(const s of [0,1])PM[n].setColorAt(i*2+s,_PC.setHex(q.col[n]));
-    q.ph+=dt*(q.stand?0.6:q.v*5.8/q.sc);const ph=q.ph,st=q.stand?0:1,sw=Math.sin(ph);
-    const bob=st*Math.abs(Math.cos(ph))*0.03;
-    _cq.setFromAxisAngle(_cy,ang);_B.compose(_cp.set(x,y+bob,z),_cq,_cs.set(q.sc,q.sc,q.sc));_cs.set(1,1,1);
-    const hipY=0.9,w=q.wide;
-    const torso=partAt(PM.torso,i,_B,0,hipY,0,0.04*st,0.02*sw*st).clone();PM.pelvis.setMatrixAt(i,(_T.multiplyMatrices(_B,_J.makeTranslation(0,hipY,0)),_T));
-    partAt(PM.neck,i,torso,0,0.58,0,0);partAt(PM.head,i,torso,0,0.62,0,-0.04);partAt(PM.hair,i,torso,0,0.62,0,-0.04);
-    if(q.bag)partAt(PM.bag,i,torso,(q.fem?-1:1)*0.19*w,0.18,0,0);else PM.bag.setMatrixAt(i,_hide);
-    for(const s of [0,1]){const sg=s?1:-1,leg=sw*sg*0.42*st,knee=Math.max(0,-Math.sin(ph+sg*1.4+(s?Math.PI:0)))*0.75*st+0.04;
-      const th=partAt(PM.thigh,i*2+s,_B,sg*0.085*w,hipY,0,leg).clone();
-      const sh=partAt(PM.shin,i*2+s,th,0,-0.44,0,-knee);PM.shoe.setMatrixAt(i*2+s,sh);
-      const arm=-sw*sg*0.38*st;const ua=partAt(PM.upperArm,i*2+s,torso,sg*0.2*w,0.53,0,arm,sg*0.07).clone();partAt(PM.foreArm,i*2+s,ua,0,-0.3,0,arm<0?arm*0.6-0.15:-0.2);}
-  });
-  for(const n of ['torso','pelvis','head','neck','hair','bag'])PM[n].count=k;
-  for(const n of ['thigh','shin','shoe','upperArm','foreArm'])PM[n].count=k*2;
-  for(const n in PM){if(PM[n].instanceColor)PM[n].instanceColor.needsUpdate=true;}
-  for(const k in PM)PM[k].instanceMatrix.needsUpdate=true;}
+      if(p.gal){const A=((a/(2*Math.PI))%1+1)%1;y=galY(Math.min(A,0.89));}ang=Math.atan2(-Math.sin(a)*q.dir,Math.cos(a)*q.dir);}
+    else{const L=Math.hypot(p.x1-p.x0,p.z1-p.z0);q.s+=q.dir*q.v*dt/L;if(q.s>1){q.s=1;q.dir=-1;if(p.cross)q.pause=0.5;}if(q.s<0){q.s=0;q.dir=1;if(p.cross)q.pause=0.5;}
+      const ux=(p.x1-p.x0)/L,uz=(p.z1-p.z0)/L;x=lerp(p.x0,p.x1,q.s)-uz*q.off;z=lerp(p.z0,p.z1,q.s)+ux*q.off;ang=q.stand?q.look:Math.atan2(ux*q.dir,uz*q.dir);
+      // すれ違い：近くの人と重ならないよう横にずれる
+      const gk=Math.floor(x/1.5)*7919+Math.floor(z/1.5);const o=pedGrid.get(gk);if(o&&o!==q&&Math.hypot(o.x-x,o.z-z)<0.7)q.off=clamp(q.off+(q.off>=o.off?1:-1)*dt*0.8,-p.w*0.45,p.w*0.45);}
+    if(q.hd==null)q.hd=ang;let dd=ang-q.hd;while(dd>Math.PI)dd-=2*Math.PI;while(dd<-Math.PI)dd+=2*Math.PI;q.hd+=clamp(dd,-3.2*dt,3.2*dt);
+    q.x=x;q.z=z;q.y=y;pedGrid.set(Math.floor(x/1.5)*7919+Math.floor(z/1.5),q);
+    const d=Math.hypot(x-cx,z-cz,(y-cy)*0.5);if(d>300)continue;q.d=d;vis.push(q);}
+  vis.sort((a,b)=>a.d-b.d);
+  let kn=0,kf=0;
+  for(const q of vis){const near=kn<NN&&q.d<35;const S=near?PM:PFAR,i=near?kn++:kf++;
+    // 歩幅に合わせて脚の周期を進める（足すべりを抑える）。脚を開くほど腰を下げ、足が地面にめり込まないようにする
+    const Lg=0.86*q.sc,amp=0.42*Math.min(1,q.v/1.15),stride=Math.max(0.4,4*Lg*Math.sin(Math.max(amp,0.15)));
+    q.ph+=dt*(q.v>0.05?q.v/stride*Math.PI*2:0.5);const ph=q.ph,sw=Math.sin(ph);const leg=amp*sw;
+    const drop=Lg*(1-Math.cos(Math.abs(leg)))+0.008*Math.abs(Math.sin(ph*2))*(amp>0?1:0);
+    _cq.setFromAxisAngle(_cy,q.hd);_B.compose(_cp.set(q.x,q.y-drop*q.sc,q.z),_cq,_cs.set(q.sc,q.sc,q.sc));_cs.set(1,1,1);
+    const hipY=0.9,w=q.wide,sway=0.03*sw*(amp>0?1:0);
+    const torso=partAt(S.torso,i,_B,sway*0.3,hipY,0,q.lean+0.03*amp,0.025*sw).clone();S.pelvis.setMatrixAt(i,(_T.multiplyMatrices(_B,_J.makeRotationZ(-0.03*sw).setPosition(sway*0.3,hipY,0)),_T));
+    partAt(S.head,i,torso,0,0.645,0.01,-q.lean*0.8);
+    if(near){partAt(S.neck,i,torso,0,0.58,0,0);for(const k of new Set(HAIR_K)){const m=S['hair_'+k];if(k===q.hair){_J.makeRotationX(-q.lean*0.8);_J.setPosition(0,0.645,0.01);_T.multiplyMatrices(torso,_J);m.setMatrixAt(i,_T);}else m.setMatrixAt(i,_hide);}
+      if(q.bag)partAt(S.bag,i,torso,(q.fem?-1:1)*0.2*w,0.2,0,0.05);else S.bag.setMatrixAt(i,_hide);}
+    for(const s of [0,1]){const sg=s?1:-1,lg=leg*sg;const knee=0.06+1.15*amp*Math.max(0,-Math.cos(ph)*sg);
+      const th=partAt(S.thigh,i*2+s,_B,sg*0.085*w,hipY,0,lg).clone();
+      const sh=partAt(S.shin,i*2+s,th,0,-0.44,0,knee).clone();
+      _J.makeRotationX(-(knee+lg));_T.multiplyMatrices(sh,_J.setPosition(0,0,0));S.shoe.setMatrixAt(i*2+s,_T);   // 足首を返して靴底を地面と平行に
+      const arm=-lg*0.9*q.arm;const ua=partAt(S.upperArm,i*2+s,torso,sg*0.19*w,0.515,0,arm,sg*0.05).clone();const fa=partAt(S.foreArm,i*2+s,ua,0,-0.29,0,-0.18-Math.max(0,arm)*0.6).clone();
+      if(near){_J.makeTranslation(0,-0.27,0);_T.multiplyMatrices(fa,_J);S.hand.setMatrixAt(i*2+s,_T);}}
+    const cl=q.col;for(const n of ['torso','pelvis','head'])setC(S[n],i,cl[n]);for(const n of ['thigh','shin','shoe','upperArm','foreArm'])for(const s of [0,1])setC(S[n],i*2+s,cl[n]);
+    if(near){setC(S.neck,i,cl.neck);setC(S['hair_'+q.hair],i,cl.hair);setC(S.bag,i,cl.bag);for(const s of [0,1])setC(S.hand,i*2+s,cl.hand);}}
+  for(const n in PM){PM[n].count=(['thigh','shin','upperArm','foreArm','hand','shoe'].includes(n)?2:1)*kn;PM[n].instanceMatrix.needsUpdate=true;if(PM[n].instanceColor)PM[n].instanceColor.needsUpdate=true;}
+  for(const n in PFAR){PFAR[n].count=(['thigh','shin','upperArm','foreArm','shoe'].includes(n)?2:1)*kf;PFAR[n].instanceMatrix.needsUpdate=true;if(PFAR[n].instanceColor)PFAR[n].instanceColor.needsUpdate=true;}}
 
 /* ================= trains（国土地理院の線路の上を走る。運行は演出で時刻表ではない） ================= */
 const TRACKS=TRAIN_PATHS.map(P=>({P,L:polyLen(P)}));
@@ -1449,6 +1700,17 @@ N('pz_ub',60,F4,-10.5);N('sorami_t',50,F4,-2.2,'ソラミ坂 上（4F）');chain
 // 5F 出口フロア → 連絡ブリッジ → 東京ソラマチ 5F
 N('e5',9.5,F5,-2.5,'5F 出口フロア');N('f5_door',15.84,F5,-2.23);N('f5_c',21.24,F5,-3.36);N('br5_1',30,F5,-7.2,'5F 連絡ブリッジ');N('bridge_e',83.4,F5,-12.9,'連絡ブリッジ 東端（東京ソラマチ 5F 側）');
 chain('e5','f5_door','f5_c','br5_1','bridge_e');
+// 浅草通り〜吾妻橋（道路中心線の最短経路を歩道側へずらしたもの。歩道の正確な位置は推定）
+{const RA=W.routeAsahi;if(RA){const L=RA.l,ids=[];let prev=null;
+  L.forEach((p,i)=>{const a=L[Math.max(0,i-1)],b=L[Math.min(L.length-1,i+1)],dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz)||1,nx=-dz/l,nz=dx/l,o0=Math.max(2.2,RA.w[i]/2-2.2),wet=[[0,0],[15,0],[-15,0],[0,15],[0,-15]].some(q=>inWater(p[0]+q[0],p[1]+q[1])),o=wet?Math.min(o0,2.5):o0;
+    let pt=null;for(const s of [1,-1]){const x=p[0]+nx*o*s,z=p[1]+nz*o*s;const f=floorAt(x,z,0.5);if(f&&!blocked(x,z,f.y)){pt=[x,f.y,z];break;}}
+    if(!pt){const f=floorAt(p[0],p[1],0.5);pt=[p[0],f?f.y:0,p[1]];}
+    const id='ra'+i;N(id,pt[0],pt[1],pt[2]);ids.push(id);});
+  chain('s_w',...ids);
+  const lab=(id,t)=>{if(NODES[id])NODES[id].label=t;};
+  const near=(x,z)=>ids.reduce((a,id)=>{const n=NODES[id],d=Math.hypot(n.x-x,n.z-z);return !a||d<a.d?{id,d}:a;},null).id;
+  lab(near(-470,157),'浅草通り（本所付近）');lab(near(-890,100),'アサヒビール本社の南側（浅草通り）');lab(near(-1003,37),'吾妻橋 東詰');lab(near(-1060,-5),'吾妻橋（隅田川の上）');lab(ids[ids.length-1],'吾妻橋 西詰（浅草側）');
+  window.__RA_IDS=ids;}}
 // 押上駅（模式）→ B3 連絡（イーストタワー地下3階）
 const gateX=223+1.05*13+0.645;
 N('osh_c_n',gateX,OY,-48,'押上駅 構内（模式）');N('osh_gate',gateX,OY,GATE_Z,'押上駅 改札（模式）');N('osh_c_s',gateX,OY,-9);N('osh_pass',216,OY,-9);N('et_b3',195,OY,-24,'B3 出口・イーストタワー地下3階（直結）');
@@ -1478,7 +1740,7 @@ link('tsky_e_in','tsky_pf1','駅構内（推定）','東口改札 → 1番線ホ
 const ARRIVE_HEAD={e350:bOut('e350'),g445:185,e345:bOut('e345'),e5:75,plaza_w:60,plaza_e:265,ty_n:0,ty_s:180,et_b3:0,et_1f:180};
 const DESTS=[['天望デッキ フロア350','e350'],['天望回廊・ソラカラポイント','g_sora'],['4F 入口フロア','e4'],['5F 出口フロア','e5'],['4F 屋外広場（スカイアリーナ）','sky_arena'],['MAIN ENTRANCE（4F 入口棟）','pz_door_o'],['ソラミ坂','sorami_t'],['連絡ブリッジ（5F）','br5_1'],
   ['とうきょうスカイツリー駅 1番線ホーム','tsky_pf1'],['とうきょうスカイツリー駅 東口改札（2026年の写真）','tsky_e_gate'],['押上駅 改札（模式）','osh_gate'],['B3 出口（イーストタワー直結）','et_b3'],
-  ['ソラマチひろば（1F）','hiroba'],['北十間川の橋（名称未確認）','br_m']].filter(d=>NODES[d[1]]);
+  ['ソラマチひろば（1F）','hiroba'],['アサヒビール本社の南側','__ASAHI'],['吾妻橋（隅田川の上）','__AZUMA'],['吾妻橋 西詰（浅草側）','__AZW'],['北十間川の橋（名称未確認）','br_m']].map(d=>{if(d[1].startsWith('__')&&window.__RA_IDS){const want={__ASAHI:'アサヒビール本社の南側（浅草通り）',__AZUMA:'吾妻橋（隅田川の上）',__AZW:'吾妻橋 西詰（浅草側）'}[d[1]];const id=window.__RA_IDS.find(i=>NODES[i].label===want);return [d[0],id||'none'];}return d;}).filter(d=>NODES[d[1]]);
 function routeTo(goal){const dist={},next={},nl={},rev={};for(const id in NODES){dist[id]=Infinity;rev[id]=[];}
   for(const id in NODES)for(const e of NODES[id].e)rev[e.to].push({from:id,w:e.w,link:e.link});
   dist[goal]=0;const open=new Set([goal]);
@@ -1517,7 +1779,7 @@ function dayPattern(){const doy=Math.floor((Date.UTC(2026,9,2)-Date.UTC(2026,0,0
 function applyEnv(){
   const {el,az}=sunAt(timeH),e=el*DEG,a=az*DEG;const dir=new THREE.Vector3(Math.sin(a)*Math.cos(e),Math.sin(e),-Math.cos(a)*Math.cos(e));
   const dayF=smooth(-5,10,el),nightF=1-smooth(-7,3,el),gold=smooth(-4,3,el)*(1-smooth(4,16,el));
-  ENV.el=el;ENV.dayF=dayF;ENV.nightF=nightF;skyU.uSun.value.copy(dir);skyU.uNight.value=nightF;
+  ENV.el=el;ENV.dayF=dayF;ENV.nightF=nightF;skyU.uSun.value.copy(dir);skyU.uNight.value=nightF;skyU.uCloud.value=weather==='cloud'?0.95:weather==='haze'?0.55:0.32;skyU.uCT.value=timeH*600;
   const cl=weather==='cloud',hz=weather==='haze';
   const top=C(0.012,0.016,0.045).lerp(C(0.16,0.33,0.72),dayF),hor=C(0.035,0.045,0.085).lerp(C(0.62,0.72,0.86),dayF).lerp(C(0.95,0.55,0.32),gold*0.85);
   if(hz){top.lerp(C(0.42,0.5,0.62),0.45*dayF);hor.lerp(C(0.8,0.8,0.8),0.4*dayF);}
@@ -1730,7 +1992,8 @@ let perfOn=false;
 const keys={};const isTouch=matchMedia('(pointer:coarse)').matches;
 let locked=false,dragging=false,lx=0,ly=0;
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;keys[e.code]=true;
-  if(e.code==='KeyE'||e.code==='Enter')act();
+  if(e.code==='KeyF')flyToggle();if(FLY.on){if(e.code==='Digit1')FLY.mode=0;if(e.code==='Digit2')FLY.mode=1;if(e.code==='Digit3')FLY.mode=2;if(e.code==='KeyR')flyNearest();if(e.code==='KeyH')flyHome();if(['Digit1','Digit2','Digit3'].includes(e.code))toast('速度：'+FLY_NAME[FLY.mode],1.5);}
+  if((e.code==='KeyE'||e.code==='Enter')&&!FLY.on)act();
   if(e.code==='KeyM')zi=(zi+1)%3;if(e.code==='KeyP')photo();if(e.code==='KeyL'){labelsOn=!labelsOn;document.querySelectorAll('[data-lb]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.lb==='1')===labelsOn)));}
   if(e.code==='KeyV')setOverlay(!overlayOn);if(e.code==='KeyG'){document.querySelector('[data-p="destPanel"]').click();}
   if(e.code==='F3'){e.preventDefault();perfOn=!perfOn;$('perf').hidden=!perfOn;}
@@ -1769,6 +2032,62 @@ function renderReflection(){const cp=camera.position;if(!reflOn||overlayOn||cp.y
   for(const w of waters)w.visible=true;}
 renderer.shadowMap.autoUpdate=false;
 
+/* ================= 自由飛行（F で切替。上昇 Space／下降 C・Q、速度 1・2・3、近くの安全な場所 R、開始地点 H） ================= */
+const FLY={on:false,v:new THREE.Vector3(),mode:1,alt:0,landing:false,msgT:0};
+const FLY_SP=[6,25,90],FLY_NAME=['低速（観察）','標準','高速（移動）'],FLY_CEIL=900,FLY_R=1700;
+const START={x:97,y:0,z:70,yaw:330};
+// 塔の外形（足元の三角形〜回廊）を円錐で近似した当たり判定
+function towerR(y){if(y<0||y>634)return 0;if(y<350)return lerp(40,21,y/350);if(y<360)return 24;if(y<445)return lerp(21,15,(y-360)/85);if(y<455)return 19;return Math.max(3,lerp(12,2,(y-455)/180));}
+function flyBlocked(x,y,z){if(y<1.0)return true;const r=Math.hypot(x,z);if(r<towerR(y)+1.2)return true;
+  for(const L of [0,-1.2])if(blocked(x,z,y+L-0.35))return true;   // 建物・橋・高架（地上と同じ当たり判定を、高さを合わせて使う）
+  return false;}
+function groundBelow(x,z,y){let best=null,name='ground';const g=groundAt(x,z);if(g!=null&&g<=y)best=g;
+  for(const f of floors){const b=f.b;if(x<b[0]||x>b[2]||z<b[1]||z>b[3])continue;const h=f.h(x,z);if(h==null||h>y+0.01)continue;if(best==null||h>best){best=h;name=f.name;}}
+  return best==null?null:{y:best,name};}
+function flyToggle(){if(!started)return;if(!FLY.on){FLY.on=true;FLY.v.set(0,0,0);P.y=P.y+0.0;FLY.alt=0;document.body.classList.add('flying');toast('自由飛行：Space 上昇／C 下降／1・2・3 速度／F 着地',4);ui();return;}
+  // 着地：真下に安全な床があるか確かめてから降りる
+  const g=groundBelow(P.x,P.z,P.y+0.5);if(!g||blocked(P.x,P.z,g.y)){toast('ここには着地できません。R で近くの安全な場所へ移動できます',4);return;}
+  FLY.landing=g;}
+function flyNearest(){let best=null,bd=1e9;for(const id in NODES){const n=NODES[id];if(n.y>30||n.y<-1)continue;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<bd){bd=d;best=n;}}
+  if(best){FLY.on=false;FLY.landing=false;document.body.classList.remove('flying');teleport(best.x,best.y,best.z,P.yaw/DEG,0);toast(`近くの安全な場所へ移動：${best.label||'通路'}`,3);ui();}}
+function flyHome(){FLY.on=false;FLY.landing=false;document.body.classList.remove('flying');teleport(START.x,START.y,START.z,START.yaw,0.1);toast('開始地点へ戻りました',3);ui();}
+const _fv=new THREE.Vector3();
+function flyStep(dt){let f=0,s=0,u=0;if(keys.KeyW||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;if(keys.KeyD)s+=1;if(keys.KeyA)s-=1;if(keys.Space||flyBtn.up)u+=1;if(keys.KeyC||keys.KeyQ||keys.ControlLeft||flyBtn.down)u-=1;
+  if(keys.ArrowRight)P.yaw+=1.4*dt;if(keys.ArrowLeft)P.yaw-=1.4*dt;
+  if(joyId!=null){f-=joyV.y;s+=joyV.x;}
+  if(FLY.landing){const g=FLY.landing;const dy=g.y-P.y;FLY.v.set(0,clamp(dy*2,-12,-0.6),0);if(Math.abs(dy)<0.15){P.y=g.y;P.fname=g.name;camY=P.y;FLY.on=false;FLY.landing=false;document.body.classList.remove('flying');toast('着地しました（徒歩に戻りました）',3);ui();return;}
+    P.y=Math.max(g.y,P.y+FLY.v.y*dt);return;}
+  const sp=FLY_SP[FLY.mode]*((keys.ShiftLeft||keys.ShiftRight)?2:1);
+  const fx=Math.sin(P.yaw),fz=-Math.cos(P.yaw),rx=Math.cos(P.yaw),rz=Math.sin(P.yaw);
+  _fv.set((fx*f+rx*s)*sp,u*sp*0.7,(fz*f+rz*s)*sp);
+  FLY.v.lerp(_fv,1-Math.exp(-dt/0.35));                         // なめらかな加減速
+  const nx=P.x+FLY.v.x*dt,ny=clamp(P.y+FLY.v.y*dt,0,FLY_CEIL),nz=P.z+FLY.v.z*dt;
+  const ok=(x,y,z)=>!flyBlocked(x,y+P.eye,z)&&Math.hypot(x,z)<FLY_R;
+  if(ok(nx,ny,nz)){P.x=nx;P.y=ny;P.z=nz;}
+  else{let moved=false;if(ok(nx,P.y,P.z)){P.x=nx;moved=true;}else FLY.v.x=0;if(ok(P.x,P.y,nz)){P.z=nz;moved=true;}else FLY.v.z=0;if(ok(P.x,ny,P.z)){P.y=ny;}else FLY.v.y=0;
+    if(Math.hypot(nx,nz)>=FLY_R&&FLY.msgT<=0){toast(`探索範囲の境界です（タワーから ${FLY_R} m）`,2.5);FLY.msgT=3;}}
+  if(P.y>=FLY_CEIL-0.5&&FLY.msgT<=0){toast(`上限高度 ${FLY_CEIL} m です`,2.5);FLY.msgT=3;}
+  FLY.msgT-=dt;camY=P.y;
+  const g=groundBelow(P.x,P.z,P.y+0.5);FLY.alt=P.y+P.eye-(g?g.y:0);
+  const hs=Math.hypot(FLY.v.x,FLY.v.z,FLY.v.y);
+  if(frame%6===0){const b=((P.yaw/DEG)%360+360)%360,dr=Math.hypot(P.x,P.z);
+    flyHud.innerHTML=`<b>自由飛行</b>（${FLY_NAME[FLY.mode]}）<br>高度 <b>${FLY.alt.toFixed(0)} m</b>（地面から）・海抜の目安 ${(P.y+P.eye).toFixed(0)} m／上限 ${FLY_CEIL} m<br>速度 ${(hs*3.6).toFixed(0)} km/h ・ 方位 ${Math.round(b)}° ${dirName(b)}<br>境界まで ${Math.max(0,FLY_R-dr).toFixed(0)} m`;}
+  boundRing.visible=Math.hypot(P.x,P.z)>FLY_R-300;}
+// 境界の目印（境界に近づいたときだけ見える半透明の壁）
+const boundRing=(()=>{const g=new THREE.CylinderGeometry(FLY_R,FLY_R,FLY_CEIL,128,1,true);g.translate(0,FLY_CEIL/2,0);const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0x7fb2ff,transparent:true,opacity:0.12,side:THREE.DoubleSide,depthWrite:false}));m.visible=false;scene.add(m);return m;})();
+const flyHud=document.createElement('div');flyHud.id='flyHud';flyHud.className='plate';flyHud.hidden=true;document.body.appendChild(flyHud);
+const flyBtn={up:false,down:false};
+const flyPad=document.createElement('div');flyPad.id='flyPad';flyPad.innerHTML='<button class="plate tbtn" data-f="up" aria-label="上昇">▲</button><button class="plate tbtn" data-f="down" aria-label="下降">▼</button><button class="plate tbtn" data-f="spd">速度</button><button class="plate tbtn" data-f="near">近くへ</button><button class="plate tbtn" data-f="home">開始地点</button>';document.body.appendChild(flyPad);
+flyPad.querySelectorAll('button').forEach(b=>{const k=b.dataset.f;if(k==='up'||k==='down'){const on=e=>{e.preventDefault();flyBtn[k]=true;},off=()=>{flyBtn[k]=false;};b.addEventListener('touchstart',on,{passive:false});b.addEventListener('touchend',off);b.addEventListener('mousedown',on);b.addEventListener('mouseup',off);b.addEventListener('mouseleave',off);}
+  else b.onclick=()=>{if(k==='spd'){FLY.mode=(FLY.mode+1)%3;toast('速度：'+FLY_NAME[FLY.mode],1.5);}if(k==='near')flyNearest();if(k==='home')flyHome();};});
+const flyToggleBtn=document.createElement('button');flyToggleBtn.id='flyBtn';flyToggleBtn.className='plate tbtn';flyToggleBtn.textContent='飛行';flyToggleBtn.onclick=()=>flyToggle();document.body.appendChild(flyToggleBtn);
+function ui(){flyHud.hidden=!FLY.on;flyPad.hidden=!FLY.on;flyToggleBtn.textContent=FLY.on?'着地':'飛行';flyToggleBtn.setAttribute('aria-pressed',String(FLY.on));}
+ui();
+const flyCss=document.createElement('style');flyCss.textContent=`#flyHud{position:fixed;left:16px;bottom:84px;padding:10px 14px;font-size:13px;line-height:1.6;max-width:min(360px,calc(100vw - 32px));z-index:5}
+#flyPad{position:fixed;right:16px;bottom:150px;display:flex;flex-direction:column;gap:8px;z-index:5}#flyPad[hidden]{display:none}
+#flyPad button{min-width:64px;min-height:44px}#flyBtn{position:fixed;right:16px;bottom:96px;min-width:64px;min-height:44px;z-index:5}
+body.flying #prompt,body.flying #actBtn{display:none!important}`;document.head.appendChild(flyCss);
+
 /* ================= main loop ================= */
 let last=performance.now(),frame=0,envT=0,mapT=0,poiId=null;
 const poiEl=$('poi');
@@ -1780,7 +2099,8 @@ function tick(now){const dt=Math.min(0.05,(now-last)/1000);last=now;frame++;U.ti
   if(toastT>0){toastT-=dt;if(toastT<=0)toastEl.hidden=true;}if(boundT>0)boundT-=dt;
   const simT=performance.now()/1000,ph=phase(simT);
   let T=null;
-  if(started&&!elevating){
+  if(started&&FLY.on){flyStep(dt);updatePOI();}
+  else if(started&&!elevating){
     nearLinks=findLinks();T=updateGuide(dt);const ap=autopilot(dt,T);
     let f=ap[0],s=0;if(keys.KeyW||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;if(keys.KeyD)s+=1;if(keys.KeyA)s-=1;if(keys.ArrowRight)P.yaw+=1.6*dt;if(keys.ArrowLeft)P.yaw-=1.6*dt;
     if(joyId!=null){f-=joyV.y;s+=joyV.x;}const l=Math.hypot(f,s);if(l>1){f/=l;s/=l;}
@@ -1793,7 +2113,7 @@ function tick(now){const dt=Math.min(0.05,(now-last)/1000);last=now;frame++;U.ti
     updatePOI();
   }
   if(ELV){ELV.t+=dt;const k=clamp(ELV.t/ELV.dur,0,1),e=k*k*(3-2*k);$('elevAlt').textContent=altText(lerp(ELV.y0,ELV.y1,e));if(k>=1)finishLink();}
-  camY+=(P.y-camY)*Math.min(1,dt*12);if(Math.abs(P.y-camY)>6)camY=P.y;
+  if(!FLY.on){camY+=(P.y-camY)*Math.min(1,dt*12);if(Math.abs(P.y-camY)>6)camY=P.y;}
   camera.position.set(P.x,camY+P.eye+Math.sin(bob)*0.03,P.z);
   if(!started){P.yaw=330*DEG+Math.sin(now/1000*0.08)*0.1;}
   camera.rotation.set(P.pitch,-P.yaw,0);sky.position.copy(camera.position);
@@ -1834,7 +2154,7 @@ function boot(data){
 const hot=window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(()=>({P:{x:P.x,y:P.y,z:P.z,yaw:P.yaw,pitch:P.pitch,fname:P.fname,eye:P.eye,speed:P.speed},timeH,started}));
 hot&&hot.ready?hot.ready(boot):boot((hot&&hot.data)||{});
-window.__SKY={cam:camera,topView:(x,z,h,fov)=>{started=true;$('start').hidden=true;P.x=x;P.z=z;P.y=h;camY=h;P.pitch=-Math.PI/2+0.0001;P.yaw=0;fovH=fov;resize();P.fname='debug';},P,NODES,LINKS,floors,checkRoutes,teleport,floorAt,blocked,doLink,startGuide,setTime:t=>{timeH=t;timeIn.value=t;$('timeOut').textContent=fmtT(t);applyEnv();},setLight:m=>{lightMode=m;applyEnv();},setWeather:w=>{weather=w;applyEnv();},renderer,perfText,start:()=>go.click(),get started(){return started;},bldgCount,dbg:{grid,wallsG,gk,GRID},setFov:f=>{fovH=f;resize();},CARS,PEDS,along,MAT,scene};
+window.__SKY={cam:camera,topView:(x,z,h,fov)=>{started=true;$('start').hidden=true;P.x=x;P.z=z;P.y=h;camY=h;P.pitch=-Math.PI/2+0.0001;P.yaw=0;fovH=fov;resize();P.fname='debug';},P,NODES,LINKS,floors,checkRoutes,teleport,floorAt,blocked,doLink,startGuide,setTime:t=>{timeH=t;timeIn.value=t;$('timeOut').textContent=fmtT(t);applyEnv();},setLight:m=>{lightMode=m;applyEnv();},setWeather:w=>{weather=w;applyEnv();},renderer,perfText,start:()=>go.click(),get started(){return started;},bldgCount,dbg:{grid,wallsG,gk,GRID},setFov:f=>{fovH=f;resize();},CARS,PEDS,along,MAT,scene,carShowcase,FLY,flyToggle,flyStep,flyNearest,flyHome,keys,flySim:(n,dt)=>{for(let i=0;i<n;i++)flyStep(dt||0.05);return [P.x,P.y,P.z,FLY.alt,FLY.on];},setTimeH:t=>{timeH=t;applyEnv();}};
 })();
 </script>
 </body>

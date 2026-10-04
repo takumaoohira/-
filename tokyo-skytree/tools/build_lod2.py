@@ -59,6 +59,18 @@ for b in d:
             if k=='canopy': CAN.append((pg.buffer(0.6),h+0.3))
             TR.append({'h':h,'k':k,'p':[[round(p[0],2),round(p[2],2)] for p in P]})
         TOWN_TR=TR
+    # 壁の向きを外側にそろえる：面の中心から法線方向へ0.4m進んだ点が、その壁より高い屋根の下（＝建物の中）なら裏返す
+    try:
+        _fp=S.get('GroundSurface',[None])[0];_fp=Polygon([(p[0],p[2]) for p in _fp]).buffer(0) if _fp else Polygon(b['p']).buffer(0)
+    except Exception: _fp=None
+    _roofs=[]
+    for P in S.get('RoofSurface',[]):
+        try:_roofs.append((prep(Polygon([(p[0],p[2]) for p in P]).buffer(0.05)),min(p[1] for p in P)-y0))
+        except Exception: pass
+    _fpp=prep(_fp.buffer(0.05)) if _fp is not None and not _fp.is_empty else None
+    def _inside(x,z,ytop):
+        if _fpp is None or not _fpp.contains(Point(x,z)): return False
+        return any(rp.contains(Point(x,z)) and rh>=ytop-0.6 for rp,rh in _roofs) or not _roofs
     for k,L in (('RoofSurface',roofs),('WallSurface',walls)):
         for P in S.get(k,[]):
             if town:
@@ -85,13 +97,21 @@ for b in d:
                         c=sample(pg.representative_point().x,pg.representative_point().y); ss=[c] if c is not None else []
                     if ss: pc=np.median(np.array(ss),0)
                 except Exception: pc=None
+            if k=='WallSurface':
+                n=norm(P);hl=math.hypot(n[0],n[2])
+                if hl>1e-6:
+                    cx=sum(p[0] for p in P)/len(P);cz=sum(p[2] for p in P)/len(P);yt=max(p[1] for p in P)
+                    if _inside(cx+n[0]/hl*0.4,cz+n[2]/hl*0.4,yt) and not _inside(cx-n[0]/hl*0.4,cz-n[2]/hl*0.4,yt): P=P[::-1]
+            npoly=norm(P)
             for t in tri(P):
                 nn=np.cross(t[1]-t[0],t[2]-t[0])
                 if np.linalg.norm(nn)<1e-4: continue
-                if k=='RoofSurface' and nn[1]<0: t=t[::-1]
+                if k=='RoofSurface':
+                    if nn[1]<0: t=t[::-1]
+                elif np.dot(nn,npoly)<0: t=t[::-1]   # 三角形分割の向きを元の面の向きにそろえる
                 L.append((t,pc) if k=='RoofSurface' else t)
     if not roofs and not walls: continue
-    if r>1000 and not town:
+    if r>1450 and not town:
         lod1.append({'p':[[p[0],p[2]] for p in (S.get('GroundSurface') or [[[q[0],0,q[1]] for q in b['p']]])[0]],'h':max([p[1] for t,_ in roofs for p in t]+[p[1] for t in walls for p in t])}); continue
     # footprint（当たり判定用）
     fp=S.get('GroundSurface',[None])[0]

@@ -22,6 +22,16 @@ _n0=len(plat)
 plat=[b for b in plat if b['id']=='13107-bldg-19558' or not _cov.contains(Polygon(b['p']).representative_point() if len(b['p'])>2 else Point(0,0))]
 print('2020 kept',len(plat),'of',_n0)
 plat+= [{'id':'p25','p':b['p'],'h':b['h']} for b in json.load(open('p25_lod1.json'))['lod1'] if b['h'] and b['h']>0 and len(b['p'])>2]
+# 専用に作る建物（アサヒビールタワー・スーパードライホール）は汎用の箱から外す
+SPECIAL={'asahi_tower':(-900.5,-6.0),'superdry':(-935.8,29.9)}
+SPEC={}
+def _cen(p):return (sum(q[0] for q in p)/len(p),sum(q[1] for q in p)/len(p))
+_keep=[]
+for b in plat:
+    c=_cen(b['p']);hit=[k for k,v in SPECIAL.items() if math.hypot(c[0]-v[0],c[1]-v[1])<7 and b.get('h',0)>40]
+    if hit: SPEC[hit[0]]={'p':[[round(x,2),round(z,2)] for x,z in b['p']],'h':b['h']}
+    else: _keep.append(b)
+plat=_keep;print('special',list(SPEC))
 TOWN=[b for b in plat if b['id']=='13107-bldg-19558'][0]
 TOWNP=Polygon(TOWN['p']).buffer(0)
 NEAR_R=1550
@@ -120,7 +130,7 @@ wn=unary_union([Polygon(p[0],p[1:]) for p in WN])
 wp=prep(wn)
 bridges=[]
 for r in roads:
-    if r['lv']>0: continue
+    if r['lv']>1 or (r['lv']==1 and r['r']==3): continue   # 一般道の橋（吾妻橋など、高さの区分1）も含める
     L=LineString(r['l'])
     if not wp.intersects(L): continue
     I=L.intersection(wn)
@@ -183,6 +193,16 @@ for i,r in enumerate(maj):
 print('chains',len(chains))
 labels=[{'n':f['p'].get('knj'),'c':f['p'].get('annoCtg'),'x':f['g'][0],'z':f['g'][1]} for f in g16['label'] if f['t']=='Point' and f['p'].get('knj') and abs(f['g'][0])<1700 and abs(f['g'][1])<1700]
 world={'chains':chains,'labels':labels,'water':WN,'waterFar':WF,'rails':rails,'roads':[r for r in roads if r['r']>=2],'bridges':bridges,'trees':trees,'town':[[round(x,1),round(z,1)] for x,z in TOWNP.exterior.coords[:-1]],'aerial':meta}
+world['special']=SPEC
+# スカイツリー周辺〜吾妻橋の徒歩経路（道路中心線の最短経路。tools/route_asahi_path.json）
+import os
+if os.path.exists('route_asahi.json'):
+    _r=json.load(open('route_asahi.json'));_P=_r['path'];_W=_r['w'];_o=[_P[0]];_acc=0
+    for i in range(1,len(_P)):
+        _acc+=math.hypot(_P[i][0]-_P[i-1][0],_P[i][1]-_P[i-1][1])
+        if _acc>=22 or i==len(_P)-1:_o.append([round(_P[i][0],1),round(_P[i][1],1)]);_acc=0
+    _ws=[_W[min(min(range(len(_P)),key=lambda k:math.hypot(_P[k][0]-q[0],_P[k][1]-q[1])),len(_W)-1)] for q in _o]
+    world['routeAsahi']={'l':_o,'w':_ws}
 json.dump(world,open(OUT+'world.json','w'),separators=(',',':'))
 import os
 for f in os.listdir(OUT): print(f,os.path.getsize(OUT+f))
