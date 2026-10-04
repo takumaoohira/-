@@ -2129,7 +2129,7 @@ function flyBlocked(x,y,z){if(y<1.0)return true;const r=Math.hypot(x,z);if(r<tow
 function groundBelow(x,z,y){let best=null,name='ground';const g=groundAt(x,z);if(g!=null&&g<=y)best=g;
   for(const f of floors){const b=f.b;if(x<b[0]||x>b[2]||z<b[1]||z>b[3])continue;const h=f.h(x,z);if(h==null||h>y+0.01)continue;if(best==null||h>best){best=h;name=f.name;}}
   return best==null?null:{y:best,name};}
-function flyToggle(){if(!started)return;if(!FLY.on){FLY.on=true;FLY.v.set(0,0,0);P.y=P.y+0.0;FLY.alt=0;document.body.classList.add('flying');toast('自由飛行：Space 上昇／C 下降／1・2・3 速度／F 着地',4);ui();return;}
+function flyToggle(){if(!started)return;if(!FLY.on){FLY.on=true;FLY.v.set(0,0,0);flyHud.innerHTML='<b>自由飛行</b>（'+FLY_NAME[FLY.mode]+'）';P.y=P.y+0.0;FLY.alt=0;document.body.classList.add('flying');toast(isTouch?'自由飛行：右の▲▼で上昇・下降、スティックで移動、「速度」で切替、「着地」で降ります':'自由飛行：Space 上昇／C 下降／1・2・3 速度／F 着地',4);ui();return;}
   // 着地：真下に安全な床があるか確かめてから降りる
   const g=groundBelow(P.x,P.z,P.y+0.5);if(!g||blocked(P.x,P.z,g.y)){toast('ここには着地できません。R で近くの安全な場所へ移動できます',4);return;}
   FLY.landing=g;}
@@ -2170,7 +2170,8 @@ function ui(){flyHud.hidden=!FLY.on;flyPad.hidden=!FLY.on;flyToggleBtn.textConte
 ui();
 const flyCss=document.createElement('style');flyCss.textContent=`#flyHud{position:fixed;left:16px;bottom:84px;padding:10px 14px;font-size:13px;line-height:1.6;max-width:min(360px,calc(100vw - 32px));z-index:5}
 #flyPad{position:fixed;right:16px;bottom:150px;display:flex;flex-direction:column;gap:8px;z-index:5}#flyPad[hidden]{display:none}
-#flyPad button{min-width:64px;min-height:44px}#flyBtn{position:fixed;right:16px;bottom:96px;min-width:64px;min-height:44px;z-index:5}
+#flyPad button,#flyPad .tbtn{position:static!important;min-width:64px;min-height:44px;transform:none!important}
+body.touch #flyHud{bottom:auto;top:200px;font-size:12px;padding:8px 10px}body.touch #flyPad{bottom:240px}#flyBtn{position:fixed;right:16px;bottom:96px;min-width:64px;min-height:44px;z-index:5}
 body.flying #prompt,body.flying #actBtn{display:none!important}`;document.head.appendChild(flyCss);
 
 /* ================= main loop ================= */
