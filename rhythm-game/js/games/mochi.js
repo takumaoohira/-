@@ -32,7 +32,7 @@
       { p: 'rest', sec: 'I', guide: 'トン・トン・ペタン／トン・カッカッ・ペタペタ' },
       ...'ABABBA'.split('').map(p => ({ p, sec: 'A' })),
       ...'BBABBB'.split('').map((p, i) => ({ p, sec: 'B', guide: i === 0 ? '2連続ラッシュ！' : null })),
-      ...'ABBABBAB'.split('').map((p, i) => ({ p, sec: 'C', guide: i === 0 ? 'ラスト！' : null })),
+      ...'ABBABBABBA'.split('').map((p, i) => ({ p, sec: 'C', guide: i === 0 ? 'ラスト！' : null })),
       { p: 'fin', sec: 'end', guide: 'おもち、できあがり！' }
     ]
   };

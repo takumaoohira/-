@@ -112,8 +112,10 @@ RG.Chart = class Chart {
   validate() {
     const problems = [];
     const real = this.inputs.slice().sort((a, b) => a.time - b.time);
+    // 隣どうしの Good 判定の範囲（±goodMs）が重ならないこと
+    const minGap = 2 * RG.CONFIG.judge.goodMs / 1000 + 0.01;
     for (let i = 1; i < real.length; i++) {
-      if (real[i].time - real[i - 1].time < 0.24) problems.push(`入力が近すぎます: ${real[i - 1].beat}拍 と ${real[i].beat}拍`);
+      if (real[i].time - real[i - 1].time < minGap) problems.push(`入力が近すぎます: ${real[i - 1].beat}拍 と ${real[i].beat}拍`);
     }
     if (this.game.validate) problems.push(...this.game.validate(this));
     return problems;

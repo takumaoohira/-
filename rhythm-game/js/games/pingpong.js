@@ -48,7 +48,7 @@
       { p: 'rest', sec: 'I', guide: 'コン=1拍 / パシッ=半拍 / ポワーン=2拍' },
       ...seq('N S O S L SN', 'A'),
       ...seq('SS O LS SS O N', 'B', '裏拍ラリー＆スマッシュ連打！'),
-      ...seq('SS LS O SS SN LS O SS', 'C', 'ラスト！'),
+      ...seq('SS LS O SS SN LS O SS N SS', 'C', 'ラスト！'),
       { p: 'fin', sec: 'end', guide: 'ゲームセット！' }
     ]
   };
