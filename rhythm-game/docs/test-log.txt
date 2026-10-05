@@ -1,0 +1,38 @@
+✔ mochi: 曲の最後まで時計の誤差が小さい（<4ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.7267842939011078,"songTime":55.38777082288512}
+✔ mochi: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":27,"good":0,"miss":0,"extra":0,"combo":27,"total":27,"advice":["タイミングがとても安定しています！"]}
+✔ penguin: 曲の最後まで時計の誤差が小さい（<4ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.773932994854511,"songTime":57.612247796188754}
+✔ penguin: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":24,"good":0,"miss":0,"extra":0,"combo":24,"total":24,"advice":["タイミングがとても安定しています！"]}
+✔ echo: 曲の最後まで時計の誤差が小さい（<4ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":0.6384506705838788,"songTime":62.50523898415676}
+✔ echo: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"]}
+✔ mochi: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":27,"good":0,"miss":0,"extra":0,"combo":27,"total":27,"advice":["タイミングがとても安定しています！"]}
+✔ penguin: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":24,"good":0,"miss":0,"extra":0,"combo":24,"total":24,"advice":["タイミングがとても安定しています！"]}
+✔ echo: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"]}
+✔ mochi: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":27,"miss":0,"extra":0,"combo":27,"total":27,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
+✔ penguin: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":24,"miss":0,"extra":0,"combo":24,"total":24,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
+✔ echo: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":32,"miss":0,"extra":0,"combo":32,"total":32,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
+✔ mochi: 主スレッドが定期的に250ms止まっても判定がずれない  {"score":100,"rank":"大成功！","perfect":27,"good":0,"miss":0,"extra":0,"combo":27,"total":27,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":18.44381107011711,"songTime":55.40007634259271}}
+✔ penguin: 主スレッドが定期的に250ms止まっても判定がずれない  {"score":100,"rank":"大成功！","perfect":24,"good":0,"miss":0,"extra":0,"combo":24,"total":24,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":19.503174535534296,"songTime":57.86112268204573}}
+penguin errors: []
+✔ echo: 主スレッドが定期的に250ms止まっても判定がずれない  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":6.6061268610525525,"songTime":62.50363689393646}}
+echo errors: []
+✔ mochi: 入力なし → 0点・全Miss  {"score":0,"rank":"もう一度！","perfect":0,"good":0,"miss":27,"extra":0,"combo":0,"total":27,"advice":["押し忘れが多めです。合図のあとの拍を心の中で数えてみよう"]}
+✔ mochi: 60msごとの連打 → 0点  {"score":0,"rank":"もう一度！","perfect":0,"good":8,"miss":19,"extra":711,"combo":1,"total":27,"advice":["少し早めに押す傾向があります（平均 115ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください","合図のないところで押しています。押すのは決まった拍だけ！"]}
+✔ mochi: 250msごとの連打 → 高得点にならない(<40)  {"score":0,"rank":"もう一度！","perfect":9,"good":12,"miss":6,"extra":157,"combo":2,"total":27,"advice":["平均はぴったり。合図の音をよく聴くと、さらにそろいます","合図のないところで押しています。押すのは決まった拍だけ！"]}
+mochi errors: []
+✔ 開始ボタンの連打（3回同時）→ 動くセッションは1つ  running=1
+✔ 再挑戦を6回連続 → 入力は1回につき1件・旧セッションの音は停止  {"sources":3,"logAdded":1,"connected":true}
+✘ Spaceキーの長押し → 入力は1回だけ  0
+✔ 画面タップ（タッチ） → 入力は1回だけ（click等と重複しない）  1
+✔ 一時停止ボタン → 判定に入らず一時停止
+✔ バックグラウンドで中断 → 再開で最初（カウント）から  {"intr":{"overlay":true,"session":false,"title":"中断しました"},"resumed":{"t":0.059622072244797764,"running":true}}
+retry errors: []
+✔ mochi: 練習を最後まで（1回目は失敗）→ 練習完了・保存  {"practiced":true,"title":"練習クリア！"}
+mochi practice errors: []
+✔ penguin: 練習を最後まで（1回目は失敗）→ 練習完了・保存  {"practiced":true,"title":"練習クリア！"}
+penguin practice errors: []
+✔ echo: 練習を最後まで（1回目は失敗）→ 練習完了・保存  {"practiced":true,"title":"練習クリア！"}
+echo practice errors: []
+✔ 再読み込み後も設定と記録が残る  {"off":42,"best":77}
+
+27/28 passed
+EXIT 1

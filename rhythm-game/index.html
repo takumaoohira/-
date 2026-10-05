@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fff4dd">
+<meta name="description" content="音を聴いてタップするだけのリズムミニゲーム集">
+<title>リズムびより</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- タイトル -->
+  <section id="screen-title" class="screen active" aria-label="タイトル">
+    <div class="title-wrap">
+      <canvas id="title-canvas" class="title-canvas" aria-hidden="true"></canvas>
+      <h1 class="logo">リズム<span>びより</span></h1>
+      <p class="tagline">聴いて、数えて、ポンとタップ。</p>
+      <button id="btn-start" class="btn big primary">タップしてはじめる</button>
+      <p class="note">音が出ます。音量にご注意ください。<br>イヤホン推奨（Bluetoothは遅れることがあります）</p>
+    </div>
+  </section>
+
+  <!-- ミニゲーム選択 -->
+  <section id="screen-select" class="screen" aria-label="ミニゲーム選択">
+    <header class="menu-head"><h2>ミニゲームをえらぶ</h2></header>
+    <div id="game-list" class="game-list"></div>
+    <div id="overlay-first" class="overlay" hidden>
+      <div class="panel">
+        <h3>はじめてのミニゲーム</h3>
+        <p class="small">新しい合図のリズムを、先に練習しておくのがおすすめです。<br>（お手本を聴いてまねするだけ・数十秒）</p>
+        <button id="btn-first-practice" class="btn primary">練習してから遊ぶ</button>
+        <button id="btn-first-main" class="btn ghost">練習せずに本編へ</button>
+      </div>
+    </div>
+    <footer class="menu-foot">
+      <button id="btn-to-settings" class="btn">⚙ 設定・タイミング調整</button>
+      <button id="btn-to-title" class="btn ghost">タイトルへ</button>
+    </footer>
+  </section>
+
+  <!-- プレイ画面 -->
+  <section id="screen-play" class="screen" aria-label="プレイ画面">
+    <header id="play-top">
+      <button id="btn-pause" class="corner-btn" aria-label="一時停止">Ⅱ</button>
+      <div id="guide" class="guide"></div>
+      <button id="btn-skip" class="corner-btn skip" aria-label="練習をスキップ">スキップ</button>
+    </header>
+    <div id="stage"><canvas id="cv"></canvas></div>
+    <footer id="play-bottom">
+      <div id="feedback" class="feedback"></div>
+      <div id="sub-info" class="sub-info"></div>
+    </footer>
+    <pre id="debug" class="debug" hidden></pre>
+
+    <div id="overlay-pause" class="overlay" hidden>
+      <div class="panel">
+        <h3 id="pause-title">一時停止</h3>
+        <p id="pause-msg" class="small"></p>
+        <button id="btn-restart" class="btn primary">最初から（カウント付き）</button>
+        <button id="btn-next-lesson" class="btn" hidden>次の課題へ</button>
+        <button id="btn-quit" class="btn ghost">選択画面へ</button>
+      </div>
+    </div>
+    <div id="overlay-loading" class="overlay" hidden><div class="panel"><p>じゅんび中…</p></div></div>
+  </section>
+
+  <!-- 結果 -->
+  <section id="screen-result" class="screen" aria-label="結果">
+    <div class="result-wrap">
+      <p id="res-game" class="res-game"></p>
+      <div class="res-score"><span id="res-score">0</span><small>点</small></div>
+      <p id="res-rank" class="res-rank"></p>
+      <p id="res-best" class="res-best"></p>
+      <table class="res-table">
+        <tr><th>Perfect</th><td id="res-perfect"></td><th>Good</th><td id="res-good"></td></tr>
+        <tr><th>Miss</th><td id="res-miss"></td><th>余分な入力</th><td id="res-extra"></td></tr>
+        <tr><th>最大コンボ</th><td id="res-combo"></td><th>判定数</th><td id="res-total"></td></tr>
+      </table>
+      <ul id="res-advice" class="res-advice"></ul>
+      <div class="res-buttons">
+        <button id="btn-retry" class="btn big primary">もう一度</button>
+        <button id="btn-res-select" class="btn">選択画面へ</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 練習完了 -->
+  <section id="screen-practice-done" class="screen" aria-label="練習完了">
+    <div class="result-wrap">
+      <p id="pd-game" class="res-game"></p>
+      <p class="res-rank" id="pd-title">練習クリア！</p>
+      <p id="pd-msg" class="small center"></p>
+      <div class="res-buttons">
+        <button id="btn-pd-main" class="btn big primary">本編へ</button>
+        <button id="btn-pd-again" class="btn">もう一度練習</button>
+        <button id="btn-pd-select" class="btn ghost">選択画面へ</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 設定 -->
+  <section id="screen-settings" class="screen scroll" aria-label="設定">
+    <header class="menu-head"><h2>設定</h2></header>
+    <div class="settings">
+      <h3>音量</h3>
+      <label class="row">全体<input type="range" id="vol-master" min="0" max="100"><output></output></label>
+      <label class="row">BGM<input type="range" id="vol-bgm" min="0" max="100"><output></output></label>
+      <label class="row">合図<input type="range" id="vol-cue" min="0" max="100"><output></output></label>
+      <label class="row">効果音<input type="range" id="vol-sfx" min="0" max="100"><output></output></label>
+      <button id="btn-vol-test" class="btn small">音を確かめる</button>
+
+      <h3>タイミング調整</h3>
+      <p class="small">合図に合わせて押しているのに「早い」「遅い」と出るときに使います。<br>
+        イヤホン・スピーカー・Bluetooth機器を変えたら、調整し直してください。</p>
+      <div class="offset-box">
+        <div class="offset-label">入力の補正 <b id="in-offset-val">0</b> ms</div>
+        <div class="offset-ctrl">
+          <button class="btn small" data-adj="in" data-d="-10">−10</button>
+          <button class="btn small" data-adj="in" data-d="-1">−1</button>
+          <button class="btn small" data-adj="in" data-d="1">＋1</button>
+          <button class="btn small" data-adj="in" data-d="10">＋10</button>
+        </div>
+        <p class="small hint">・音より<b>遅れて</b>押してしまう → ＋（プラス）へ<br>・音より<b>先に</b>押してしまう → −（マイナス）へ</p>
+      </div>
+      <div class="offset-box">
+        <div class="offset-label">映像の補正 <b id="vis-offset-val">0</b> ms</div>
+        <div class="offset-ctrl">
+          <button class="btn small" data-adj="vis" data-d="-10">−10</button>
+          <button class="btn small" data-adj="vis" data-d="-1">−1</button>
+          <button class="btn small" data-adj="vis" data-d="1">＋1</button>
+          <button class="btn small" data-adj="vis" data-d="10">＋10</button>
+        </div>
+        <p class="small hint">判定には影響しません。キャラクターの動きと音がずれて見えるときだけ使います。<br>・動きが音より<b>先に</b>見える → ＋（映像を遅らせる）</p>
+      </div>
+      <button id="btn-calib" class="btn primary">タップで自動調整する</button>
+      <button id="btn-offset-reset" class="btn small ghost">補正を初期値（0）に戻す</button>
+
+      <h3>演出</h3>
+      <label class="row check"><input type="checkbox" id="opt-vibe"> 成功時に振動する（対応端末のみ）</label>
+      <label class="row check"><input type="checkbox" id="opt-shake"> 画面の揺れ演出</label>
+
+      <details class="dev">
+        <summary>開発者向け</summary>
+        <label class="row check"><input type="checkbox" id="opt-debug"> 確認用の表示（時刻・判定ログ）</label>
+        <label class="row">Perfect幅 ±<input type="number" id="judge-perfect" min="10" max="150" step="5"> ms</label>
+        <label class="row">Good幅 ±<input type="number" id="judge-good" min="20" max="200" step="5"> ms</label>
+        <label class="row">余分な入力の減点<input type="number" id="judge-extra" min="0" max="10" step="0.5"> 点</label>
+        <button id="btn-judge-reset" class="btn small ghost">判定設定を初期値に戻す</button>
+        <button id="btn-reset-records" class="btn small ghost">記録をすべて消す</button>
+        <p class="small" id="audio-info"></p>
+      </details>
+    </div>
+    <footer class="menu-foot"><button id="btn-settings-back" class="btn">もどる</button></footer>
+  </section>
+
+  <!-- タイミング自動調整 -->
+  <section id="screen-calib" class="screen" aria-label="タイミング調整">
+    <header class="menu-head"><h2 id="calib-title">タイミング調整</h2></header>
+    <div class="calib-wrap">
+      <p id="calib-msg" class="calib-msg"></p>
+      <canvas id="calib-canvas"></canvas>
+      <p id="calib-result" class="calib-result"></p>
+      <div class="calib-buttons">
+        <button id="btn-calib-start" class="btn primary">スタート</button>
+        <button id="btn-calib-apply" class="btn primary" hidden>この値にする</button>
+        <button id="btn-calib-visual" class="btn" hidden>映像のずれを確かめる</button>
+        <div id="calib-vis-ctrl" class="offset-ctrl" hidden>
+          <button class="btn small" data-vadj="-10">−10</button>
+          <button class="btn small" data-vadj="10">＋10</button>
+        </div>
+        <button id="btn-calib-back" class="btn ghost">設定へもどる</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" hidden></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/synth.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/music.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/judge.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/games/mochi.js"></script>
+<script src="js/games/penguin.js"></script>
+<script src="js/games/echo.js"></script>
+<script src="js/session.js"></script>
+<script src="js/calib.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
