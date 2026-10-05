@@ -69,33 +69,25 @@
 
   function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
   function music(info, chart) {
-    const spb = chart.spb, ch = info.chord, sec = info.sec;
-    const ev = [];
-    if (sec === 'count') return ev;
-    if (sec === 'end') {
-      M.strum('G', 0, 'guitar', 0.6, 0.04, 2.4).forEach(e => ev.push(e));
-      ev.push({ b: 0, id: 'bass:G2:2', gain: 1 }, { b: 0, id: 'flute:G5:1.6', gain: 0.8 }, { b: 0, id: 'kick', gain: 0.9 });
-      return ev;
-    }
-    M.strum(ch, 0, 'guitar', 0.45, 0.04, 1.6).forEach(e => ev.push(e));
-    M.strum(ch, 2, 'guitar', 0.3, 0.04, 1.2).forEach(e => ev.push(e));
-    ev.push({ b: 0, id: `bass:${M.root(ch, 2)}:1.2`, gain: 0.9 });
-    ev.push(...M.rhythm('..o...o...o...o.', 'shaker', 0.5));
-    if (sec === 'C') ev.push(...M.rhythm('x.......x.......', 'kick', 0.5));
+    const spb = chart.spb, sec = info.sec;
+    if (sec === 'count') return [];
+    if (sec === 'end') return RG.Band.ending('G').concat([{ b: 0, id: 'flute:G5:1.6', gain: 0.7, rev: 0.4 }]);
+    const ev = RG.Band.bar(info, chart, { style: 'folk', chord: info.chord, drums: 0.9, comp: 1, pad: sec === 'C' ? 0.3 : 0.18, bass: 0.9 });
     // 笛：長くのばす音だけ（リズムの邪魔をしない）。聴く小節だけで鳴らす
-    if (info.secBar % 2 === 0 && sec !== 'I') ev.push({ b: 0, id: `flute:${FL[ch] || 'D5'}:${(spb * 3.5).toFixed(1)}`, gain: 0.35 });
+    if (info.secBar % 2 === 0 && sec !== 'I') ev.push({ b: 0, id: `flute:${FL[info.chord] || 'D5'}:${(spb * 3.5).toFixed(1)}`, gain: 0.35, pan: 0.3, rev: 0.35 });
     return ev;
   }
+
   function hitSounds(tg, kind, chart) {
     const bar = chart.barAt(tg.beat);
-    const ch = M.chord(bar && bar.chord ? bar.chord : 'G');
+    const ch = RG.Band.chord(bar && bar.chord ? bar.chord : 'G').notes;
     const s = [{ id: 'tan', gain: 0.9 }, { id: `marimba:${up(ch[tg.k % 3])}:0.6`, gain: 0.45 }];
     if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.35 });
     return s;
   }
   function preload() {
     const ids = ['tan', 'pon', 'tickLo', 'tickHi', 'kazoo', 'sparkle', 'chime', 'boom'];
-    Object.values(M.CHORDS).forEach(c => c.forEach(n => ids.push(`marimba:${up(n)}:0.6`)));
+    Object.values(PROG).flat().forEach(nm => RG.Band.chord(nm).notes.forEach(n => ids.push(`marimba:${up(n)}:0.6`)));
     return ids;
   }
 
@@ -328,6 +320,12 @@
     level: 2, patterns, main, hard, lessons, finalePattern: 'fin',
     cueSounds: { pon: { id: 'pon', gain: 1 }, tickL: { id: 'tickLo', gain: 0.55 }, tickR: { id: 'tickHi', gain: 0.6 }, fin: [{ id: 'boom', gain: 0.6 }, { id: 'chime', gain: 0.8 }] },
     missSound: 'kazoo',
+    anchors: { lady: { x: 100, y: 268 }, crowd: { x: 290, y: 110 } },
+    quips: {
+      miss: [{ id: 'voice:lady:アレレ？', say: 'アレレ？', who: 'lady' }, { id: 'voice:lady:ドンマイ', say: 'ドンマイ', who: 'lady' }],
+      combo: [{ id: 'voice:lady:ステキ！', say: 'ステキ！', who: 'lady' }, { id: 'voice:crowd:ブラボー！', say: 'ブラボー！', who: 'crowd' }],
+      extra: [{ id: 'voice:lady:シーッ', say: 'シーッ', who: 'lady' }]
+    },
     chordFor, music, hitSounds, preload, createScene, drawIcon
   };
 })();

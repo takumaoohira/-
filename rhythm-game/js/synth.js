@@ -274,15 +274,120 @@ RG.Synth = (function () {
       }
       return fadeEdges(a, sr, 1, 60);
     },
-    whiff(sr) { const a = buf(sr, 0.3); noise(a, sr, 0.3, 10, 2500, 500, 0.08); return fadeEdges(a, sr); }
+    whiff(sr) { const a = buf(sr, 0.3); noise(a, sr, 0.3, 10, 2500, 500, 0.08); return fadeEdges(a, sr); },
+
+    // ---- 高品質BGM用（第3版） ----
+    ep(sr, n, d) { // FM のエレクトリックピアノ（ローズ風）
+      const f = freq(n), dur = d || 1.2, a = buf(sr, dur + 0.3);
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr, idx = 0.4 + 2.2 * Math.exp(-t * 6);
+        const env = Math.min(1, t / 0.003) * Math.exp(-t * 1.4) * (t > dur ? Math.max(0, 1 - (t - dur) / 0.3) : 1);
+        const tine = 0.12 * Math.sin(TAU * f * 7.1 * t) * Math.exp(-t * 30);
+        a[i] = 0.3 * env * (Math.sin(TAU * f * t + idx * Math.sin(TAU * f * t)) + tine) * (1 + 0.08 * Math.sin(TAU * 4.5 * t));
+      }
+      return fadeEdges(a, sr, 1, 20);
+    },
+    organ(sr, n, d) {
+      const f = freq(n), dur = d || 0.8, a = buf(sr, dur + 0.08);
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr, ph = TAU * f * t;
+        const env = Math.min(1, t / 0.008) * (t > dur ? Math.max(0, 1 - (t - dur) / 0.08) : 1);
+        const perc = 0.35 * Math.exp(-t * 9) * Math.sin(3 * ph);
+        a[i] = 0.16 * env * (Math.sin(ph) + 0.8 * Math.sin(2 * ph) + 0.5 * Math.sin(4 * ph) + 0.25 * Math.sin(8 * ph) + perc) * (1 + 0.12 * Math.sin(TAU * 6.3 * t));
+      }
+      return fadeEdges(a, sr);
+    },
+    str(sr, ns, d) { // スーパーソウのストリングス（和音）
+      const notes = ns.split(',').map(freq), dur = d || 2, rel = 0.5, a = buf(sr, dur + rel);
+      const dets = [-0.012, -0.005, 0, 0.006, 0.013];
+      notes.forEach(f => dets.forEach((dt, j) => {
+        let ph = (j * 0.37) % 1;
+        for (let i = 0; i < a.length; i++) {
+          const t = i / sr; ph += f * (1 + dt) / sr; ph -= Math.floor(ph);
+          const env = Math.min(1, t / 0.18) * (t > dur ? Math.max(0, 1 - (t - dur) / rel) : 1);
+          a[i] += env * 0.022 * (2 * ph - 1);
+        }
+      }));
+      let y1 = 0, y2 = 0; const c = coef(2400, sr);
+      for (let i = 0; i < a.length; i++) { y1 += c * (a[i] - y1); y2 += c * (y1 - y2); a[i] = y2; }
+      return fadeEdges(a, sr);
+    },
+    lead(sr, n, d) { // リードシンセ（ノコギリ＋矩形、フィルターが開いて閉じる）
+      const f = freq(n), dur = d || 0.5, a = buf(sr, dur + 0.12);
+      let p1 = 0, p2 = 0, y = 0;
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr, vib = 1 + 0.006 * Math.sin(TAU * 5.5 * t) * Math.min(1, Math.max(0, t - 0.12) / 0.2);
+        p1 += f * vib * 1.003 / sr; p1 -= Math.floor(p1); p2 += f * vib * 0.997 / sr; p2 -= Math.floor(p2);
+        const x = (2 * p1 - 1) * 0.6 + (p2 < 0.5 ? 0.4 : -0.4);
+        y += coef(900 + 3200 * Math.exp(-t * 7), sr) * (x - y);
+        const env = Math.min(1, t / 0.01) * (t > dur ? Math.max(0, 1 - (t - dur) / 0.12) : 1) * (0.8 + 0.2 * Math.exp(-t * 5));
+        a[i] = 0.2 * y * env;
+      }
+      return fadeEdges(a, sr);
+    },
+    synb(sr, n, d) { // シンセベース
+      const f = freq(n), dur = d || 0.3, a = buf(sr, dur + 0.05);
+      let p = 0, y = 0, y2 = 0;
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr; p += f / sr; p -= Math.floor(p);
+        const c = coef(250 + 1600 * Math.exp(-t * 14), sr);
+        y += c * ((2 * p - 1) - y); y2 += c * (y - y2);
+        const env = Math.min(1, t / 0.004) * (t > dur ? Math.max(0, 1 - (t - dur) / 0.05) : 1);
+        a[i] = env * (0.32 * y2 * 1.6 + 0.3 * Math.sin(TAU * f * t));
+      }
+      return fadeEdges(a, sr);
+    },
+    mute(sr, n, d) { return ks(sr, freq(n), d || 0.14, 0.95, 0.9, 0.5); }, // ミュートしたギターの「チャカ」
+    gtr(sr, n, d) { return ks(sr, freq(n), d || 1.2, 0.55, 0.996, 0.42); },
+    kick2(sr) { const a = buf(sr, 0.45); sweep(a, sr, 160, 48, 32, 0.85, 7); tone(a, sr, 48, 0.25, 5); noise(a, sr, 0.3, 300, 5000, 800); return fadeEdges(a, sr); },
+    snare2(sr) { const a = buf(sr, 0.3); sweep(a, sr, 260, 185, 35, 0.32, 18); tone(a, sr, 330, 0.12, 25); noise(a, sr, 0.5, 13, 9000, 1200); noise(a, sr, 0.25, 40, 4000, 300); return fadeEdges(a, sr); },
+    hh2(sr, n, d) { // 金属的なハイハット（矩形波6本＋ハイパス）
+      const len = d || 0.06, a = buf(sr, len + 0.02), fs = [205.3, 304.4, 369.6, 522.7, 540, 800];
+      let y = 0; const c = coef(7000, sr);
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr; let x = 0;
+        fs.forEach(f => { x += Math.sin(TAU * f * 1.9 * t) > 0 ? 1 : -1; });
+        y += c * (x - y);
+        a[i] = 0.07 * (x - y) * Math.exp(-t * (len > 0.1 ? 9 : 55));
+      }
+      noise(a, sr, 0.12, len > 0.1 ? 9 : 60, 0, 8000);
+      return fadeEdges(a, sr);
+    },
+    crash(sr) { const a = buf(sr, 1.8); noise(a, sr, 0.35, 2.4, 0, 4000); noise(a, sr, 0.2, 6, 9000, 2500); return fadeEdges(a, sr, 1, 80); },
+    tom(sr, n) { const f = freq(n || 'G2'), a = buf(sr, 0.4); sweep(a, sr, f * 1.6, f, 18, 0.7, 9); noise(a, sr, 0.15, 60, 3000, 200); return fadeEdges(a, sr); },
+    rise(sr, n, d) { const dur = d || 1, a = buf(sr, dur); let y = 0; for (let i = 0; i < a.length; i++) { const t = i / sr; y += coef(400 + 7000 * (t / dur) ** 2, sr) * (rnd() - y); a[i] = 0.3 * y * (t / dur) ** 2; } return fadeEdges(a, sr, 1, 10); },
+    snap(sr) { const a = buf(sr, 0.12); noise(a, sr, 0.5, 70, 6000, 1500); tone(a, sr, 1900, 0.15, 60); return fadeEdges(a, sr); },
+    tamb(sr) { const a = buf(sr, 0.2); noise(a, sr, 0.28, 18, 14000, 7000); tone(a, sr, 5200, 0.05, 30); return fadeEdges(a, sr); },
+    splat(sr) { const a = buf(sr, 0.4); noise(a, sr, 0.6, 16, 1800, 100, 0.004); sweep(a, sr, 220, 70, 20, 0.4, 14); return fadeEdges(a, sr); },
+    boing(sr) { const a = buf(sr, 0.5); let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr, f = 180 + 120 * Math.sin(TAU * 9 * t) * Math.exp(-t * 5) + 160 * t; ph += TAU * f / sr; a[i] = 0.35 * Math.sin(ph) * Math.exp(-t * 5); } return fadeEdges(a, sr); },
+    zap(sr) { const a = buf(sr, 0.25); let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr, f = 2400 * Math.exp(-t * 18) + 200; ph += TAU * f / sr; a[i] = 0.3 * (Math.sin(ph) > 0 ? 1 : -1) * Math.exp(-t * 10); } let y = 0; const c = coef(5000, sr); for (let i = 0; i < a.length; i++) { y += c * (a[i] - y); a[i] = y; } return fadeEdges(a, sr); },
+    rope(sr) { const a = buf(sr, 0.09); noise(a, sr, 0.6, 50, 3500, 300); tone(a, sr, 180, 0.3, 40); return fadeEdges(a, sr); },
+    whoosh(sr) { const a = buf(sr, 0.35); let y = 0; for (let i = 0; i < a.length; i++) { const t = i / sr, k = Math.sin(Math.PI * t / 0.35); y += coef(600 + 2500 * k, sr) * (rnd() - y); a[i] = 0.4 * y * k; } return fadeEdges(a, sr); },
+    stab(sr, ns, d) { // オーケストラ・ヒット風（キメ用）
+      const notes = ns.split(',').map(freq), dur = d || 0.35, a = buf(sr, dur + 0.25);
+      notes.forEach(f => [0.996, 1.004].forEach(dt => {
+        let ph = 0, y = 0;
+        for (let i = 0; i < a.length; i++) {
+          const t = i / sr; ph += f * dt / sr; ph -= Math.floor(ph);
+          y += coef(1200 + 5000 * Math.exp(-t * 10), sr) * ((2 * ph - 1) - y);
+          a[i] += 0.07 * y * Math.min(1, t / 0.005) * Math.exp(-t * (t > dur ? 14 : 2.5));
+        }
+      }));
+      noise(a, sr, 0.15, 30, 6000, 200);
+      tone(a, sr, notes[0] / 2, 0.25, 6);
+      return fadeEdges(a, sr);
+    }
   };
+
+  // 別ファイルから音色を追加する（声の合成など）
+  function register(name, fn) { INST[name] = fn; }
 
   function render(id, sr) {
     const p = id.split(':');
     const fn = INST[p[0]];
     if (!fn) throw new Error('unknown sound ' + id);
     seed = 12345 + id.length * 7919 + id.charCodeAt(id.length - 1);
-    return fn(sr, p[1], p[2] !== undefined ? parseFloat(p[2]) : undefined);
+    return fn(sr, p[1], p[2] !== undefined ? parseFloat(p[2]) : undefined, p);
   }
-  return { render, has: name => !!INST[name.split(':')[0]] };
+  return { render, register, has: name => !!INST[name.split(':')[0]] };
 })();

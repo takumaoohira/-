@@ -1,7 +1,7 @@
 /* 端末内保存（localStorage）。使えない環境でもゲームは動くようにする */
 RG.Storage = (function () {
   const KEY = 'rhythm-biyori-save-v1';
-  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf'];
+  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie'];
 
   function defaults() {
     const records = {};
@@ -9,7 +9,7 @@ RG.Storage = (function () {
     return {
       version: 1,
       settings: {
-        vol: { master: 85, bgm: 70, cue: 95, sfx: 80 },
+        vol: { master: 85, bgm: 70, cue: 95, sfx: 80, voice: 85 },
         inputOffsetMs: 0,   // ＋なら「遅れて押す」分を差し引いて判定
         visualOffsetMs: 0,  // ＋なら映像を遅らせる（判定には影響しない）
         vibration: true,

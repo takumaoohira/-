@@ -21,6 +21,7 @@ RG.Chart = class Chart {
     this.fx = [];
     this.active = [];          // [{from,to}] 秒。余分な入力を減点する区間
     this.guides = [];          // [{beat, text}]
+    this.bubbles = [];         // キャラクターのふきだし [{beat, text, who, len}]
     this.instances = [];       // 置いたパターンの記録
     this.bars = [];            // 小節ごとの情報 {sec, secBar, chord}
     this.secCount = {};
@@ -40,7 +41,8 @@ RG.Chart = class Chart {
   }
 
   // tok: { p: パターン名, sec: 楽曲セクション, guide: 上部の案内, demo: お手本（自動演奏・採点なし）, trial: 練習の試行ID }
-  place(tok) {
+  // next：次に置くトークン（BGMの「フィル（つなぎ）」を入れるかどうかの判断に使う）
+  place(tok, next) {
     const pat = this.pattern(tok.p);
     const base = this.cursor;
     const len = pat.len || 4;
@@ -51,10 +53,16 @@ RG.Chart = class Chart {
       const barIdx = Math.round((base + b) / 4);
       const sec = tok.sec || (tok.p === 'count' ? 'count' : 'A');
       const secBar = this.secCount[sec] = (this.secCount[sec] === undefined ? 0 : this.secCount[sec] + 1);
-      const info = { bar: barIdx, sec, secBar, beat: base + b, chord: this.game.chordFor ? this.game.chordFor(sec, secBar) : null };
+      const lastBar = b + 4 >= len;
+      const info = {
+        bar: barIdx, sec, secBar, beat: base + b, chord: this.game.chordFor ? this.game.chordFor(sec, secBar) : null,
+        p: tok.p, pbar: b / 4, demo: !!tok.demo,
+        next: next ? (next.sec || 'A') : null,
+        fill: lastBar && !!next && (next.sec || 'A') !== sec && sec !== 'count'
+      };
       this.bars[barIdx] = info;
       const evs = this.game.music(info, this) || [];
-      evs.forEach(e => this.queue(base + b + e.b, e.id, e.bus || 'bgm', e.gain));
+      evs.forEach(e => this.queue(base + b + e.b, e.id, e.bus || 'bgm', e.gain, e));
     }
 
     // 入力（判定対象）
@@ -63,21 +71,28 @@ RG.Chart = class Chart {
       const tg = { id: ++this._id, beat, time: this.t(beat), type: p.type || 'hit', k, inst, demo: inst.demo, trial: inst.trial, judged: null, diff: null, at: null, vbeat: null, data: p.data || null };
       this.inputs.push(tg);
       inst.targets.push(tg);
-      if (inst.demo) this.game.hitSounds(tg, 'perfect', this).forEach(s => this.queue(beat, s.id, 'sfx', s.gain));
+      if (inst.demo) this.game.hitSounds(tg, 'perfect', this).forEach(s => this.queue(beat, s.id, s.bus || 'sfx', s.gain, s));
     });
     // 合図
     (pat.cues || []).forEach(c => {
       const beat = base + c.b;
-      const cue = { beat, time: this.t(beat), type: c.type, who: c.who || null, n: c.n, inst, target: c.for !== undefined ? inst.targets[c.for] : null };
+      const cue = { beat, time: this.t(beat), type: c.type, who: c.who || null, n: c.n, inst, target: c.for !== undefined ? inst.targets[c.for] : null, data: c.data || null };
       this.cues.push(cue);
       inst.cues.push(cue);
-      const snd = (pat === Chart.COUNT ? Chart.COUNT_SOUNDS : this.game.cueSounds)[c.type];
-      if (snd) (Array.isArray(snd) ? snd : [snd]).forEach(s => this.queue(beat + (s.d || 0), s.id || s, 'cue', s.gain || 1));
+      // 合図ごとに音を指定できる（歌詞など）。なければゲーム共通の cueSounds
+      const snd = c.snd || (pat === Chart.COUNT ? Chart.COUNT_SOUNDS : this.game.cueSounds)[c.type];
+      if (snd) (Array.isArray(snd) ? snd : [snd]).forEach(s => {
+        const o = typeof s === 'string' ? { id: s } : s;
+        this.queue(beat + (o.d || 0), o.id, o.bus || 'cue', o.gain || 1, o);
+        if (o.say) this.bubbles.push({ beat: beat + (o.d || 0), text: o.say, who: o.who || c.who || null, len: o.len || 1.2 });
+      });
+      if (c.say) this.bubbles.push({ beat, text: c.say, who: c.who || null, len: c.len || 1.2 });
     });
     (pat.fx || []).forEach(f => this.fx.push({ beat: base + f.b, type: f.type, inst }));
     if (tok.guide) this.guides.push({ beat: base + (tok.guideAt || 0), text: tok.guide });
 
-    if (!inst.demo && pat.active !== false && (pat.inputs || []).length) {
+    // activeAlways：押してはいけない小節（フリーズ・ストップ・フェイント）。押すと余分な入力
+    if (!inst.demo && pat.active !== false && ((pat.inputs || []).length || pat.activeAlways)) {
       const a = pat.active || [0, len];
       this.active.push({ from: this.t(base + a[0]), to: this.t(base + a[1]), inst });
     }
@@ -87,8 +102,11 @@ RG.Chart = class Chart {
     return inst;
   }
 
-  queue(beat, id, bus, gain = 1) {
-    this.audioQueue.push({ time: this.t(beat), beat, id, bus, gain });
+  // ex：{ pan, rev, dt(秒) }。声は「最初の母音」が拍に来るように前へずらす
+  queue(beat, id, bus, gain = 1, ex = {}) {
+    let time = this.t(beat) + (ex.dt || 0);
+    if (id.startsWith('voice:') && RG.Voice) time -= RG.Voice.onset(id);
+    this.audioQueue.push({ time, beat, id, bus, gain, pan: ex.pan || 0, rev: ex.rev || 0 });
   }
   drainAudio() {
     const q = this.audioQueue;

@@ -71,22 +71,19 @@
   const tr = (root, oct, semi) => { const i = NOTE_ORDER.indexOf(root) + semi; return NOTE_ORDER[((i % 12) + 12) % 12] + (oct + Math.floor(i / 12)); };
 
   function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
+  const RIFFS = { C: ['E5 . G5 . A5 . B5 -', '. . A5 . G5 . E5 -', 'G5 . E5 . D5 . E5 -', '. . . . B4 - D5 -'] };
   function music(info, chart) {
-    const ch = CH[info.chord] || CH.Em7, sec = info.sec, ev = [];
-    if (sec === 'count') return [{ b: 0, id: 'ohat', gain: 0.3 }, { b: 2, id: 'ohat', gain: 0.3 }];
-    if (sec === 'end') {
-      ev.push({ b: 0, id: 'brass:E4,G4,B4,D5:0.9', gain: 1 }, { b: 0, id: `sbass:E2:1.2`, gain: 1 }, { b: 0, id: 'kick', gain: 1 }, { b: 0, id: 'clap', gain: 0.8 });
-      return ev;
-    }
-    ev.push(...M.rhythm('x.....x...x.....', 'kick', 0.42));
-    ev.push(...M.rhythm('....x.......x...', 'clap', 0.34));
-    ev.push(...M.rhythm('o.o.o.o.o.o.o.o.', 'hat', 0.28));
-    ev.push(...M.rhythm('..............x.', 'ohat', 0.3));
-    RIFF.forEach(([b, s, d]) => ev.push({ b, id: `sbass:${tr(ch.root, 2, s)}:${d}`, gain: 0.48 }));
-    [1.75, 3.75].forEach(b => ch.notes.slice(1).forEach(n => ev.push({ b, id: `clav:${n}:0.2`, gain: 0.32 })));
-    if (info.secBar % 4 === 0 && sec !== 'I' && sec !== 'P') ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(n.replace(/\d$/, ''), 4, 0)).join(',')}:0.25`, gain: 0.5 });
+    const sec = info.sec, i = info.secBar;
+    if (sec === 'count') return [{ b: 0, id: 'hh2:o:0.3', gain: 0.2 }, { b: 2, id: 'hh2:o:0.3', gain: 0.2 }];
+    if (sec === 'end') return RG.Band.ending('Em7').concat([{ b: 0, id: 'brass:E4,G4,B4,D5:0.9', gain: 0.8, rev: 0.3 }]);
+    const ev = RG.Band.bar(info, chart, {
+      style: 'funk', chord: info.chord, drums: 0.8, comp: 0.6, bass: 0.85, pad: sec === 'B' ? 0.2 : 0,
+      mel: RIFFS[sec] ? RIFFS[sec][i % 4] : null, melInst: 'organ', melGain: 0.35, melPan: 0.3
+    });
+    if (info.secBar % 4 === 0 && sec !== 'I' && sec !== 'P') { const ch = RG.Band.chord(info.chord); ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(n.replace(/-?\d$/, ''), 4, 0)).join(',')}:0.25`, gain: 0.3, pan: 0.2, rev: 0.2 }); }
     return ev;
   }
+
   function hitSounds(tg, kind, chart) {
     const bar = chart.barAt(tg.beat);
     const ch = CH[bar && bar.chord] || CH.Em7;
@@ -286,8 +283,14 @@
     howto: 'コン→1拍あと、パシッ（スマッシュ）→半拍あと、ポワーン（ロブ）→2拍あとに打ち返す',
     bpm: 116, offset: 0,
     patterns, main, hard, lessons, finalePattern: 'fin',
-    cueSounds: { pong: { id: 'pong', gain: 1.8 }, smash: { id: 'smash', gain: 0.9 }, lob: { id: 'lob', gain: 2.6 }, pok: { id: 'pok', gain: 1.2 }, fin: [{ id: 'cheer', gain: 0.8 }, { id: 'boom', gain: 0.6 }] },
+    cueSounds: { pong: { id: 'pong', gain: 2.0 }, smash: { id: 'smash', gain: 0.9 }, lob: { id: 'lob', gain: 2.6 }, pok: { id: 'pok', gain: 1.5 }, fin: [{ id: 'cheer', gain: 0.8 }, { id: 'boom', gain: 0.6 }] },
     missSound: 'miss',
+    anchors: { gorilla: { x: 60, y: 210 }, duck: { x: 300, y: 222 }, crowd: { x: 180, y: 400 } },
+    quips: {
+      miss: [{ id: 'voice:gorilla:ウホッ！', say: 'ウホッ！', who: 'gorilla' }, { id: 'voice:gorilla:アマイゼ', say: 'あまいぜ', who: 'gorilla' }],
+      combo: [{ id: 'voice:duck:ナイス！', say: 'ナイス！', who: 'duck' }, { id: 'voice:crowd:ファンキー！', say: 'ファンキー！', who: 'crowd' }],
+      extra: [{ id: 'voice:gorilla:スカッ', say: 'スカッ', who: 'gorilla' }]
+    },
     chordFor, music, hitSounds, preload, createScene, drawIcon, validate
   };
 })();

@@ -101,10 +101,12 @@ function check(name, ok, detail) {
 
 (async () => {
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-  const games = ONLY.length ? ONLY : ['mochi', 'penguin', 'echo', 'pingpong', 'golf'];
+  const games = ONLY.length ? ONLY : ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie'];
+  // 5つずつ並列に実行（同時に動かしすぎると、テスト環境のCPUが足りずに音の予約が遅れるため）
+  const pool = async (list, fn) => { for (let i = 0; i < list.length; i += 5) await Promise.all(list.slice(i, i + 5).map(fn)); };
 
   // ゲームごとに並列で実行
-  await Promise.all(games.map(async id => {
+  await pool(games, async id => {
     const page = await newPage(browser);
     // 1. 全部ぴったり（判定時のずれも記録）
     const perfect = await playMain(page, id, { errMs: 0 }, { inputOffsetMs: 0 });
@@ -146,9 +148,9 @@ function check(name, ok, detail) {
       const mash2 = await playMain(page, id, { mashMs: 250 }, {});
       check(`${id}: 250msごとの連打 → 高得点にならない(<40)`, mash2.score < 40, JSON.stringify(mash2));
     }
-    console.log(`${id} errors:`, page.errors);
+    console.log(`${id} errors:`, page.errors.filter(e => !e.includes('ERR_CERT_AUTHORITY_INVALID')));
     await page.close();
-  }));
+  });
 
   // 6. 再挑戦の連打で音・入力が重ならない
   {
@@ -205,7 +207,7 @@ function check(name, ok, detail) {
   }
 
   // 7. 練習モードを最後まで（ぴったり入力）
-  await Promise.all(games.map(async id => {
+  await pool(games, async id => {
     const page = await newPage(browser);
     await page.evaluate(id => RG.App.startGame(id, 'practice'), id);
     // 最初の試行を1回わざと失敗させて、同じ課題が繰り返されるか
@@ -213,9 +215,21 @@ function check(name, ok, detail) {
     await page.waitForFunction(() => RG.App.screen === 'practice-done', null, { timeout: 180000 });
     const info = await page.evaluate(id => ({ practiced: RG.Storage.record(id).practiced, title: document.getElementById('pd-title').textContent }), id);
     check(`${id}: 練習を最後まで（1回目は失敗）→ 練習完了・保存`, info.practiced && info.title === '練習クリア！', JSON.stringify(info));
-    console.log(`${id} practice errors:`, page.errors);
+    console.log(`${id} practice errors:`, page.errors.filter(e => !e.includes('ERR_CERT_AUTHORITY_INVALID')));
     await page.close();
-  }));
+  });
+
+  // 声の合図は「最初の母音」が拍ちょうどに来るように予約される
+  {
+    const page = await newPage(browser);
+    const v = await page.evaluate(() => {
+      const c = new RG.Chart(RG.Games.disco); RG.Games.disco.main.forEach((t, i, a) => c.place(t, a[i + 1]));
+      const cue = c.cues.find(x => x.type === 'hai'), ev = c.drainAudio().find(e => e.id === 'voice:boss:ハイ！');
+      return { cueTime: cue.time, eventTime: ev.time, onset: RG.Voice.onset('voice:boss:ハイ！') };
+    });
+    check('声の合図：母音の頭が拍ちょうど（予約時刻＝拍の時刻−母音までの長さ）', Math.abs(v.eventTime + v.onset - v.cueTime) < 1e-9 && v.onset > 0, JSON.stringify(v));
+    await page.close();
+  }
 
   // 保存が再読み込み後も残る
   {

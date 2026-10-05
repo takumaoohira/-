@@ -56,22 +56,19 @@
   const pc = n => n.replace(/-?\d$/, '');
 
   function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
-  function music(info) {
-    const ch = CH[info.chord] || CH.Gm7, sec = info.sec, ev = [];
-    if (sec === 'count') return [{ b: 0, id: 'ohat', gain: 0.3 }, { b: 2, id: 'ohat', gain: 0.3 }];
-    if (sec === 'end') {
-      ev.push({ b: 0, id: 'brass:G4,A#4,D5,F5:0.9', gain: 1 }, { b: 0, id: 'sbass:G2:1.2', gain: 1 }, { b: 0, id: 'kick', gain: 1 }, { b: 0, id: 'clap', gain: 0.8 });
-      return ev;
-    }
-    ev.push(...M.rhythm('x..x......x.x...', 'kick', 0.42));
-    ev.push(...M.rhythm('....x.......x...', 'clap', 0.34));
-    ev.push(...M.rhythm('o.o.o.o.o.o.o.o.', 'hat', 0.26));
-    ev.push(...M.rhythm('......x.........', 'ohat', 0.28));
-    RIFF.forEach(([b, s, d]) => ev.push({ b, id: `sbass:${tr(ch.root, 2, s)}:${d}`, gain: 0.48 }));
-    [1.25, 3.25].forEach(b => ch.notes.slice(1).forEach(n => ev.push({ b, id: `clav:${n}:0.2`, gain: 0.3 })));
-    if (info.secBar % 4 === 0 && sec !== 'I' && sec !== 'P') ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(pc(n), 4, 0)).join(',')}:0.25`, gain: 0.5 });
+  const RIFFS = { C: ['G5 . A#5 . C6 . D6 -', '. . C6 . A#5 . G5 -', 'A#5 . G5 . F5 . G5 -', '. . . . D5 - F5 -'] };
+  function music(info, chart) {
+    const sec = info.sec, i = info.secBar;
+    if (sec === 'count') return [{ b: 0, id: 'hh2:o:0.3', gain: 0.2 }, { b: 2, id: 'hh2:o:0.3', gain: 0.2 }];
+    if (sec === 'end') return RG.Band.ending('Gm7').concat([{ b: 0, id: 'brass:G4,A#4,D5,F5:0.9', gain: 0.8, rev: 0.3 }]);
+    const ev = RG.Band.bar(info, chart, {
+      style: 'funk', chord: info.chord, drums: 0.75, comp: 0.7, bass: 0.8, pad: sec === 'B' ? 0.2 : 0,
+      mel: RIFFS[sec] ? RIFFS[sec][i % 4] : null, melInst: 'lead', melGain: 0.35, melPan: 0.3
+    });
+    if (info.secBar % 4 === 0 && sec !== 'I' && sec !== 'P') { const ch = RG.Band.chord(info.chord); ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(pc(n), 4, 0)).join(',')}:0.25`, gain: 0.45, pan: 0.2, rev: 0.2 }); }
     return ev;
   }
+
   function hitSounds(tg, kind, chart) {
     const bar = chart.barAt(tg.beat);
     const ch = CH[bar && bar.chord] || CH.Gm7;
@@ -275,6 +272,11 @@
     patterns, main, hard, lessons, finalePattern: 'fin',
     cueSounds: { tee: { id: 'tee', gain: 2.2 }, waggle: { id: 'waggle', gain: 2.4 }, scratch: { id: 'scratch', gain: 1.8 }, putt: { id: 'rim', gain: 1.6 }, fin: [{ id: 'cheer', gain: 0.8 }, { id: 'boom', gain: 0.6 }] },
     missSound: 'whiff',
+    anchors: { golfer: { x: 124, y: 234 }, mole: { x: 50, y: 340 }, crowd: { x: 270, y: 270 } },
+    quips: {
+      miss: [{ id: 'voice:boss:ファー！', say: 'ファー！', who: 'golfer' }, { id: 'voice:robo:アチャー', say: 'アチャー', who: 'mole' }],
+      combo: [{ id: 'voice:crowd:ナイスショット！', say: 'ナイスショット！', who: 'crowd' }, { id: 'voice:boss:グルーヴィ！', say: 'グルーヴィ！', who: 'golfer' }]
+    },
     chordFor, music, hitSounds, preload, createScene, drawIcon
   };
 })();

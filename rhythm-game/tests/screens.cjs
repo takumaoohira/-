@@ -39,7 +39,25 @@ const SHOTS = [
   ['golf', 'chip', 6, null, -0.6],
   ['golf', 'rush', 12, null, -0.5],
   ['golf', 'miss', 2, 'miss', 1.0],
-  ['golf', 'finale', -1, 'fin', 1.4]
+  ['golf', 'finale', -1, 'fin', 1.4],
+  ['disco', 'hai_call', 'cue:hai', null, 0.3],
+  ['disco', 'clap', 9, 'perfect', 0.1],
+  ['disco', 'freeze', 'cue:freeze', null, 0.8],
+  ['disco', 'turn', 'cue:turn', null, 1.2],
+  ['rope', 'jump', 0, 'perfect', 0.15],
+  ['rope', 'double', 'cue:double', null, 1.1],
+  ['rope', 'miss', 2, 'miss', 0.4],
+  ['kime', 'pickup', 'cue:roll', null, 0.6],
+  ['kime', 'kime_hit', 1, 'perfect', 0.15],
+  ['kime', 'miss', 2, 'miss', 0.5],
+  ['karaoke', 'singing', 'cue:sing', null, 1.2],
+  ['karaoke', 'aite', 0, 'perfect', 0.1],
+  ['karaoke', 'miss', 2, 'miss', 0.5],
+  ['pie', 'throw', 0, null, -0.8],
+  ['pie', 'dodge', 1, 'perfect', 0.1],
+  ['pie', 'creamed', 2, 'miss', 0.4],
+  ['pie', 'triple', 'cue:triple', null, 2.3],
+  ['karaoke', 'finale', -1, 'fin', 1.2]
 ];
 
 (async () => {
@@ -61,6 +79,10 @@ const SHOTS = [
         if (kind === 'fin') {
           beat = s.chart.fx.find(f => f.type === 'finale').beat + after;
           real.forEach(tg => { tg.judged = 'perfect'; s.scene.onJudge(tg, 'perfect', tg.beat, { kind: 'perfect' }); });
+        } else if (typeof idx === 'string') { // 'cue:種類' → その合図の最初の1つから after 拍後
+          const c = s.chart.cues.find(c => c.type === idx.slice(4));
+          real.filter(x => x.beat < c.beat).forEach(x => { x.judged = 'perfect'; s.scene.onJudge(x, 'perfect', x.beat, { kind: 'perfect' }); });
+          beat = c.beat + after;
         } else {
           const tg = real[idx];
           // それまでの対象はすべて成功扱い

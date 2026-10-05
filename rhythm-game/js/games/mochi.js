@@ -57,29 +57,23 @@
 
   function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
 
+  const LOFI = { C: 'Cmaj7', Am: 'Am7', F: 'Fmaj7', G: 'G7', Em: 'Em7' };
   function music(info, chart) {
-    const spb = chart.spb, ch = info.chord, sec = info.sec, i = info.secBar;
-    const ev = [];
-    if (sec === 'count') return ev;
-    if (sec === 'end') {
-      M.strum('C', 0, 'koto', 0.7, 0.05, 2.5).forEach(e => ev.push(e));
-      ev.push({ b: 0, id: 'pad:C4,E4,G4,C5:2.2', gain: 0.9 }, { b: 0, id: 'bass:C2:1.8', gain: 1 }, { b: 0, id: 'kick', gain: 1 });
-      return ev;
-    }
-    const root = M.root(ch, 2);
-    ev.push(...M.rhythm('x.......x.......', 'kick', 0.42));
-    ev.push(...M.rhythm('..o...o...o...o.', 'shaker', 0.8));
-    if (sec === 'C') ev.push(...M.rhythm('....x.......x...', 'rim', 0.5));
-    ev.push({ b: 0, id: `bass:${root}:0.9`, gain: 0.75 }, { b: 2.5, id: `bass:${root}:0.6`, gain: 0.6 });
-    ev.push({ b: 0, id: `pad:${M.chord(ch).join(',')}:${(spb * 4).toFixed(1)}`, gain: sec === 'I' ? 0.8 : 0.55 });
+    const sec = info.sec, i = info.secBar;
+    if (sec === 'count') return [];
+    if (sec === 'end') return RG.Band.ending('Cmaj7').concat(M.strum('C', 0, 'koto', 0.6, 0.05, 2.5).map(e => Object.assign(e, { rev: 0.3 })));
     const mel = MEL[sec];
-    if (mel) ev.push(...M.line(mel[i % mel.length], 'koto', { spb, gain: 0.5 }));
-    return ev;
+    // 「トン」（1・2拍目）とぶつからないよう、その拍のキック・スネアは抜く
+    return RG.Band.bar(info, chart, {
+      style: 'lofi', chord: LOFI[info.chord] || info.chord, clear: [0, 1],
+      mel: mel ? mel[i % mel.length] : null, melInst: 'koto', melGain: 0.5, melPan: -0.2,
+      drums: sec === 'I' ? 0.5 : 0.85, comp: 0.9, pad: sec === 'B' ? 0.35 : 0.2, bass: 0.9
+    });
   }
 
   function hitNote(chart, tg) {
     const bar = chart.barAt(tg.beat);
-    const ch = M.chord(bar && bar.chord ? bar.chord : 'C');
+    const ch = RG.Band.chord(bar && bar.chord ? bar.chord : 'C').notes;
     return up(tg.k === 1 ? ch[2] : ch[0], 1);
   }
   function hitSounds(tg, kind, chart) {
@@ -89,7 +83,7 @@
   }
   function preload() {
     const ids = ['slap', 'sparkle', 'chime', 'boom', 'miss', 'ka', 'ton'];
-    Object.values(M.CHORDS).forEach(c => { ids.push(`koto:${up(c[0])}:0.8`, `koto:${up(c[2])}:0.8`); });
+    Object.values(PROG).flat().forEach(n => { const c = RG.Band.chord(n).notes; ids.push(`koto:${up(c[0])}:0.8`, `koto:${up(c[2])}:0.8`); });
     return ids;
   }
 
@@ -304,6 +298,12 @@
     level: 1, patterns, main, hard, lessons, finalePattern: 'fin',
     cueSounds: { ton: { id: 'ton', gain: 1.5 }, ka: { id: 'ka', gain: 1.0 }, fin: [{ id: 'boom', gain: 0.9 }, { id: 'chime', gain: 0.8 }] },
     missSound: 'miss',
+    anchors: { kid: { x: 150, y: 200 } },
+    quips: {
+      miss: [{ id: 'voice:kid:アチャー', say: 'アチャー', who: 'kid' }, { id: 'voice:kid:オモチガ〜', say: 'おもちが〜', who: 'kid' }],
+      combo: [{ id: 'voice:kid:イイネ！', say: 'イイネ！', who: 'kid' }, { id: 'voice:kid:モチモチ！', say: 'モチモチ！', who: 'kid' }],
+      extra: [{ id: 'voice:kid:マダダヨ', say: 'まだだよ', who: 'kid' }]
+    },
     chordFor, music, hitSounds, preload, createScene, drawIcon
   };
 })();

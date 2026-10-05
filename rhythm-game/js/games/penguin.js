@@ -60,35 +60,26 @@
 
   function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
   function music(info, chart) {
-    const spb = chart.spb, ch = info.chord, sec = info.sec, i = info.secBar;
-    const ev = [];
-    if (sec === 'count') return ev;
-    if (sec === 'end') {
-      ['F3', 'A3', 'C4', 'F4'].forEach((n, k) => ev.push({ b: k * 0.04, id: `marimba:${n}:1.6`, gain: 0.9 }));
-      ev.push({ b: 0, id: 'bass:F2:1.6', gain: 1 }, { b: 0, id: 'kick', gain: 1 }, { b: 0, id: 'pad:F3,A3,C4,F4:2', gain: 0.7 });
-      return ev;
-    }
-    ev.push(...M.rhythm('x.......x.......', 'kick', 0.42));
-    ev.push(...M.rhythm('....o.......o...', 'snare', 0.32));
-    ev.push(...M.rhythm('..x...x...x...x.', 'hat', 0.35));
-    const r = M.root(ch, 2), f5 = (FIFTH[ch] || 'C') + '2';
-    ev.push({ b: 0, id: `bass:${r}:0.5`, gain: 0.7 }, { b: 2, id: `bass:${f5}:0.5`, gain: 0.6 });
-    // ズン・チャッ（裏の和音）
-    [1, 3].forEach(b => M.chord(ch).forEach(n => ev.push({ b, id: `pizz:${n}:0.35`, gain: 0.32 })));
+    const sec = info.sec, i = info.secBar;
+    if (sec === 'count') return [];
+    if (sec === 'end') return RG.Band.ending('F').concat(['F4', 'A4', 'C5', 'F5'].map((n, k) => ({ b: k * 0.06, id: `marimba:${n}:1.4`, gain: 0.6, rev: 0.3 })));
     const mel = MEL[sec];
-    if (mel) ev.push(...M.line(mel[i % mel.length], 'marimba', { spb, gain: 0.5, tail: 0.2 }));
-    return ev;
+    return RG.Band.bar(info, chart, {
+      style: 'polka', chord: info.chord, mel: mel ? mel[i % mel.length] : null, melInst: 'marimba', melGain: 0.55, melPan: 0.25,
+      drums: 0.9, comp: 1, pad: sec === 'C' ? 0.25 : 0, bass: 1
+    });
   }
+
   function hitSounds(tg, kind, chart) {
     const bar = chart.barAt(tg.beat);
-    const ch = M.chord(bar && bar.chord ? bar.chord : 'F');
+    const ch = RG.Band.chord(bar && bar.chord ? bar.chord : 'F').notes;
     const s = [{ id: 'catchBox', gain: 0.95 }, { id: `marimba:${up(tg.type === 'express' ? ch[2] : ch[0])}:0.6`, gain: 0.5 }];
     if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.5 });
     return s;
   }
   function preload() {
     const ids = ['catchBox', 'sparkle', 'drop', 'chime', 'bell', 'whistle', 'boom'];
-    Object.values(M.CHORDS).forEach(c => ids.push(`marimba:${up(c[0])}:0.6`, `marimba:${up(c[2])}:0.6`));
+    Object.values(PROG).flat().forEach(n => { const c = RG.Band.chord(n).notes; ids.push(`marimba:${up(c[0])}:0.6`, `marimba:${up(c[2])}:0.6`); });
     return ids;
   }
   function validate(chart) {
@@ -316,6 +307,11 @@
     level: 2, patterns, main, hard, lessons, finalePattern: 'fin',
     cueSounds: { bell: { id: 'bell', gain: 1.6 }, whistle: { id: 'whistle', gain: 1.5 }, fin: [{ id: 'boom', gain: 0.7 }, { id: 'chime', gain: 0.8 }] },
     missSound: 'drop',
+    anchors: { penguin: { x: 226, y: 280 } },
+    quips: {
+      miss: [{ id: 'voice:penguin:オットット', say: 'オットット', who: 'penguin' }, { id: 'voice:penguin:アワワ！', say: 'アワワ！', who: 'penguin' }],
+      combo: [{ id: 'voice:penguin:マイド！', say: 'まいど！', who: 'penguin' }, { id: 'voice:penguin:オマカセ！', say: 'おまかせ！', who: 'penguin' }]
+    },
     chordFor, music, hitSounds, preload, createScene, drawIcon, validate
   };
 })();

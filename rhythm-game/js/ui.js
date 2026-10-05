@@ -1,7 +1,7 @@
 /* 画面遷移・入力の受付・保存（タイトル → 選択 → 練習／本編 → 結果） */
 RG.App = (function () {
   const $ = id => document.getElementById(id);
-  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'pingpong', 'golf'].filter(id => RG.Games && RG.Games[id]);
+  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
   const DESIGN_W = 360, DESIGN_H = 540;
 
   const App = {
@@ -37,12 +37,13 @@ RG.App = (function () {
       const r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
       if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
-      const n = GAME_ORDER.length, t = ms / 1000, size = Math.min(cv.width / (n * 1.12 + 0.3), cv.height * 0.5);
+      const n = GAME_ORDER.length, t = ms / 1000, rows = n > 6 ? 2 : 1, per = Math.ceil(n / rows);
+      const size = Math.min(cv.width / (per * 1.12 + 0.3), cv.height / (rows * 1.25 + 0.2));
       GAME_ORDER.forEach((id, i) => {
-        const k = i - (n - 1) / 2;
-        const x = cv.width / 2 + k * size * 1.12 - size / 2;
-        // 120BPMで弾む（中央が高い弧に並べる）
-        const y = cv.height * 0.62 - size / 2 - (1 - Math.abs(k) / n) * size * 0.5 - Math.abs(Math.sin(t * Math.PI * 2 + i * 1.05)) * size * 0.12;
+        const row = Math.floor(i / per), col = i % per, k = col - (per - 1) / 2;
+        const x = cv.width / 2 + k * size * 1.12 - size / 2 + (row ? size * 0.3 : -size * 0.3);
+        // 120BPMで弾む（2段に並べる）
+        const y = cv.height * (rows === 1 ? 0.5 : 0.3 + row * 0.45) - size / 2 - Math.abs(Math.sin(t * Math.PI * 2 + i * 1.05)) * size * 0.1;
         g.save(); g.translate(x + size / 2, y + size / 2); g.rotate(Math.sin(t * Math.PI + i) * 0.08); g.translate(-size / 2, -size / 2);
         RG.D.rrect(g, 3, 3, size, size, size * 0.2, '#0f0618');
         g.beginPath(); RG.D.rrect(g, 0, 0, size, size, size * 0.2); g.clip();
@@ -58,10 +59,14 @@ RG.App = (function () {
   App.buildSelect = function () {
     const list = $('game-list');
     list.innerHTML = '';
+    const grp = id => RG.Games[id].sport ? 'sport' : RG.Games[id].group || 'basic';
     const groups = [
-      { title: 'リズムあそび', sub: 'まずはここから', ids: GAME_ORDER.filter(id => !RG.Games[id].sport) },
-      { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', ids: GAME_ORDER.filter(id => RG.Games[id].sport) }
-    ];
+      { title: 'リズムあそび', sub: 'まずはここから', key: 'basic' },
+      { title: 'ダンス', sub: '先生の声で踊る・跳ぶ', key: 'dance' },
+      { title: '音ハメ', sub: '曲のキメ・歌のすきまにピタッと', key: 'beat' },
+      { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', key: 'sport' },
+      { title: 'お笑い道場', sub: '3連符とフェイント', key: 'fun' }
+    ].map(gr => Object.assign(gr, { ids: GAME_ORDER.filter(id => grp(id) === gr.key) }));
     groups.forEach(gr => {
       if (!gr.ids.length) return;
       const h = document.createElement('div');
@@ -196,6 +201,12 @@ RG.App = (function () {
     g.setTransform(s, 0, 0, s, ox, oy);
     const view = { x0: -ox / s, y0: -oy / s, x1: (W - ox) / s, y1: (H - oy) / s };
     session.scene.render(g, beat, view);
+    // キャラクターのふきだし
+    for (const b of session.chart.bubbles) {
+      if (b.beat > beat || beat > b.beat + b.len) continue;
+      const a = (session.scene.anchor && session.scene.anchor(b.who)) || (session.game.anchors && session.game.anchors[b.who]) || { x: 180, y: 150 };
+      drawBubble(g, a.x, a.y, b.text, beat - b.beat, b.len);
+    }
     // カウント表示
     for (const c of session.chart.cues) {
       if (c.beat > beat + 0.05) break;
@@ -208,6 +219,24 @@ RG.App = (function () {
       }
     }
   };
+
+  // ふきだし（a.x, a.y はしっぽの先＝話しているキャラの口元）
+  function drawBubble(g, x, y, text, d, len) {
+    const s = RG.U.ease.outBack(Math.min(1, d / 0.15)) * (1 - RG.U.prog(d, len - 0.15, len));
+    if (s <= 0) return;
+    g.save();
+    g.font = `800 15px ${getComputedStyle(document.body).fontFamily}`;
+    const w = Math.max(44, g.measureText(text).width + 22), h = 30;
+    const bx = Math.max(6 + w / 2, Math.min(354 - w / 2, x));
+    const by = y - 26;
+    g.translate(bx, by); g.scale(s, s);
+    g.beginPath(); g.moveTo(x - bx - 6, h / 2 - 2); g.lineTo(x - bx, 26 - 4); g.lineTo(x - bx + 8, h / 2 - 2); g.closePath();
+    g.fillStyle = '#fff'; g.fill(); g.lineWidth = 2.5; g.strokeStyle = '#1a0b26'; g.stroke();
+    RG.D.rrect(g, -w / 2, -h / 2, w, h, 12, '#fff', '#1a0b26', 2.5);
+    g.beginPath(); g.moveTo(x - bx - 5, h / 2 - 3.5); g.lineTo(x - bx + 7, h / 2 - 3.5); g.lineWidth = 4; g.strokeStyle = '#fff'; g.stroke();
+    RG.D.text(g, text, 0, 1, 15, '#1a0b26', null, 'center', 800);
+    g.restore();
+  }
 
   App.onMainEnd = function (session, res) {
     App.lastStats = { lateEvents: session.lateEvents || 0, maxClockErrMs: (session.maxClockErr || 0) * 1000, songTime: session.songTime() };
@@ -283,7 +312,7 @@ RG.App = (function () {
   // ---------- 設定 ----------
   App.syncSettings = function () {
     const S = RG.Storage.settings;
-    ['master', 'bgm', 'cue', 'sfx'].forEach(k => { const el = $('vol-' + k); el.value = S.vol[k]; el.nextElementSibling.textContent = S.vol[k]; });
+    ['master', 'bgm', 'cue', 'sfx', 'voice'].forEach(k => { const el = $('vol-' + k); el.value = S.vol[k]; el.nextElementSibling.textContent = S.vol[k]; });
     $('in-offset-val').textContent = (S.inputOffsetMs > 0 ? '+' : '') + S.inputOffsetMs;
     $('vis-offset-val').textContent = (S.visualOffsetMs > 0 ? '+' : '') + S.visualOffsetMs;
     $('opt-vibe').checked = S.vibration;
@@ -297,7 +326,7 @@ RG.App = (function () {
 
   function bindSettings() {
     const S = () => RG.Storage.settings;
-    ['master', 'bgm', 'cue', 'sfx'].forEach(k => {
+    ['master', 'bgm', 'cue', 'sfx', 'voice'].forEach(k => {
       const el = $('vol-' + k);
       el.addEventListener('input', () => { S().vol[k] = +el.value; el.nextElementSibling.textContent = el.value; RG.Audio.applyVolumes(S().vol); });
       el.addEventListener('change', () => RG.Storage.save());

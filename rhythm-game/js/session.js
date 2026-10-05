@@ -25,7 +25,7 @@ RG.Session = class Session {
     this.extraLog = [];
     this.guideText = null;
     this.frameBound = () => this.frame();
-    if (mode === 'main') (this.hard ? game.hard.main : game.main).forEach(tok => this.chart.place(tok));
+    if (mode === 'main') { const toks = this.hard ? game.hard.main : game.main; toks.forEach((tok, i) => this.chart.place(tok, toks[i + 1])); }
     else this.practice = new RG.Practice(this, opts.lesson || 0);
     this.scene = game.createScene(this);
     if (RG.DEV) { const p = this.chart.validate(); if (p.length) console.warn('[chart]', p); }
@@ -79,7 +79,7 @@ RG.Session = class Session {
       const when = this.startAt + e.time;
       if (when > horizon) break;
       if (when < now) this.lateEvents = (this.lateEvents || 0) + 1; // 予約が間に合わなかった音（確認用）
-      if (when >= now - 0.05) A.play(e.id, when, this.sb[e.bus], e.gain, this.sb);
+      if (when >= now - 0.05) A.play(e.id, when, this.sb[e.bus], e.gain, this.sb, e.pan || 0, e.rev || 0);
       this.evIdx++;
     }
   }
@@ -96,6 +96,24 @@ RG.Session = class Session {
   playLater(id, delaySec, gain = 1, bus = 'sfx') {
     if (!this.sb) return;
     RG.Audio.play(id, RG.Audio.ctx.currentTime + delaySec, this.sb[bus], gain, this.sb);
+  }
+
+  // キャラクターのひとこと（声＋ふきだし）。合図の邪魔をしないよう、近くに判定対象があるときと、言ったばかりのときは黙る
+  quip(kind, force) {
+    const q = this.game.quips && this.game.quips[kind];
+    if (!q || !q.length || !this.sb) return;
+    const t = this.songTime() - this.inOff, beat = this.chart.beatAt(t);
+    if (!force) {
+      if (beat - (this.lastQuip || -99) < 3) return;
+      const nt = this.judge.nextTarget(t);
+      if (nt && nt.time - t < this.spb * 1.0) return;
+    }
+    this.quipN = (this.quipN || 0) + 1;
+    const line = q[this.quipN % q.length];
+    this.lastQuip = beat;
+    RG.Audio.play(line.id, RG.Audio.ctx.currentTime, this.sb.voice, line.gain || 0.9, this.sb, line.pan || 0, 0.12);
+    const tv = this.songTime() - this.visOff;
+    this.chart.bubbles.push({ beat: this.chart.beatAt(tv), text: line.say, who: line.who || null, len: 1.3 });
   }
 
   input(tsMs, src) {
@@ -120,6 +138,9 @@ RG.Session = class Session {
       this.playNow('tap', 0.5);
     }
     if (r.target) this.scene.onJudge(r.target, r.kind, vbeat, r);
+    if (r.kind === 'perfect' || r.kind === 'good') { const c = this.judge.s.combo; if (c === 10 || c === 25 || c === 40) this.quip('combo'); }
+    else if (r.kind === 'miss') this.quip('miss');
+    else if (r.kind === 'extra') this.quip('extra');
     this.scene.onTap && this.scene.onTap(vbeat, r);
     this.showFeedback(r);
     this.updateInfo();
@@ -161,6 +182,7 @@ RG.Session = class Session {
     if (missed.length) {
       missed.forEach(tg => this.scene.onJudge(tg, 'miss', beatV, { kind: 'miss', target: tg, diff: null }));
       this.playNow(this.game.missSound || 'miss', 0.8);
+      this.quip('miss');
       if (this.mode === 'practice') this.app.feedback('押し忘れ', 'late');
       this.updateInfo();
     }

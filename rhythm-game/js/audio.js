@@ -37,7 +37,12 @@ RG.Audio = (function () {
     shaper.curve = curve;
     A.master.connect(shaper);
     shaper.connect(A.ctx.destination);
-    ['bgm', 'cue', 'sfx'].forEach(k => { const g = A.ctx.createGain(); g.connect(A.master); A.bus[k] = g; });
+    ['bgm', 'cue', 'sfx', 'voice'].forEach(k => { const g = A.ctx.createGain(); g.connect(A.master); A.bus[k] = g; });
+    // 残響（BGM・声に少しだけ掛ける）。直接音には遅延を足さない
+    A.reverb = A.ctx.createConvolver();
+    A.reverb.buffer = makeImpulse(A.ctx, 1.6);
+    A.reverbOut = A.ctx.createGain(); A.reverbOut.gain.value = 0.55;
+    A.reverb.connect(A.reverbOut); A.reverbOut.connect(A.bus.bgm);
     A.ctx.onstatechange = () => A.listeners.forEach(fn => fn(A.ctx.state));
     A.applyVolumes(RG.Storage.settings.vol);
     return A.ctx;
@@ -57,6 +62,7 @@ RG.Audio = (function () {
     A.bus.bgm.gain.setTargetAtTime(curve(vol.bgm) * 0.8, t, 0.02);
     A.bus.cue.gain.setTargetAtTime(curve(vol.cue) * 1.1, t, 0.02);
     A.bus.sfx.gain.setTargetAtTime(curve(vol.sfx), t, 0.02);
+    A.bus.voice.gain.setTargetAtTime(curve(vol.voice === undefined ? 85 : vol.voice), t, 0.02);
   };
 
   // 音色IDから AudioBuffer を取得（なければ合成してキャッシュ）
@@ -75,7 +81,8 @@ RG.Audio = (function () {
   // セッションごとの出力（停止時に切断すれば、予約済みの音もまとめて消える）
   A.createSessionBus = function () {
     const sb = {};
-    ['bgm', 'cue', 'sfx'].forEach(k => { const g = A.ctx.createGain(); g.connect(A.bus[k]); sb[k] = g; });
+    ['bgm', 'cue', 'sfx', 'voice'].forEach(k => { const g = A.ctx.createGain(); g.connect(A.bus[k]); sb[k] = g; });
+    sb.rev = A.ctx.createGain(); sb.rev.connect(A.reverb);
     sb.sources = new Set();
     return sb;
   };
@@ -83,21 +90,40 @@ RG.Audio = (function () {
     if (!sb) return;
     sb.sources.forEach(s => { try { s.stop(); } catch (e) {} });
     sb.sources.clear();
-    ['bgm', 'cue', 'sfx'].forEach(k => { try { sb[k].disconnect(); } catch (e) {} });
+    ['bgm', 'cue', 'sfx', 'voice', 'rev'].forEach(k => { try { sb[k].disconnect(); } catch (e) {} });
   };
 
   // when: ctx 時刻（秒）。dest: GainNode
-  A.play = function (id, when, dest, gain = 1, sb) {
+  // pan：左右（−1〜1）、rev：残響へ送る量（0〜1）
+  A.play = function (id, when, dest, gain = 1, sb, pan = 0, rev = 0) {
     const ctx = A.ctx;
     const src = ctx.createBufferSource();
     src.buffer = A.buffer(id);
     let node = src;
     if (gain !== 1) { const g = ctx.createGain(); g.gain.value = gain; src.connect(g); node = g; }
+    if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan)); node.connect(p); node = p; }
     node.connect(dest);
+    if (rev > 0 && sb && sb.rev) { const r = ctx.createGain(); r.gain.value = rev; node.connect(r); r.connect(sb.rev); }
     src.start(Math.max(when, ctx.currentTime));
     if (sb) { sb.sources.add(src); src.onended = () => sb.sources.delete(src); }
     return src;
   };
+
+  // 部屋の残響（ノイズを減衰させたインパルス応答。左右で別のノイズにして広がりを出す）
+  function makeImpulse(ctx, sec) {
+    const n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, n, ctx.sampleRate);
+    let seed = 777;
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch); let lp = 0;
+      for (let i = 0; i < n; i++) {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        const x = seed / 2147483648 - 1, t = i / ctx.sampleRate;
+        lp += (0.35 + 0.5 * Math.exp(-t * 3)) * (x - lp); // 後半ほど高音が減る
+        d[i] = lp * Math.pow(1 - t / sec, 2) * (t < 0.012 ? t / 0.012 : 1) * 0.6;
+      }
+    }
+    return b;
+  }
 
   // ---- 時計 ----
   A.updateClock = function () {
