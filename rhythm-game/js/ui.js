@@ -1,7 +1,7 @@
 /* 画面遷移・入力の受付・保存（タイトル → 選択 → 練習／本編 → 結果） */
 RG.App = (function () {
   const $ = id => document.getElementById(id);
-  const GAME_ORDER = ['mochi', 'penguin', 'echo'].filter(id => RG.Games && RG.Games[id]);
+  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'pingpong', 'golf'].filter(id => RG.Games && RG.Games[id]);
   const DESIGN_W = 360, DESIGN_H = 540;
 
   const App = {
@@ -37,11 +37,14 @@ RG.App = (function () {
       const r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
       if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
-      const t = ms / 1000, size = Math.min(cv.width / 3.6, cv.height * 0.62);
+      const n = GAME_ORDER.length, t = ms / 1000, size = Math.min(cv.width / (n * 1.12 + 0.3), cv.height * 0.5);
       GAME_ORDER.forEach((id, i) => {
-        const x = cv.width / 2 + (i - 1) * size * 1.12 - size / 2;
-        const y = cv.height / 2 - size / 2 - Math.abs(Math.sin(t * Math.PI * 1.6 + i * 1.05)) * size * 0.12;
-        g.save(); g.translate(x, y);
+        const k = i - (n - 1) / 2;
+        const x = cv.width / 2 + k * size * 1.12 - size / 2;
+        // 120BPMで弾む（中央が高い弧に並べる）
+        const y = cv.height * 0.62 - size / 2 - (1 - Math.abs(k) / n) * size * 0.5 - Math.abs(Math.sin(t * Math.PI * 2 + i * 1.05)) * size * 0.12;
+        g.save(); g.translate(x + size / 2, y + size / 2); g.rotate(Math.sin(t * Math.PI + i) * 0.08); g.translate(-size / 2, -size / 2);
+        RG.D.rrect(g, 3, 3, size, size, size * 0.2, '#0f0618');
         g.beginPath(); RG.D.rrect(g, 0, 0, size, size, size * 0.2); g.clip();
         RG.Games[id].drawIcon(g, size, size, t + i);
         g.restore();
@@ -55,30 +58,49 @@ RG.App = (function () {
   App.buildSelect = function () {
     const list = $('game-list');
     list.innerHTML = '';
-    GAME_ORDER.forEach(id => {
-      const game = RG.Games[id], rec = RG.Storage.record(id);
-      const card = document.createElement('div');
-      card.className = 'game-card';
-      const best = rec.best === null ? '―' : rec.best + '点';
-      card.innerHTML = `
-        <canvas width="152" height="152"></canvas>
-        <h3>${game.title}</h3>
-        <p class="how">${game.howto}</p>
-        <div class="stat"><span>最高 <b>${best}</b></span>
-          ${rec.cleared ? '<span class="badge ok">★ クリア</span>' : ''}
-          ${rec.practiced ? '<span class="badge ok">練習済み</span>' : '<span class="badge rec">まずは練習がおすすめ</span>'}</div>
-        <div class="btns">
-          <button class="btn" data-mode="practice">練習</button>
-          <button class="btn primary" data-mode="main">本編スタート</button>
-        </div>`;
-      game.drawIcon(card.querySelector('canvas').getContext('2d'), 152, 152, 0.3);
-      card.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-        if (b.dataset.mode === 'main' && !rec.practiced && !rec.plays) { App._firstId = id; $('overlay-first').hidden = false; return; }
-        App.startGame(id, b.dataset.mode);
-      }));
-      list.appendChild(card);
+    const groups = [
+      { title: 'リズムあそび', sub: 'まずはここから', ids: GAME_ORDER.filter(id => !RG.Games[id].sport) },
+      { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', ids: GAME_ORDER.filter(id => RG.Games[id].sport) }
+    ];
+    groups.forEach(gr => {
+      if (!gr.ids.length) return;
+      const h = document.createElement('div');
+      h.className = 'group-head';
+      h.innerHTML = `<span>${gr.title}</span><small>${gr.sub}</small>`;
+      list.appendChild(h);
+      gr.ids.forEach(id => list.appendChild(card(id)));
     });
   };
+  function card(id) {
+    const game = RG.Games[id], rec = RG.Storage.record(id);
+    const el = document.createElement('div');
+    el.className = 'game-card' + (game.sport ? ' sport' : '');
+    const best = rec.best === null ? '―' : rec.best + '点';
+    const hbest = rec.hardBest === null ? '―' : rec.hardBest + '点';
+    const lv = '●'.repeat(game.level || 1) + '○'.repeat(5 - (game.level || 1));
+    el.innerHTML = `
+      <canvas width="152" height="152"></canvas>
+      <h3>${game.title}</h3>
+      <p class="how">${game.howto}</p>
+      <div class="stat"><span class="lv" title="むずかしさ">${lv}</span>
+        <span>最高 <b>${best}</b></span><span>ハード <b>${hbest}</b></span>
+        ${rec.cleared ? '<span class="badge ok">★ クリア</span>' : ''}
+        ${rec.hardCleared ? '<span class="badge hard">★ ハード</span>' : ''}
+        ${rec.practiced ? '' : '<span class="badge rec">まずは練習</span>'}</div>
+      <div class="btns">
+        <button class="btn" data-mode="practice">練習</button>
+        <button class="btn primary" data-mode="main">本編</button>
+        <button class="btn hard" data-mode="hard">ハード</button>
+      </div>`;
+    game.drawIcon(el.querySelector('canvas').getContext('2d'), 152, 152, 0.3);
+    el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      const mode = b.dataset.mode;
+      if (mode !== 'practice' && !rec.practiced && !rec.plays) { App._firstId = id; App._firstHard = mode === 'hard'; $('overlay-first').hidden = false; return; }
+      if (mode === 'hard') App.startGame(id, 'main', { hard: true });
+      else App.startGame(id, mode);
+    }));
+    return el;
+  }
 
   // ---------- プレイ ----------
   App.startGame = async function (id, mode, opts = {}) {
@@ -191,11 +213,13 @@ RG.App = (function () {
     App.lastStats = { lateEvents: session.lateEvents || 0, maxClockErrMs: (session.maxClockErr || 0) * 1000, songTime: session.songTime() };
     const id = session.game.id;
     const rec = RG.Storage.record(id);
-    const prevBest = rec.best;
+    const bk = session.hard ? 'hardBest' : 'best', ck = session.hard ? 'hardCleared' : 'cleared';
+    const prevBest = rec[bk];
     rec.plays++;
     const isNew = prevBest === null || res.score > prevBest;
-    if (isNew) rec.best = res.score;
-    if (res.cleared) rec.cleared = true;
+    if (isNew) rec[bk] = res.score;
+    if (res.cleared) rec[ck] = true;
+    res.hard = session.hard;
     RG.Storage.save();
     App.session = null;
     setTimeout(() => App.showResult(session.game, res, isNew, prevBest), 350);
@@ -203,7 +227,7 @@ RG.App = (function () {
 
   App.showResult = function (game, res, isNew, prevBest) {
     App.show('result');
-    $('res-game').textContent = game.title;
+    $('res-game').textContent = game.title + (res.hard ? '（ハード）' : '');
     $('res-rank').textContent = res.rank.label;
     $('res-best').textContent = isNew ? (prevBest === null ? 'はじめての記録！' : `最高記録 更新！（前回まで ${prevBest}点）`) : `最高記録 ${prevBest}点`;
     $('res-best').classList.toggle('new', isNew);
@@ -367,7 +391,7 @@ RG.App = (function () {
       App.show('select');
     });
     $('btn-first-practice').addEventListener('click', () => { $('overlay-first').hidden = true; App.startGame(App._firstId, 'practice'); });
-    $('btn-first-main').addEventListener('click', () => { $('overlay-first').hidden = true; App.startGame(App._firstId, 'main'); });
+    $('btn-first-main').addEventListener('click', () => { $('overlay-first').hidden = true; App.startGame(App._firstId, 'main', { hard: !!App._firstHard }); });
     $('btn-to-settings').addEventListener('click', () => { App._settingsReturn = 'select'; App.show('settings'); });
     $('btn-to-title').addEventListener('click', () => App.show('title'));
     $('btn-pause').addEventListener('pointerdown', e => e.stopPropagation());
@@ -380,7 +404,7 @@ RG.App = (function () {
     $('btn-restart').addEventListener('click', () => App.restart());
     $('btn-next-lesson').addEventListener('click', () => { App._resumeLesson = (App._resumeLesson || 0) + 1; App.restart(); });
     $('btn-quit').addEventListener('click', () => { $('overlay-pause').hidden = true; App.show('select'); });
-    $('btn-retry').addEventListener('click', () => App.startGame(App.last.id, 'main'));
+    $('btn-retry').addEventListener('click', () => App.startGame(App.last.id, 'main', App.last.opts));
     $('btn-res-select').addEventListener('click', () => App.show('select'));
     $('btn-pd-main').addEventListener('click', () => App.startGame(App.lastGame, 'main'));
     $('btn-pd-again').addEventListener('click', () => App.startGame(App.lastGame, 'practice'));

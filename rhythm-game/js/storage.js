@@ -1,11 +1,11 @@
 /* 端末内保存（localStorage）。使えない環境でもゲームは動くようにする */
 RG.Storage = (function () {
   const KEY = 'rhythm-biyori-save-v1';
-  const GAMES = ['mochi', 'penguin', 'echo'];
+  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf'];
 
   function defaults() {
     const records = {};
-    GAMES.forEach(id => { records[id] = { best: null, cleared: false, plays: 0, practiced: false }; });
+    GAMES.forEach(id => { records[id] = { best: null, cleared: false, plays: 0, practiced: false, hardBest: null, hardCleared: false }; });
     return {
       version: 1,
       settings: {

@@ -12,7 +12,8 @@ RG.Session = class Session {
     this.mode = mode;            // 'main' | 'practice'
     this.opts = opts;
     this.settings = RG.Storage.settings;
-    this.chart = new RG.Chart(game);
+    this.hard = mode === 'main' && !!opts.hard && !!game.hard;
+    this.chart = new RG.Chart(game, this.hard ? { bpm: game.hard.bpm } : {});
     this.judge = new RG.Judge(this.chart, this.settings);
     this.events = [];
     this.evIdx = 0;
@@ -24,7 +25,7 @@ RG.Session = class Session {
     this.extraLog = [];
     this.guideText = null;
     this.frameBound = () => this.frame();
-    if (mode === 'main') game.main.forEach(tok => this.chart.place(tok));
+    if (mode === 'main') (this.hard ? game.hard.main : game.main).forEach(tok => this.chart.place(tok));
     else this.practice = new RG.Practice(this, opts.lesson || 0);
     this.scene = game.createScene(this);
     if (RG.DEV) { const p = this.chart.validate(); if (p.length) console.warn('[chart]', p); }
@@ -91,6 +92,12 @@ RG.Session = class Session {
     RG.Audio.play(id, RG.Audio.ctx.currentTime, this.sb[bus], gain, this.sb);
   }
 
+  // 少しあとに鳴らす効果音（ボールがカップに入る音など）。予約するので音の時計どおりに鳴る
+  playLater(id, delaySec, gain = 1, bus = 'sfx') {
+    if (!this.sb) return;
+    RG.Audio.play(id, RG.Audio.ctx.currentTime + delaySec, this.sb[bus], gain, this.sb);
+  }
+
   input(tsMs, src) {
     if (!this.running || this.finished) return;
     const raw = RG.Audio.perfToHeard(tsMs) - this.startAt;
@@ -128,7 +135,10 @@ RG.Session = class Session {
 
   updateInfo() {
     if (this.mode === 'practice') this.app.subInfo(this.practice.infoText());
-    else this.app.subInfo(this.judge.s.combo >= 2 ? `${this.judge.s.combo} コンボ` : '');
+    else {
+      const c = this.judge.s.combo;
+      this.app.subInfo(c >= 10 ? `ノリノリ！ ${c} コンボ` : c >= 2 ? `${c} コンボ` : '');
+    }
   }
 
   frame() {

@@ -13,7 +13,7 @@ const path = require('path');
   await p.goto('file://' + path.resolve(__dirname, '../index.html'));
   const res = await p.evaluate(async () => {
     const out = {};
-    for (const id of ['mochi', 'penguin', 'echo']) {
+    for (const id of ['mochi', 'penguin', 'echo', 'pingpong', 'golf']) {
       const game = RG.Games[id];
       const chart = new RG.Chart(game);
       game.main.forEach(t => chart.place(t));

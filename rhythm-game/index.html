@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#fff4dd">
-<meta name="description" content="音を聴いてタップするだけのリズムミニゲーム集">
+<meta name="theme-color" content="#24123a">
+<meta name="description" content="音を聴いてタップするだけの、ファンクなリズムミニゲーム集">
 <title>リズムびより</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -16,7 +16,8 @@
     <div class="title-wrap">
       <canvas id="title-canvas" class="title-canvas" aria-hidden="true"></canvas>
       <h1 class="logo">リズム<span>びより</span></h1>
-      <p class="tagline">聴いて、数えて、ポンとタップ。</p>
+      <p class="tagline">FUNKY RHYTHM GAMES ×5</p>
+      <p class="tagline-jp">聴いて、数えて、ノって、タップ。</p>
       <button id="btn-start" class="btn big primary">タップしてはじめる</button>
       <p class="note">音が出ます。音量にご注意ください。<br>イヤホン推奨（Bluetoothは遅れることがあります）</p>
     </div>
@@ -24,7 +25,7 @@
 
   <!-- ミニゲーム選択 -->
   <section id="screen-select" class="screen" aria-label="ミニゲーム選択">
-    <header class="menu-head"><h2>ミニゲームをえらぶ</h2></header>
+    <header class="menu-head"><h2>ミニゲームをえらぶ</h2><div class="stripes"></div></header>
     <div id="game-list" class="game-list"></div>
     <div id="overlay-first" class="overlay" hidden>
       <div class="panel">
@@ -102,7 +103,7 @@
 
   <!-- 設定 -->
   <section id="screen-settings" class="screen scroll" aria-label="設定">
-    <header class="menu-head"><h2>設定</h2></header>
+    <header class="menu-head"><h2>設定</h2><div class="stripes"></div></header>
     <div class="settings">
       <h3>音量</h3>
       <label class="row">全体<input type="range" id="vol-master" min="0" max="100"><output></output></label>
@@ -190,6 +191,8 @@
 <script src="js/games/mochi.js"></script>
 <script src="js/games/penguin.js"></script>
 <script src="js/games/echo.js"></script>
+<script src="js/games/pingpong.js"></script>
+<script src="js/games/golf.js"></script>
 <script src="js/session.js"></script>
 <script src="js/calib.js"></script>
 <script src="js/ui.js"></script>

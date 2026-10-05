@@ -29,6 +29,9 @@
     p0153: phrase([0, 1.5, 3]),     // 1拍目、2拍目の裏、4拍目
     p0052: phrase([0, 0.5, 2]),
     p01253: phrase([0, 1, 2.5, 3]),
+    p05153: phrase([0.5, 1.5, 3]),   // 裏から始まる（ハード）
+    p00515: phrase([0, 0.5, 1, 1.5]),
+    p02535: phrase([0, 2.5, 3.5]),
     fin: { len: 4, end: true, cues: [{ b: 0, type: 'fin' }], fx: [{ b: 0, type: 'finale' }] }
   };
 
@@ -41,10 +44,23 @@
     ...seq('p0153 p0052 p01253 p0153', 'C', '裏拍（拍と拍のあいだ）が入るよ'),
     { p: 'fin', sec: 'end', guide: '演奏おしまい！' }
   ];
+  const hard = {
+    bpm: 106,
+    main: [
+      { p: 'count', sec: 'count', guide: 'ハード！ 裏拍だらけ' },
+      { p: 'rest', sec: 'I', guide: '「コッ」で聴いて、「チッ」で返す' },
+      ...seq('p0153 p0052 p05153 p01253', 'A'),
+      ...seq('p00515 p02535 p0153 p05153', 'B', '細かくなるよ'),
+      ...seq('p01253 p00515 p02535 p05153', 'C', 'ラスト！'),
+      { p: 'fin', sec: 'end', guide: '演奏おしまい！' }
+    ]
+  };
+
   const lessons = [
     { p: 'p02', title: '同じ間隔', hint: 'ポン・・ポン → 1拍目と3拍目' },
     { p: 'p013', title: '休みのあるリズム', hint: 'ポン ポン ・ ポン → 3拍目は休み' },
-    { p: 'p0153', title: '裏拍のリズム', hint: 'ポン・・ン ポン・ポン → 2拍目の「裏」' }
+    { p: 'p0153', title: '裏拍のリズム', hint: 'ポン・・ン ポン・ポン → 2拍目の「裏」' },
+    { p: 'p05153', title: '裏から始まる（ハード用）', hint: '・ン ・ン ・ポン → 1拍目の裏から' }
   ];
 
   const PROG = { A: ['G', 'G', 'Em', 'Em', 'C', 'C', 'D', 'D'], B: ['C', 'C', 'G', 'G', 'Am', 'Am', 'D', 'D'], C: ['G', 'G', 'Em', 'Em', 'C', 'C', 'D', 'D'], P: ['G', 'G', 'C', 'C'], I: ['D'], count: ['G'], end: ['G'] };
@@ -119,7 +135,7 @@
     D.circ(g, -22, 16, 8, '#ffffff', '#6b5a6b', 2.5);
     g.restore();
   }
-  function squirrel(g, x, y, beat, hitAmt, mood, tilt, ready) {
+  function squirrel(g, x, y, beat, hitAmt, mood, tilt, ready, cool) {
     g.save(); g.translate(x, y - U.hop(beat) * 2);
     // しっぽ
     g.beginPath(); g.moveTo(26, 30); g.bezierCurveTo(80, 20, 70, -70, 30, -60); g.bezierCurveTo(60, -40, 50, 10, 20, 10); g.closePath();
@@ -131,6 +147,7 @@
     D.circ(g, 0, 0, 28, '#d98c48', '#6b3d16', 3);
     D.ell(g, 0, 8, 16, 12, '#f6d7a8');
     D.eyes(g, 0, -4, 11, 4.5, mood, -1);
+    if (cool && mood !== 'wide') D.shades(g, 0, -4, 11, 6);
     D.circ(g, 0, 6, 3, '#4a2a10');
     D.mouth(g, 0, 13, 4, mood === 'happy' ? 'smile' : mood === 'wide' ? 'o' : 'smile');
     g.restore();
@@ -232,7 +249,7 @@
           g.globalAlpha = 0.28; D.ell(g, P.ph === 'listen' ? TEACH.x : SQ.x, 392, 66, 16, '#fff7c0'); g.globalAlpha = 1;
         }
         rabbit(g, TEACH.x, TEACH.y, beat, strike, tMood, P.ph === 'respond');
-        squirrel(g, SQ.x, SQ.y, beat, hitAmt, sqMood, tilt, P.ph === 'respond');
+        squirrel(g, SQ.x, SQ.y, beat, hitAmt, sqMood, tilt, P.ph === 'respond', session.judge.s.combo >= 10);
         if (confused) D.text(g, '?', SQ.x + 30, SQ.y - 92, 30, '#6b3d16', '#ffffff');
 
         // 一緒に演奏する仲間（成功時）
@@ -308,7 +325,7 @@
     id: 'echo', title: '森のエコー楽団', color: '#3f8a3a',
     howto: '先生の「ポン」を1小節聴いて、次の小節で同じリズムをタップ',
     bpm: BPM, offset: 0,
-    patterns, main, lessons, finalePattern: 'fin',
+    level: 2, patterns, main, hard, lessons, finalePattern: 'fin',
     cueSounds: { pon: { id: 'pon', gain: 1 }, tickL: { id: 'tickLo', gain: 0.55 }, tickR: { id: 'tickHi', gain: 0.6 }, fin: [{ id: 'boom', gain: 0.6 }, { id: 'chime', gain: 0.8 }] },
     missSound: 'kazoo',
     chordFor, music, hitSounds, preload, createScene, drawIcon

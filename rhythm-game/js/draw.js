@@ -70,7 +70,8 @@ RG.D = (function () {
   let FONT = null;
   function text(g, s, x, y, size, fill, stroke, align = 'center', weight = 800) {
     if (!FONT) FONT = getComputedStyle(document.body).fontFamily;
-    g.font = `${weight} ${size}px ${FONT}`;
+    // 大きな文字（演出の見出し）はファンクな見出し用フォント
+    g.font = size >= 20 ? `400 ${size}px "Dela Gothic One", ${FONT}` : `${weight} ${size}px ${FONT}`;
     g.textAlign = align; g.textBaseline = 'middle';
     if (stroke) { g.lineWidth = size / 5; g.strokeStyle = stroke; g.lineJoin = 'round'; g.strokeText(s, x, y); }
     g.fillStyle = fill; g.fillText(s, x, y);
@@ -81,5 +82,14 @@ RG.D = (function () {
     ell(g, 0, 0, 6, 4.5, color); line(g, 5, -1, 5, -18, color, 2.2); line(g, 5, -18, 11, -13, color, 2.2);
     g.restore();
   }
-  return { TAU, ell, circ, rrect, star, crescent, line, eyes, mouth, blush, sweat, text, note };
+  // サングラス（ノリノリのとき・ファンクなキャラ）。gap=目の間隔の半分、r=レンズの大きさ
+  function shades(g, x, y, gap, r, tint = '#1a1028') {
+    g.save();
+    g.fillStyle = tint; g.strokeStyle = '#000'; g.lineWidth = 2;
+    [-1, 1].forEach(s => { g.beginPath(); g.moveTo(x + s * gap - r * 1.2, y - r * 0.7); g.lineTo(x + s * gap + r * 1.2, y - r * 0.7); g.quadraticCurveTo(x + s * gap + r * 1.1, y + r * 1.1, x + s * gap, y + r * 0.9); g.quadraticCurveTo(x + s * gap - r * 1.1, y + r * 1.1, x + s * gap - r * 1.2, y - r * 0.7); g.fill(); g.stroke(); });
+    line(g, x - gap + r * 1.2, y - r * 0.6, x + gap - r * 1.2, y - r * 0.6, '#000', 2.5);
+    g.globalAlpha *= 0.7; line(g, x - gap - r * 0.6, y - r * 0.3, x - gap - r * 0.1, y - r * 0.3, '#fff', 2); g.globalAlpha /= 0.7;
+    g.restore();
+  }
+  return { shades, TAU, ell, circ, rrect, star, crescent, line, eyes, mouth, blush, sweat, text, note };
 })();

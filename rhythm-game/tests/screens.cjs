@@ -27,7 +27,19 @@ const SHOTS = [
   ['echo', 'respond', 1, 'perfect', 0.2],
   ['echo', 'miss', 3, 'miss', 0.4],
   ['echo', 'offbeat', 30, 'good', 0.1],
-  ['echo', 'finale', -1, 'fin', 1.2]
+  ['echo', 'finale', -1, 'fin', 1.2],
+  ['pingpong', 'normal', 0, null, -0.3],
+  ['pingpong', 'hit', 1, 'perfect', 0.4],
+  ['pingpong', 'smash', 12, null, -0.15],
+  ['pingpong', 'lob', 18, null, -1.4],
+  ['pingpong', 'miss', 3, 'miss', 0.4],
+  ['pingpong', 'finale', -1, 'fin', 1.0],
+  ['golf', 'drive', 0, null, -0.4],
+  ['golf', 'perfect', 1, 'perfect', 0.7],
+  ['golf', 'chip', 6, null, -0.6],
+  ['golf', 'rush', 12, null, -0.5],
+  ['golf', 'miss', 2, 'miss', 1.0],
+  ['golf', 'finale', -1, 'fin', 1.4]
 ];
 
 (async () => {

@@ -10,10 +10,10 @@
  * 判定処理（judge.js）は拍→秒に変換された targets だけを見るので、曲やリズムを変えても判定処理は書き換え不要です。
  */
 RG.Chart = class Chart {
-  constructor(game) {
+  constructor(game, opts = {}) {
     this.game = game;
-    this.bpm = game.bpm;
-    this.spb = 60 / game.bpm;
+    this.bpm = opts.bpm || game.bpm;   // ハード版はテンポを上げる
+    this.spb = 60 / this.bpm;
     this.offset = game.offset || 0;
     this.cursor = 0;          // 次に置く拍
     this.cues = [];

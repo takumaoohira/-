@@ -24,6 +24,19 @@
     { p: 'fin', sec: 'end', guide: 'おもち、できあがり！' }
   ];
 
+  // ハード：テンポ126、2連続を多めに
+  const hard = {
+    bpm: 126,
+    main: [
+      { p: 'count', sec: 'count', guide: 'ハード！ 速いよ' },
+      { p: 'rest', sec: 'I', guide: 'トン・トン・ペタン／トン・カッカッ・ペタペタ' },
+      ...'ABABBA'.split('').map(p => ({ p, sec: 'A' })),
+      ...'BBABBB'.split('').map((p, i) => ({ p, sec: 'B', guide: i === 0 ? '2連続ラッシュ！' : null })),
+      ...'ABBABBAB'.split('').map((p, i) => ({ p, sec: 'C', guide: i === 0 ? 'ラスト！' : null })),
+      { p: 'fin', sec: 'end', guide: 'おもち、できあがり！' }
+    ]
+  };
+
   const lessons = [
     { p: 'A', title: 'ふつうのペタン', hint: 'トン・トン・ペタン（3拍目でタップ）' },
     { p: 'B', title: '2連続ペタペタ', hint: 'トン・カッカッ・ペタペタ（3拍目とその裏）' }
@@ -95,6 +108,7 @@
     g.beginPath(); g.moveTo(-26, 20); g.bezierCurveTo(-30, -30, 30, -30, 26, 20); g.quadraticCurveTo(0, 32, -26, 20);
     g.fillStyle = color; g.fill(); g.lineWidth = 3; g.strokeStyle = '#4b4466'; g.stroke();
     D.eyes(g, 0, -6, 9, 5, mood, 0);
+    if (opt.shades && mood !== 'x') D.shades(g, 0, -6, 9, 6);
     if (mood === 'happy' || mood === 'smug') D.blush(g, 0, 4, 15, 5);
     D.mouth(g, 0, 9, 5, mood === 'happy' ? 'smile' : mood === 'wide' ? 'o' : mood === 'x' ? 'wavy' : 'smile');
     g.restore();
@@ -165,7 +179,7 @@
         // プレイヤー（奥）
         const pMood = fin !== null ? 'happy' : missRecent ? 'x' : hd < 0.8 && st.hit.kind === 'perfect' ? 'happy' : 'normal';
         const pHop = fin !== null ? -24 * Math.max(0, Math.sin(Math.min(fin, 1) * Math.PI)) : -U.hop(beat) * 3;
-        alien(g, 180, 262 + pHop, 1.7, COL.p, pMood, beat);
+        alien(g, 180, 262 + pHop, 1.7, COL.p, pMood, beat, { shades: session.judge.s.combo >= 10 });
         if (missRecent) { // 顔にお餅
           const a = U.prog(md, 0, 0.15) * (1 - U.prog(md, 1.1, 1.4));
           g.globalAlpha = a;
@@ -287,7 +301,7 @@
     id: 'mochi', title: '月面もちつき', color: '#4b4fa3',
     howto: '「トン・トン」のあと、3拍目でタップ。「カッカッ」の後は2回！',
     bpm: BPM, offset: 0,
-    patterns, main, lessons, finalePattern: 'fin',
+    level: 1, patterns, main, hard, lessons, finalePattern: 'fin',
     cueSounds: { ton: { id: 'ton', gain: 1.5 }, ka: { id: 'ka', gain: 1.0 }, fin: [{ id: 'boom', gain: 0.9 }, { id: 'chime', gain: 0.8 }] },
     missSound: 'miss',
     chordFor, music, hitSounds, preload, createScene, drawIcon

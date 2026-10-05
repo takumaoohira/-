@@ -67,11 +67,11 @@ async function newPage(browser) {
   return page;
 }
 
-async function playMain(page, id, botOpts, settings) {
-  await page.evaluate(([id, settings]) => {
+async function playMain(page, id, botOpts, settings, hard) {
+  await page.evaluate(([id, settings, hard]) => {
     Object.assign(RG.Storage.settings, settings || {});
-    return RG.App.startGame(id, 'main');
-  }, [id, settings]);
+    return RG.App.startGame(id, 'main', { hard: !!hard });
+  }, [id, settings, hard]);
   await page.evaluate(o => {
     if (o && o.errMs !== undefined) o.err = o.errMs / 1000;
     return window.__bot(o);
@@ -101,7 +101,7 @@ function check(name, ok, detail) {
 
 (async () => {
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-  const games = ONLY.length ? ONLY : ['mochi', 'penguin', 'echo'];
+  const games = ONLY.length ? ONLY : ['mochi', 'penguin', 'echo', 'pingpong', 'golf'];
 
   // ゲームごとに並列で実行
   await Promise.all(games.map(async id => {
@@ -126,6 +126,15 @@ function check(name, ok, detail) {
     const lagSt = await page.evaluate(() => RG.App.lastStats);
     lag.stats = lagSt;
     check(`${id}: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms`, lag.perfect === lag.total && lagSt.maxClockErrMs < 10, JSON.stringify(lag));
+
+    // ハード版：全部ぴったり → 100点、+75ms遅れ → 全Good、譜面の検証エラーなし
+    const hp = await playMain(page, id, { errMs: 0 }, { inputOffsetMs: 0 }, true);
+    const hproblems = await page.evaluate(id => { const c = new RG.Chart(RG.Games[id], { bpm: RG.Games[id].hard.bpm }); RG.Games[id].hard.main.forEach(t => c.place(t)); const n = new RG.Chart(RG.Games[id]); RG.Games[id].main.forEach(t => n.place(t)); return { hard: c.validate(), normal: n.validate(), hardSec: c.t(c.endBeat).toFixed(1), normalSec: n.t(n.endBeat).toFixed(1) }; }, id);
+    check(`${id}: ハード版 全部ぴったり → 100点・譜面の検証OK`, hp.score === 100 && hp.perfect === hp.total && !hproblems.hard.length && !hproblems.normal.length, JSON.stringify({ hp, hproblems }));
+    const hl = await playMain(page, id, { errMs: -75 }, { inputOffsetMs: 0 }, true);
+    check(`${id}: ハード版 −75ms早め → 全Good・早めの助言`, hl.good === hl.total && hl.advice.some(a => a.includes('早め')), JSON.stringify(hl));
+    const hr = await page.evaluate(id => RG.Storage.record(id), id);
+    check(`${id}: ハードの記録は別に保存`, hr.hardBest === 100 && hr.best === 100, JSON.stringify(hr));
 
     if (id === games[0]) {
       // 2. 入力なし

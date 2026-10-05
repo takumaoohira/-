@@ -30,6 +30,18 @@
     { p: 'fin', sec: 'end', guide: '配達完了！' }
   ];
 
+  const hard = {
+    bpm: 118,
+    main: [
+      { p: 'count', sec: 'count', guide: 'ハード！ 繁忙期です' },
+      { p: 'rest', sec: 'I', guide: 'チリーン→2拍あと／ピピッ→1拍あと' },
+      ...seq('N EE N1 E2 EE N', 'A'),
+      ...seq('E2 N1 EE E2 N EE', 'B', '速達ラッシュ！'),
+      ...seq('EE EE N1 E2 EE N E2 EE', 'C', 'ラストスパート！'),
+      { p: 'fin', sec: 'end', guide: '配達完了！' }
+    ]
+  };
+
   const lessons = [
     { p: 'N', title: '通常便', hint: 'チリーン → 2拍あと（箱が2回はねたら）タップ' },
     { p: 'E', title: '速達便', hint: 'ピピッ → 1拍あとにタップ' },
@@ -130,7 +142,7 @@
     else if (pose === 'salute') { fl(-1, 0.2); fl(1, 2.6); }
     else { const w = Math.sin(beat * Math.PI) * 0.08; fl(-1, 0.2 + w); fl(1, 0.2 - w); }
     // 顔
-    D.eyes(g, -4, -26, 12, 5, mood === 'panic' ? 'wide' : mood === 'happy' ? 'happy' : mood === 'smug' ? 'smug' : 'normal', look);
+    D.eyes(g, -4, -26, 12, 5, mood === 'panic' ? 'wide' : mood === 'happy' ? 'happy' : mood === 'smug' ? 'smug' : 'normal', typeof look === 'number' ? look : -1);
     if (mood === 'happy' || mood === 'smug') D.blush(g, -4, -14, 20, 5);
     g.beginPath();
     if (mood === 'smug') { g.moveTo(-14, -18); g.lineTo(-4, -26); g.lineTo(6, -18); }
@@ -142,6 +154,7 @@
     D.rrect(g, -32, -46, 50, 7, 3, '#2b5fb0', '#1b2238', 2);
     D.circ(g, 0, -52, 5, '#ffcc00', '#1b2238', 1.5);
     if (mood === 'smug') D.star(g, 30, -40, 7, 3, 4, beat, '#ffe066');
+    if (look === 'shades' && mood !== 'panic') D.shades(g, -4, -26, 12, 6);
     g.restore();
   }
 
@@ -237,7 +250,7 @@
         else if (dTap >= 0 && dTap < 0.3) { pose = 'catch'; mood = dHit >= 0 && dHit < 0.6 ? (st.combo >= 5 ? 'smug' : 'happy') : 'normal'; }
         else if (dHit >= 0 && dHit < 0.8) mood = st.combo >= 5 ? 'smug' : 'happy';
         else if (st.combo >= 5) mood = 'smug';
-        penguin(g, 238, 352, mood, pose, beat, -1);
+        penguin(g, 238, 352, mood, pose, beat, session.judge.s.combo >= 10 ? 'shades' : -1);
 
         // 荷物
         let delivered = 0;
@@ -300,7 +313,7 @@
     id: 'penguin', title: 'ペンギン宅配便', color: '#3d7bd9',
     howto: 'ベル「チリーン」→2拍あと、笛「ピピッ」→1拍あとにタップでキャッチ',
     bpm: BPM, offset: 0,
-    patterns, main, lessons, finalePattern: 'fin',
+    level: 2, patterns, main, hard, lessons, finalePattern: 'fin',
     cueSounds: { bell: { id: 'bell', gain: 1.6 }, whistle: { id: 'whistle', gain: 1.5 }, fin: [{ id: 'boom', gain: 0.7 }, { id: 'chime', gain: 0.8 }] },
     missSound: 'drop',
     chordFor, music, hitSounds, preload, createScene, drawIcon, validate

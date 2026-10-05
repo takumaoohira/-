@@ -197,7 +197,84 @@ RG.Synth = (function () {
     drop(sr) { const a = buf(sr, 0.3); noise(a, sr, 0.5, 14, 600, 0, 0.02); sweep(a, sr, 110, 70, 10, 0.25, 12); return fadeEdges(a, sr); },
     tap(sr) { const a = buf(sr, 0.05); tone(a, sr, 420, 0.16, 90); noise(a, sr, 0.06, 150, 3000); return fadeEdges(a, sr); },
     // ドーン（締め）
-    boom(sr) { const a = buf(sr, 1.2); sweep(a, sr, 110, 50, 6, 0.6, 3.2); noise(a, sr, 0.25, 6, 900, 0, 0.003); return fadeEdges(a, sr, 1, 60); }
+    boom(sr) { const a = buf(sr, 1.2); sweep(a, sr, 110, 50, 6, 0.6, 3.2); noise(a, sr, 0.25, 6, 900, 0, 0.003); return fadeEdges(a, sr, 1, 60); },
+
+    // ---- ファンク用の楽器（スポーツ系ミニゲーム） ----
+    clap(sr) { const a = buf(sr, 0.25); [0, 0.011, 0.023].forEach(st => noise(a, sr, 0.32, 60, 5000, 900, 0, st)); noise(a, sr, 0.28, 14, 4500, 1000, 0, 0.03); return fadeEdges(a, sr); },
+    ohat(sr) { const a = buf(sr, 0.32); noise(a, sr, 0.3, 9, 0, 6500); return fadeEdges(a, sr, 1, 40); },
+    sbass(sr, n, d) { // スラップベース（はじく音＋低音）
+      const f = freq(n), a = buf(sr, d || 0.4); let ph = 0;
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr; ph += TAU * f / sr;
+        const bright = Math.exp(-t * 18);
+        a[i] = 0.45 * (Math.sin(ph) + 0.5 * bright * Math.sin(2 * ph) + 0.3 * bright * Math.sin(3 * ph) + 0.15 * bright * Math.sin(5 * ph)) * Math.min(1, t / 0.003) * Math.exp(-t * 4);
+      }
+      noise(a, sr, 0.18, 120, 6000, 1500);
+      return fadeEdges(a, sr, 1, 20);
+    },
+    clav(sr, n, d) { // クラビネット風（短く歯切れのよい鍵盤）
+      const f = freq(n), a = buf(sr, d || 0.25); let ph = 0, y = 0;
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr; ph += TAU * f / sr;
+        const sq = (ph % TAU) < TAU * 0.3 ? 1 : -1;
+        const c = coef(600 + 5000 * Math.exp(-t * 25), sr);
+        y += c * (sq - y);
+        a[i] = 0.22 * y * Math.min(1, t / 0.002) * Math.exp(-t * 9);
+      }
+      return fadeEdges(a, sr, 1, 15);
+    },
+    brass(sr, ns, d) { // ブラスの短い和音
+      const notes = ns.split(',').map(freq), dur = d || 0.3, a = buf(sr, dur + 0.15);
+      notes.forEach(f => {
+        let ph = 0, y = 0;
+        for (let i = 0; i < a.length; i++) {
+          const t = i / sr; ph += TAU * f * (1 + 0.004 * Math.sin(TAU * 6 * t)) / sr;
+          const saw = (ph / Math.PI) % 2 - 1;
+          const env = Math.min(1, t / 0.02) * (t > dur ? Math.max(0, 1 - (t - dur) / 0.15) : 1);
+          const c = coef(900 + 2500 * Math.min(1, t / 0.05), sr);
+          y += c * (saw - y);
+          a[i] += 0.1 * y * env;
+        }
+      });
+      return fadeEdges(a, sr);
+    },
+    scratch(sr) { // DJスクラッチ「キュッ」（1回分）
+      const a = buf(sr, 0.12); let y = 0, ph = 0;
+      const n = Math.floor(0.1 * sr);
+      for (let i = 0; i < n; i++) {
+        const t = i / sr, f = 300 + 1500 * Math.sin(Math.PI * t / 0.1);
+        ph += TAU * f / sr;
+        y += 0.3 * (rnd() - y);
+        a[i] += 0.34 * (Math.sin(ph) * 0.7 + y * 0.6) * Math.sin(Math.PI * t / 0.1);
+      }
+      return fadeEdges(a, sr);
+    },
+    // 卓球
+    pong(sr) { const a = buf(sr, 0.09); tone(a, sr, 1450, 0.45, 55); tone(a, sr, 2900, 0.15, 80); noise(a, sr, 0.25, 160, 9000, 1500); return fadeEdges(a, sr); },
+    pok(sr) { const a = buf(sr, 0.06); tone(a, sr, 2300, 0.32, 90); noise(a, sr, 0.12, 200, 9000, 3000); return fadeEdges(a, sr); },
+    smash(sr) { const a = buf(sr, 0.22); noise(a, sr, 0.75, 28, 9000, 1200); sweep(a, sr, 2600, 900, 25, 0.3, 30); tone(a, sr, 1450, 0.3, 50); return fadeEdges(a, sr); },
+    lob(sr) {
+      const a = buf(sr, 0.42); let ph = 0;
+      for (let i = 0; i < a.length; i++) { const t = i / sr, f = 500 + 900 * (t / 0.42); ph += TAU * f / sr; a[i] = 0.2 * Math.sin(ph) * Math.min(1, t / 0.02) * (1 - t / 0.42); }
+      tone(a, sr, 1100, 0.35, 45);
+      return fadeEdges(a, sr);
+    },
+    pingHit(sr) { const a = buf(sr, 0.12); tone(a, sr, 1700, 0.5, 45); tone(a, sr, 3400, 0.18, 70); noise(a, sr, 0.3, 120, 10000, 2000); return fadeEdges(a, sr); },
+    // ゴルフ
+    tee(sr) { const a = buf(sr, 0.12); tone(a, sr, 880, 0.4, 45); tone(a, sr, 1760, 0.12, 60); noise(a, sr, 0.2, 120, 5000, 600); return fadeEdges(a, sr); },
+    waggle(sr) { const a = buf(sr, 0.16); noise(a, sr, 0.35, 22, 7000, 2500, 0.03); return fadeEdges(a, sr); },
+    golfHit(sr) { const a = buf(sr, 0.6); noise(a, sr, 0.5, 60, 12000, 2000); [2100, 3170, 4400].forEach((f, i) => tone(a, sr, f, 0.16 / (i + 1), 7 + i * 3)); sweep(a, sr, 300, 120, 30, 0.3, 25); return fadeEdges(a, sr, 1, 30); },
+    cup(sr) { const a = buf(sr, 0.5); tone(a, sr, 700, 0.3, 14); tone(a, sr, 1050, 0.2, 18, 0.09); tone(a, sr, 700, 0.15, 20, 0.16); return fadeEdges(a, sr, 1, 30); },
+    splash(sr) { const a = buf(sr, 0.6); noise(a, sr, 0.45, 7, 3500, 300, 0.01); sweep(a, sr, 400, 150, 12, 0.15, 10); return fadeEdges(a, sr, 1, 50); },
+    cheer(sr) { // 歓声（ワーッ）
+      const a = buf(sr, 1.4); let y1 = 0, y2 = 0;
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr; y1 += 0.08 * (rnd() - y1); y2 += 0.02 * (y1 - y2);
+        a[i] = 2.2 * (y1 - y2) * Math.min(1, t / 0.2) * Math.max(0, 1 - Math.max(0, t - 0.6) / 0.8) * (1 + 0.2 * Math.sin(TAU * 5 * t));
+      }
+      return fadeEdges(a, sr, 1, 60);
+    },
+    whiff(sr) { const a = buf(sr, 0.3); noise(a, sr, 0.3, 10, 2500, 500, 0.08); return fadeEdges(a, sr); }
   };
 
   function render(id, sr) {
