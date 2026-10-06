@@ -34,17 +34,17 @@
   .noise { position: absolute; inset: 0; opacity: .22; pointer-events: none; }
 
   /* ---------- ヘッダー写真 ---------- */
-  .hero { position: relative; height: 236px; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
+  .hero { position: relative; height: 258px; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
   .hero > img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
   .hero::before { content: ""; position: absolute; inset: 0; z-index: 1;
-    background: linear-gradient(90deg, rgba(22,20,19,.94) 0%, rgba(22,20,19,.85) 42%, rgba(22,20,19,.25) 68%, rgba(22,20,19,.05) 100%); }
-  .menu-name { position: absolute; z-index: 2; left: 34px; top: 30px; }
+    background: linear-gradient(90deg, rgba(22,20,19,.94) 0%, rgba(22,20,19,.86) 50%, rgba(22,20,19,.55) 78%, rgba(22,20,19,.3) 100%, rgba(22,20,19,.05) 100%); }
+  .menu-name { position: absolute; z-index: 2; left: 32px; top: 28px; }
   .menu-name .en { font-family: "Playfair Display", serif; font-style: italic; font-weight: 700; color: var(--gold); font-size: 12px; letter-spacing: .32em; }
-  .menu-name .pre { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-weight: 800; font-size: 25px; letter-spacing: .3em; color: var(--gold); line-height: 1; }
+  .menu-name .pre { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-weight: 800; font-size: 26px; letter-spacing: .3em; color: var(--gold); line-height: 1; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
   .menu-name .pre::after { content: ""; width: 120px; height: 1px; background: linear-gradient(90deg, var(--gold), transparent); }
-  .menu-name .main { margin-top: 10px; font-weight: 800; font-size: 72px; letter-spacing: .03em; line-height: 1; color: #f7cd48;
+  .menu-name .main { margin-top: 12px; font-weight: 800; font-size: 96px; letter-spacing: .03em; line-height: 1; color: #f7cd48;
     text-shadow: 0 2px 0 #7a4f08, 0 4px 14px rgba(0,0,0,.75), 0 0 28px rgba(247,205,72,.25); white-space: nowrap; }
-  .menu-name .main em { font-style: normal; font-size: 50px; margin-left: 4px; color: #fbf6ec; text-shadow: 0 2px 0 rgba(0,0,0,.6), 0 4px 14px rgba(0,0,0,.75); }
+  .menu-name .main em { font-style: normal; font-size: 64px; margin-left: 6px; color: #fbf6ec; text-shadow: 0 2px 0 rgba(0,0,0,.6), 0 4px 14px rgba(0,0,0,.75); }
 
   /* ---------- タイトル ---------- */
   .title { position: relative; margin-top: -30px; padding: 0 36px; }
@@ -57,7 +57,7 @@
   .price .yen { font-size: 22px; margin-left: 2px; }
   .price .tax { font-size: 12px; font-weight: 500; margin-left: 10px; color: var(--muted); }
 
-  .badge { position: absolute; right: 22px; top: -96px; width: 228px; height: 228px; z-index: 3; }
+  .badge { position: absolute; right: 30px; top: -38px; width: 196px; height: 196px; z-index: 3; }
 
   /* ---------- セクション見出し ---------- */
   .sec { margin: 26px 36px 0; display: flex; align-items: baseline; gap: 22px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
@@ -77,7 +77,7 @@
   .or { font-family: sans-serif; color: var(--gold); font-size: 24px; width: 70px; text-align: center; flex: none; }
 
   /* ---------- SNACK ---------- */
-  .snacks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px 12px; padding: 18px 36px 0; }
+  .snacks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 12px; padding: 16px 36px 0; }
   .snack .ph { width: 100%; aspect-ratio: 1.55; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.45); }
   .snack .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .snack h4 { font-weight: 800; font-size: 14.5px; letter-spacing: .1em; margin-top: 8px; }
@@ -86,7 +86,7 @@
   .snack .fee.opt span { font-family: "Shippori Mincho B1", serif; font-style: normal; font-size: 10px; margin-left: 1px; }
 
   /* ---------- Example ---------- */
-  .example { margin: 30px 36px 0; border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; display: flex; align-items: center; gap: 14px; font-size: 11.5px; }
+  .example { margin: 24px 36px 0; border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; display: flex; align-items: center; gap: 14px; font-size: 11.5px; }
   .example .ex { font-family: "Playfair Display", serif; font-style: italic; color: var(--gold); font-size: 13px; letter-spacing: .1em; }
   .example .calc { margin-left: auto; color: var(--muted); }
   .example s { color: var(--muted); }
