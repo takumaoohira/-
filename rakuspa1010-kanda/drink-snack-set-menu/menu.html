@@ -34,7 +34,7 @@
   .noise { position: absolute; inset: 0; opacity: .22; pointer-events: none; }
 
   /* ---------- ヘッダー写真 ---------- */
-  .hero { position: relative; height: 258px; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
+  .hero { position: relative; height: 250px; -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%); mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
   .hero > img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
   .hero::before { content: ""; position: absolute; inset: 0; z-index: 1;
     background: linear-gradient(90deg, rgba(22,20,19,.94) 0%, rgba(22,20,19,.86) 50%, rgba(22,20,19,.55) 78%, rgba(22,20,19,.3) 100%, rgba(22,20,19,.05) 100%); }
@@ -60,7 +60,7 @@
   .badge { position: absolute; right: 30px; top: -38px; width: 196px; height: 196px; z-index: 3; }
 
   /* ---------- セクション見出し ---------- */
-  .sec { margin: 26px 36px 0; display: flex; align-items: baseline; gap: 22px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .sec { margin: 22px 36px 0; display: flex; align-items: baseline; gap: 22px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
   .sec h2 { font-weight: 700; font-size: 30px; letter-spacing: .28em; line-height: 1; }
   .sec p { font-size: 14px; font-weight: 700; letter-spacing: .12em; }
   .sec .note { margin-left: auto; font-size: 11px; font-weight: 500; color: var(--muted); }
@@ -77,16 +77,18 @@
   .or { font-family: sans-serif; color: var(--gold); font-size: 24px; width: 70px; text-align: center; flex: none; }
 
   /* ---------- SNACK ---------- */
-  .snacks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 12px; padding: 16px 36px 0; }
+  .snacks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 12px; padding: 16px 36px 0; }
   .snack .ph { width: 100%; aspect-ratio: 1.55; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.45); }
   .snack .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .snack h4 { font-weight: 800; font-size: 14.5px; letter-spacing: .1em; margin-top: 8px; }
-  .snack .fee { margin-top: 4px; font-size: 11px; color: var(--muted); letter-spacing: .1em; height: 18px; }
-  .snack .fee.opt { font-family: "Playfair Display", serif; font-style: italic; font-weight: 800; font-size: 15px; color: var(--gold); letter-spacing: 0; }
-  .snack .fee.opt span { font-family: "Shippori Mincho B1", serif; font-style: normal; font-size: 10px; margin-left: 1px; }
+  .snack h4 { font-weight: 800; font-size: 17.5px; letter-spacing: .06em; margin-top: 9px; line-height: 1.25; white-space: nowrap; }
+  .snack h4.long { font-size: 16px; letter-spacing: 0; }
+  .snack .fee { margin-top: 6px; height: 26px; display: flex; align-items: center; }
+  .snack .fee.free span { font-size: 11.5px; font-weight: 700; color: var(--text); letter-spacing: .12em; padding: 3px 9px; border: 1px solid rgba(255,255,255,.55); border-radius: 3px; }
+  .snack .fee.opt { font-family: "Playfair Display", serif; font-style: italic; font-weight: 800; font-size: 25px; color: var(--gold); letter-spacing: 0; line-height: 1; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
+  .snack .fee.opt span { font-family: "Shippori Mincho B1", serif; font-style: normal; font-weight: 800; font-size: 14px; margin-left: 2px; align-self: flex-end; padding-bottom: 2px; }
 
   /* ---------- Example ---------- */
-  .example { margin: 24px 36px 0; border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; display: flex; align-items: center; gap: 14px; font-size: 11.5px; }
+  .example { margin: 20px 36px 0; border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; display: flex; align-items: center; gap: 14px; font-size: 11.5px; }
   .example .ex { font-family: "Playfair Display", serif; font-style: italic; color: var(--gold); font-size: 13px; letter-spacing: .1em; }
   .example .calc { margin-left: auto; color: var(--muted); }
   .example s { color: var(--muted); }
@@ -146,13 +148,13 @@
   <!-- SNACK -->
   <div class="sec"><h2>SNACK</h2><p>おつまみを2品えらぶ</p><span class="note">一部オプション料金あり</span></div>
   <div class="snacks">
-    <div class="snack"><div class="ph"><img src="img/edamame.jpg" alt=""></div><h4>枝豆</h4><div class="fee">追加料金なし</div></div>
-    <div class="snack"><div class="ph"><img src="img/jaga.jpg" alt=""></div><h4>ミニじゃがバター</h4><div class="fee">追加料金なし</div></div>
-    <div class="snack"><div class="ph"><img src="img/nama-ham.jpg" alt=""></div><h4>生ハム</h4><div class="fee">追加料金なし</div></div>
+    <div class="snack"><div class="ph"><img src="img/edamame.jpg" alt=""></div><h4>枝豆</h4><div class="fee free"><span>追加料金なし</span></div></div>
+    <div class="snack"><div class="ph"><img src="img/jaga.jpg" alt=""></div><h4>ミニじゃがバター</h4><div class="fee free"><span>追加料金なし</span></div></div>
+    <div class="snack"><div class="ph"><img src="img/nama-ham.jpg" alt=""></div><h4>生ハム</h4><div class="fee free"><span>追加料金なし</span></div></div>
     <div class="snack"><div class="ph"><img src="img/potato.jpg" alt=""></div><h4>ポテトフライ</h4><div class="fee opt">+50<span>円</span></div></div>
     <div class="snack"><div class="ph"><img src="img/karaage.jpg" alt=""></div><h4>唐揚げ</h4><div class="fee opt">+100<span>円</span></div></div>
     <div class="snack"><div class="ph"><img src="img/calamari.jpg" alt=""></div><h4>カラマリフリット</h4><div class="fee opt">+100<span>円</span></div></div>
-    <div class="snack"><div class="ph"><img src="img/cheese.jpg" alt=""></div><h4>カリカリチーズフライ</h4><div class="fee opt">+100<span>円</span></div></div>
+    <div class="snack"><div class="ph"><img src="img/cheese.jpg" alt=""></div><h4 class="long">カリカリチーズフライ</h4><div class="fee opt">+100<span>円</span></div></div>
     <div class="snack"><div class="ph"><img src="img/salmon.jpg" alt=""></div><h4>サーモンマリネ</h4><div class="fee opt">+100<span>円</span></div></div>
   </div>
 
