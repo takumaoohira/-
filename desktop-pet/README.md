@@ -2,16 +2,16 @@
 
 スマホの画面にねこ・いぬがやってきて、歩いたり寝たり、さわると反応したりするアプリです。
 
-## 2つの版
+## 3つの版
 
-| | Android アプリ (`app/`) | Web 版 (`web/index.html`) |
-|---|---|---|
-| 対応端末 | Android 8.0 以上 | iPhone / Android / PC |
-| 表示場所 | **ホーム画面や他のアプリの上** | アプリ(ページ)の中の「ペットのお部屋」 |
-| 常駐 | ○ (通知から ごはん / おいで / しまう) | 開いている間だけ |
+| | Android アプリ (`app/`) | iPhone アプリ (`ios/`) | Web 版 (`web/index.html`) |
+|---|---|---|---|
+| 対応端末 | Android 8.0 以上 | iOS 17 以上 | どのスマホ・PC でも |
+| ペットのいる場所 | **ホーム画面や他のアプリの上を歩く** | **ホーム画面のウィジェット / Dynamic Island / ロック画面**、アプリ内のお部屋 | ページ内のお部屋 |
+| 動き | なめらかに動き続ける | アプリ内はなめらか。ウィジェットと島は気分・時間でポーズとセリフが変わる | なめらか |
 
-iPhone (iOS) は、OS の決まりでどのアプリもホーム画面や他のアプリの上に重ねて表示できません。
-そのため iPhone では Web 版を使います。Safari で開いて「共有 → ホーム画面に追加」すると、アプリのように全画面で起動できます。
+iPhone (iOS) は、OS の決まりでアプリがホーム画面や他のアプリの上に重ねて表示できません。
+そのため iPhone 版は、ウィジェットと Dynamic Island でペットがくらす形にしています。
 
 ## できること(両方共通)
 
@@ -38,9 +38,29 @@ iPhone (iOS) は、OS の決まりでどのアプリもホーム画面や他の�
 
 自分でビルドする場合は Android Studio でこのフォルダを開くか、`./gradlew assembleDebug`。
 
+## iPhone アプリの入れ方 (Mac が必要)
+
+1. Mac に Xcode(App Store から無料)と XcodeGen を入れる: `brew install xcodegen`
+2. `desktop-pet/ios` フォルダで `xcodegen generate` → できた `PocketPet.xcodeproj` を開く
+3. `PocketPet` と `PocketPetWidget` の両方で **Signing & Capabilities → Team** に自分の Apple ID を選ぶ
+   - バンドルID(`jp.pocketpet.app`)と App Group(`group.jp.pocketpet.app`)は、ほかの人と重ならない名前に変える必要がある場合があります
+     (変える場合は `Shared/PetState.swift` の `groupId` と2つの `.entitlements` もそろえる)
+4. iPhone をつないで ▶ で実行。iPhone 側で「設定 → 一般 → VPNとデバイス管理」から開発者を信頼
+5. ホーム画面を長押し →「ウィジェットを追加」→「ポケットペット」(小・中、ロック画面用もあり)
+6. アプリ上部の「Dynamic Islandに出す」で、画面上部とロック画面にペットが出ます
+
+補足:
+- 無料の Apple ID でも自分の iPhone には入れられますが、7日ごとに入れ直しが必要です。
+  ウィジェットとアプリで気分を共有する App Group が無料アカウントで使えない場合は、有料の Apple Developer Program が必要です
+- ウィジェットは iOS の仕組み上なめらかなアニメはできず、10分ごとにポーズとセリフが変わります。「ごはん」「なでる」ボタンを押すとすぐ反応します
+- Dynamic Island は iOS の決まりで最長およそ8時間で消えます。アプリを開いている間は20秒ごとにポーズが変わります
+- ウィジェット用のイラストは `node ios/tools/render-sprites.cjs` で Web 版の描画コードから作り直せます
+
 ## しくみ
 
 - `Pet.kt` … 頭脳。行動の状態遷移・物理(重力/投げ/壁)・気分・タッチの解釈
 - `PetRenderer.kt` … 画像素材なしで、姿勢に合わせてペットをコードで描画
 - `PetService.kt` … 小さな透明ウィンドウを他のアプリの上に置き、毎フレーム動かす常駐サービス
-- `web/index.html` … 上記と同じロジックを JavaScript に移した Web 版
+- `web/index.html` … 上記と同じロジックを JavaScript に移した Web 版(iPhone アプリの中でもこれを表示)
+- `ios/Shared/PetState.swift` … ウィジェット・島・アプリで共有する気分と、ポーズ・セリフの決め方
+- `ios/PocketPetWidget/` … ホーム画面ウィジェットと Dynamic Island
