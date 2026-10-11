@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>モバイルオーダーのご案内</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Noto+Sans+SC:wght@400;700&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  :root {
+    --green: #6f8f6a;
+    --green-dark: #3f5a3c;
+    --green-pale: #e6eee2;
+    --cream: #faf8f2;
+    --accent: #c9853e;
+    --ink: #2b2b2b;
+    --sub: #5d5d5d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #fff; }
+  body { font-family: "Noto Sans JP", sans-serif; color: var(--ink); }
+  .page {
+    width: 210mm; height: 297mm; overflow: hidden;
+    background: var(--cream);
+    display: flex; flex-direction: column;
+  }
+  header {
+    background: var(--green-dark); color: #fff;
+    padding: 9mm 12mm 7mm; text-align: center; position: relative;
+  }
+  header .brand { font-family: Montserrat, sans-serif; font-weight: 600; letter-spacing: .25em; font-size: 10.5pt; opacity: .85; }
+  header h1 { font-weight: 900; font-size: 33pt; letter-spacing: .06em; margin: 2mm 0 1mm; }
+  header .langs { font-size: 13pt; display: flex; justify-content: center; gap: 6mm; }
+  header .langs span:first-child { font-family: Montserrat, sans-serif; font-weight: 600; }
+  header .langs span:last-child { font-family: "Noto Sans SC", sans-serif; font-weight: 700; }
+  header .lead {
+    margin-top: 4mm; display: inline-block; background: #fff; color: var(--green-dark);
+    border-radius: 99px; padding: 1.6mm 7mm; font-weight: 700; font-size: 11.5pt;
+  }
+  header .lead small { margin-left: 0 !important; font-weight: 400; font-size: 8.5pt; color: var(--sub); margin-left: 2mm; }
+
+  .steps {
+    flex: 1; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: minmax(0,1fr) minmax(0,1fr); min-height: 0;
+    gap: 6mm 7mm; padding: 7mm 10mm 5mm; position: relative;
+  }
+  .step {
+    background: #fff; border-radius: 5mm; border: .6mm solid var(--green-pale);
+    box-shadow: 0 1mm 2.5mm rgba(63,90,60,.12);
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
+  }
+  .step .head { display: flex; align-items: center; gap: 3mm; padding: 4mm 4.5mm 2.5mm; }
+  .num {
+    flex: none; width: 13mm; height: 13mm; border-radius: 50%;
+    background: var(--accent); color: #fff; display: grid; place-items: center;
+    font-family: Montserrat, sans-serif; font-weight: 800; font-size: 19pt;
+  }
+  .step h2 { font-size: 15.5pt; font-weight: 900; line-height: 1.3; color: var(--green-dark); }
+  .photo {
+    flex: 1; min-height: 0; margin: 0 4.5mm; border-radius: 3mm; overflow: hidden;
+    background: var(--green-pale); position: relative;
+  }
+  .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .photo.phone { background: var(--green-pale); }
+  .photo.phone img {
+    inset: 2.5mm auto 2.5mm 50%; transform: translateX(-50%); width: auto; height: calc(100% - 5mm); aspect-ratio: 750/1020; object-fit: cover; border-radius: 3mm;
+    border: 1.2mm solid #333; background: #fff;
+  }
+  .tl { padding: 3mm 4.5mm 4mm; font-size: 9.6pt; line-height: 1.45; }
+  .tl p + p { margin-top: 1mm; }
+  .en { font-family: Montserrat, "Noto Sans JP", sans-serif; font-weight: 600; color: var(--ink); font-size: 9.4pt; }
+  .zh { font-family: "Noto Sans SC", sans-serif; color: var(--sub); }
+  .tag { display: inline-block; font-size: 7pt; font-weight: 700; color: #fff; background: var(--green);
+         border-radius: 1mm; padding: 0 1.4mm; margin-right: 1.5mm; vertical-align: 1px; font-family: Montserrat, sans-serif; letter-spacing: .05em; }
+  .tag.zh-t { background: #9aa99a; font-family: "Noto Sans SC", sans-serif; }
+  .btn { display: inline-block; background: var(--green-pale); border: .4mm solid #b9c9b4; border-radius: 99px;
+         padding: 0 2.2mm; font-weight: 700; color: var(--green-dark); }
+  .arrow {
+    position: absolute; width: 9mm; height: 9mm; border-radius: 50%;
+    background: var(--green); color: #fff; display: grid; place-items: center;
+    font-size: 13pt; font-weight: 900; z-index: 2; box-shadow: 0 .5mm 1.5mm rgba(0,0,0,.2);
+  }
+  .a1 { left: calc(50% - 4.5mm); top: calc(7mm + 25% - 4.5mm); }
+  .a2 { left: calc(50% - 4.5mm); bottom: calc(5mm + 25% - 4.5mm); }
+
+  footer {
+    background: var(--green-pale); padding: 4.5mm 10mm; display: flex; align-items: center; gap: 5mm;
+    border-top: .6mm solid #cfdcca;
+  }
+  footer .icon { flex: none; width: 12mm; height: 12mm; border-radius: 50%; background: var(--green-dark); color: #fff;
+                 display: grid; place-items: center; font-weight: 900; font-size: 17pt; font-family: Montserrat, sans-serif; }
+  footer .msg { font-size: 10pt; line-height: 1.5; }
+  footer .msg b { font-size: 11.5pt; color: var(--green-dark); }
+  footer .brand2 { margin-left: auto; text-align: right; font-family: Montserrat, sans-serif; font-weight: 800;
+                   color: var(--green-dark); font-size: 12pt; letter-spacing: .08em; white-space: nowrap; }
+  footer .brand2 small { display: block; font-weight: 600; font-size: 7.5pt; letter-spacing: .2em; color: var(--green); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="brand">RAKU SPA 1010 KANDA</div>
+    <h1>モバイルオーダーのご案内</h1>
+    <div class="langs"><span>Mobile Order Guide</span><span lang="zh-CN">手机点餐指南</span></div>
+    <div class="lead">お手持ちのスマホで、お席から簡単にご注文いただけます
+      <br><small>Order from your seat with your phone ／ <span lang="zh-CN" class="zh">用手机在座位上轻松点餐</span></small></div>
+  </header>
+
+  <section class="steps">
+    <div class="step">
+      <div class="head"><div class="num">1</div>
+        <h2>テーブルの端末に<br>リストバンドをかざす</h2></div>
+      <div class="photo"><img src="img/step1.jpg" alt=""></div>
+      <div class="tl">
+        <p class="en"><span class="tag">EN</span>Tap your wristband on the device on your table.</p>
+        <p class="zh" lang="zh-CN"><span class="tag zh-t">中文</span>请将手环靠近桌上的终端设备。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="head"><div class="num">2</div>
+        <h2>表示されたQRコードを<br>スマホで読み取る</h2></div>
+      <div class="photo"><img src="img/step2.jpg" alt=""></div>
+      <div class="tl">
+        <p class="en"><span class="tag">EN</span>A QR code will appear. Scan it with your smartphone camera.</p>
+        <p class="zh" lang="zh-CN"><span class="tag zh-t">中文</span>屏幕上会显示二维码，请用手机相机扫描。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="head"><div class="num">3</div>
+        <h2>ご利用人数を選んで<br><span class="btn">決定</span> をタップ</h2></div>
+      <div class="photo phone"><img src="img/step3.jpg" alt=""></div>
+      <div class="tl">
+        <p class="en"><span class="tag">EN</span>Select the number of guests, then tap <span class="btn">決定</span> (Confirm).</p>
+        <p class="zh" lang="zh-CN"><span class="tag zh-t">中文</span>选择用餐人数，然后点击 <span class="btn">決定</span>（确定）。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="head"><div class="num">4</div>
+        <h2>メニューを選んで<br>ご注文！</h2></div>
+      <div class="photo phone"><img src="img/step4.jpg" alt=""></div>
+      <div class="tl">
+        <p class="en"><span class="tag">EN</span>Choose from the menu, add to cart and tap <span class="btn">確認する</span> to order.</p>
+        <p class="zh" lang="zh-CN"><span class="tag zh-t">中文</span>从菜单中选择商品，加入购物车后点击 <span class="btn">確認する</span> 下单。</p>
+      </div>
+    </div>
+
+    <div class="arrow a1">▶</div>
+    <div class="arrow a2">▶</div>
+  </section>
+
+  <footer>
+    <div class="icon">?</div>
+    <div class="msg">
+      <b>ご不明な点はお気軽にスタッフまでお声がけください。</b><br>
+      <span class="en">Please feel free to ask our staff if you need help.</span><br>
+      <span class="zh" lang="zh-CN">如有任何疑问，请随时询问工作人员。</span>
+    </div>
+    <div class="brand2"><small>RAKU SPA</small>1010 神田</div>
+  </footer>
+</div>
+</body>
+</html>
