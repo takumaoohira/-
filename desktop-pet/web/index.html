@@ -1,0 +1,1246 @@
+<title>ポケットペット</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ポケットペット">
+<meta name="theme-color" content="#CFE9FF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one-screen "pet room" — mood strip on top, the room fills the middle, a dock of care buttons at the bottom; settings slide up as a sheet. */
+:root {
+  --sky-top: #CFE9FF;
+  --sky-bottom: #F4FAFF;
+  --floor: #E3F1D6;
+  --floor-edge: #C9E2B4;
+  --ink: #3A2E3C;
+  --muted: #7D7280;
+  --panel: #FFFFFF;
+  --panel-2: #FFF6EC;
+  --line: #EADFD6;
+  --accent: #F2A33A;
+  --accent-ink: #FFFFFF;
+  --hunger: #F2A33A;
+  --energy: #4FB6E8;
+  --love: #EE6A8E;
+  --font: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sky-top: #141B33; --sky-bottom: #263055; --floor: #2C3A2E; --floor-edge: #3D5140;
+    --ink: #F3ECF4; --muted: #A99FB0; --panel: #22202B; --panel-2: #2C2935; --line: #3A3644;
+    --accent: #F5AE4C; --accent-ink: #2A1E10; --hunger: #F5AE4C; --energy: #5CC2F0; --love: #F27C9B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sky-top: #141B33; --sky-bottom: #263055; --floor: #2C3A2E; --floor-edge: #3D5140;
+  --ink: #F3ECF4; --muted: #A99FB0; --panel: #22202B; --panel-2: #2C2935; --line: #3A3644;
+  --accent: #F5AE4C; --accent-ink: #2A1E10; --hunger: #F5AE4C; --energy: #5CC2F0; --love: #F27C9B;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--panel-2); color: var(--ink); font-family: var(--font);
+  overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+#app { height: 100%; display: flex; flex-direction: column; }
+
+header {
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+  background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.who { min-width: 0; flex: 0 1 auto; }
+.who b { display: block; font-size: 18px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.who span { font-size: 11px; color: var(--muted); }
+.meters { flex: 1; display: grid; gap: 4px; min-width: 0; max-width: 260px; margin-left: auto; }
+.meter { display: grid; grid-template-columns: 4.6em 1fr; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.meter i { display: block; height: 7px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.meter i::after { content: ""; display: block; height: 100%; width: var(--v, 50%); background: var(--c); border-radius: 4px; transition: width .6s; }
+
+#stage {
+  position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none;
+  background: linear-gradient(var(--sky-top), var(--sky-bottom) 72%, var(--floor) 72%, var(--floor));
+}
+#stage::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 72%; height: 3px; background: var(--floor-edge);
+}
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+#hint {
+  position: absolute; z-index: 2; left: 50%; top: 12px; transform: translateX(-50%);
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+  padding: 6px 12px; border-radius: 999px; font-size: 12px; white-space: nowrap; transition: opacity .6s;
+  max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis;
+}
+#hint.gone { opacity: 0; }
+
+nav {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px 16px 12px;
+  background: var(--panel); border-top: 1px solid var(--line);
+}
+button {
+  font: inherit; color: inherit; border: 0; background: none; cursor: pointer;
+}
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.dock {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 0 6px; border-radius: 14px; background: var(--panel-2); font-size: 12px; font-weight: 700;
+}
+.dock svg { width: 26px; height: 26px; }
+.dock:active { transform: scale(.95); }
+
+/* settings sheet */
+#scrim { position: fixed; inset: 0; background: rgba(20, 14, 24, .35); z-index: 9; }
+#sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 86%; overflow-y: auto;
+  background: var(--panel); border-radius: 22px 22px 0 0; padding: 8px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  -webkit-user-select: text; user-select: text;
+}
+#sheet .grip { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 4px auto 10px; }
+#sheet h2 { font-size: 20px; font-weight: 900; margin: 0 0 4px; }
+#sheet h3 { font-size: 13px; color: var(--muted); font-weight: 700; margin: 18px 0 8px; letter-spacing: .04em; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
+  background: var(--panel-2); border: 1px solid var(--line); font-size: 14px;
+}
+.chip .dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--dotline); background: var(--dot); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); padding: 4px; gap: 4px; border-radius: 14px; background: var(--panel-2); }
+.seg button { padding: 9px 0; border-radius: 11px; font-size: 14px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+#name {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; color: var(--ink);
+  padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel-2);
+}
+.note { font-size: 12px; color: var(--muted); line-height: 1.7; margin-top: 18px; }
+.done { width: 100%; margin-top: 16px; padding: 13px; border-radius: 14px; background: var(--accent); color: var(--accent-ink); font-weight: 900; font-size: 16px; }
+
+@media (prefers-reduced-motion: reduce) { .meter i::after, #hint { transition: none; } }
+</style>
+
+<div id="app">
+  <header>
+    <div class="who"><b id="petName">ミケ</b><span id="petBreed">茶トラ</span></div>
+    <div class="meters" aria-label="ペットの気分">
+      <div class="meter">おなか<i id="mHunger" style="--c: var(--hunger)"></i></div>
+      <div class="meter">げんき<i id="mEnergy" style="--c: var(--energy)"></i></div>
+      <div class="meter">なかよし<i id="mLove" style="--c: var(--love)"></i></div>
+    </div>
+  </header>
+
+  <div id="stage">
+    <canvas id="cv" aria-label="ペットのいる部屋。タップ、ダブルタップ、長押し、ドラッグで遊べます"></canvas>
+    <div id="hint">タップ・ダブルタップでごはん・長押しでなでなで・つまんで投げる</div>
+  </div>
+
+  <nav>
+    <button class="dock" id="bFeed" type="button">
+      <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 13h18a9 9 0 0 1-18 0Z" fill="var(--hunger)" stroke="none"/><path d="M4 13h18a9 9 0 0 1-18 0Z"/><path d="M9 9c0-2 2-2 2-4M14 9c0-2 2-2 2-4"/></svg>
+      ごはん
+    </button>
+    <button class="dock" id="bCall" type="button">
+      <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21s-8-4.6-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 21 11c0 5.4-8 10-8 10Z" fill="var(--love)" stroke="none"/><path d="M13 21s-8-4.6-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 21 11c0 5.4-8 10-8 10Z"/></svg>
+      おいで
+    </button>
+    <button class="dock" id="bSleep" type="button">
+      <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15.5A8 8 0 1 1 10.5 6a6.5 6.5 0 0 0 9.5 9.5Z" fill="var(--energy)" stroke="none"/><path d="M20 15.5A8 8 0 1 1 10.5 6a6.5 6.5 0 0 0 9.5 9.5Z"/></svg>
+      おやすみ
+    </button>
+    <button class="dock" id="bSettings" type="button">
+      <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="2.4" fill="currentColor" stroke="none"/><circle cx="18" cy="8" r="2.4" fill="currentColor" stroke="none"/><circle cx="5" cy="14" r="2.2" fill="currentColor" stroke="none"/><circle cx="21" cy="14" r="2.2" fill="currentColor" stroke="none"/><path d="M13 13c-3 0-6 3-6 5.6 0 1.8 1.4 2.4 3 2.4 1.2 0 2-.6 3-.6s1.8.6 3 .6c1.6 0 3-.6 3-2.4C19 16 16 13 13 13Z" fill="currentColor" stroke="none"/></svg>
+      えらぶ
+    </button>
+  </nav>
+</div>
+
+<div id="scrim" hidden></div>
+<section id="sheet" hidden aria-label="ペットの設定">
+  <div class="grip"></div>
+  <h2>どの子にする?</h2>
+  <h3>ねこ</h3>
+  <div class="chips" id="catChips"></div>
+  <h3>いぬ</h3>
+  <div class="chips" id="dogChips"></div>
+  <h3>なまえ</h3>
+  <input id="name" maxlength="8" autocomplete="off">
+  <h3>おおきさ</h3>
+  <div class="seg" id="segSize"><button type="button">小</button><button type="button">中</button><button type="button">大</button></div>
+  <h3>せいかく</h3>
+  <div class="seg" id="segAct"><button type="button">おっとり</button><button type="button">ふつう</button><button type="button">げんき</button></div>
+  <p class="note">iPhone は、Safari の共有ボタンから「ホーム画面に追加」すると、アプリのように全画面で開けます。<br>おなか・げんき・なかよし度はこの端末に保存され、閉じているあいだも少しずつ変わります。</p>
+  <button class="done" id="bDone" type="button">きめた!</button>
+</section>
+
+<script>
+"use strict";
+// ======================================================================== 品種
+const BREEDS = [
+  { id: "cat_orange", label: "茶トラ", sp: "cat", base: "#F4A95E", belly: "#FFF3E0", patch: "#D9822B", pattern: "stripes", ear: "cat", tail: "long", eye: "#7FB547", outline: "#8A4F1F" },
+  { id: "cat_black", label: "黒猫", sp: "cat", base: "#36313B", belly: "#45404B", patch: "#36313B", pattern: "none", ear: "cat", tail: "long", eye: "#F5C518", outline: "#151217" },
+  { id: "cat_white", label: "白猫", sp: "cat", base: "#FCFBF8", belly: "#FFFFFF", patch: "#E9E4DC", pattern: "none", ear: "cat", tail: "long", eye: "#5BB6E0", outline: "#9C948A" },
+  { id: "cat_calico", label: "三毛猫", sp: "cat", base: "#FFFDF8", belly: "#FFFFFF", patch: "#EB9440", pattern: "calico", ear: "cat", tail: "long", eye: "#C9A227", outline: "#8C7B6B" },
+  { id: "cat_gray", label: "サバトラ", sp: "cat", base: "#A3A9B1", belly: "#EFF1F3", patch: "#5E646C", pattern: "stripes", ear: "cat", tail: "long", eye: "#8DBF4E", outline: "#4B5057" },
+  { id: "dog_shiba", label: "柴犬", sp: "dog", base: "#E0904B", belly: "#FFF5E6", patch: "#E0904B", pattern: "none", ear: "up", tail: "curl", eye: "#3A2618", outline: "#8C4E1F" },
+  { id: "dog_kuroshiba", label: "黒柴", sp: "dog", base: "#33302F", belly: "#F7E9D6", patch: "#D49A5C", pattern: "point", ear: "up", tail: "curl", eye: "#1B1514", outline: "#141111" },
+  { id: "dog_beagle", label: "ビーグル", sp: "dog", base: "#C07C3E", belly: "#FFFFFF", patch: "#2E2826", pattern: "saddle", ear: "floppy", tail: "wag", eye: "#3A2618", outline: "#6B3F1A" },
+  { id: "dog_golden", label: "ゴールデン", sp: "dog", base: "#EDBE6E", belly: "#FBE6BC", patch: "#D9A24E", pattern: "none", ear: "floppy", tail: "wag", eye: "#3A2618", outline: "#9A6A25" },
+  { id: "dog_white", label: "白いわんこ", sp: "dog", base: "#FFFFFF", belly: "#FFFFFF", patch: "#F1ECE4", pattern: "none", ear: "floppy", tail: "wag", eye: "#1F1A18", outline: "#A29A90" },
+];
+const breedById = id => BREEDS.find(b => b.id === id) || BREEDS[0];
+
+// ======================================================================== 小道具
+const PI = Math.PI, D2R = PI / 180;
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = () => Math.random();
+const pickOne = a => a[Math.floor(Math.random() * a.length)];
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function darker(h, f) { const [r, g, b] = hexRgb(h); return `rgb(${r * f | 0},${g * f | 0},${b * f | 0})`; }
+function lum(h) { const [r, g, b] = hexRgb(h); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; }
+function rotAt(c, deg, x, y) { c.translate(x, y); c.rotate(deg * D2R); c.translate(-x, -y); }
+function heartPath(c, x, y, s) {
+  c.beginPath();
+  c.moveTo(x, y + s * 0.9);
+  c.bezierCurveTo(x - s * 1.4, y - s * 0.1, x - s * 0.7, y - s * 1.1, x, y - s * 0.4);
+  c.bezierCurveTo(x + s * 0.7, y - s * 1.1, x + s * 1.4, y - s * 0.1, x, y + s * 0.9);
+  c.closePath();
+}
+
+// ======================================================================== 姿勢
+function newPose() {
+  return { posture: "stand", walkPhase: 0, walkAmp: 0, bob: 0, hop: 0, squash: 1, bodyTilt: 0, headTilt: 0,
+    headDx: 0, headDy: 0, look: 1, eyes: "open", mouth: "smile", chew: 0, tailAngle: 0, earFlick: 0,
+    blush: false, pawUp: 0, swing: 0, breathe: 0 };
+}
+
+// ======================================================================== 描画(仮想単位: 幅≒100, 足元 y=0, 右向き)
+const INK = "#2A2230", PINK = "#F59AAE", TONGUE = "#F27C93", OW = 2.2;
+const Renderer = {
+  draw(c, p, b) {
+    this.b = b; this.c = c;
+    c.save();
+    c.lineCap = "round"; c.lineJoin = "round";
+    c.translate(0, p.hop);
+    c.scale(1 + (1 - p.squash) * 0.6, p.squash);
+    switch (p.posture) {
+      case "stand": case "air": this.stand(p); break;
+      case "sit": this.sit(p); break;
+      case "lie": this.lie(p); break;
+      case "curl": this.curl(p); break;
+      case "stretch": this.stretch(p); break;
+      case "dangle": this.dangle(p); break;
+    }
+    c.restore();
+  },
+  treat(c, sp, x, y, s) {
+    c.save(); c.translate(x, y); c.scale(s, s); c.lineJoin = "round";
+    if (sp === "cat") {
+      c.beginPath(); c.moveTo(-9, 0); c.quadraticCurveTo(-2, -7, 6, 0); c.lineTo(11, -5); c.lineTo(11, 5); c.lineTo(6, 0); c.quadraticCurveTo(-2, 7, -9, 0); c.closePath();
+      c.fillStyle = "#7FB2E5"; c.fill(); c.strokeStyle = "#3C6A99"; c.lineWidth = 1.4; c.stroke();
+      c.fillStyle = INK; c.beginPath(); c.arc(-5, -1, 1.2, 0, 2 * PI); c.fill();
+    } else {
+      c.fillStyle = "#FFF6E5"; c.strokeStyle = "#B89B72"; c.lineWidth = 1.4;
+      for (const sx of [-8, 8]) for (const sy of [-2.6, 2.6]) { c.beginPath(); c.arc(sx, sy, 3.4, 0, 2 * PI); c.fill(); c.stroke(); }
+      c.fillRect(-8, -2.5, 16, 5);
+      c.beginPath(); c.moveTo(-6, -2.5); c.lineTo(6, -2.5); c.moveTo(-6, 2.5); c.lineTo(6, 2.5); c.stroke();
+    }
+    c.restore();
+  },
+
+  legColor() { return this.b.pattern === "saddle" ? this.b.belly : this.b.base; },
+  legAngle(p, off) { return Math.sin(p.walkPhase + off) * 30 * p.walkAmp; },
+  legLift(p, off) { return Math.max(0, Math.cos(p.walkPhase + off)) * 7 * p.walkAmp; },
+
+  stand(p) {
+    const air = p.posture === "air", by = p.bob, far = darker(this.legColor(), 0.82), b = this.b;
+    if (air) { this.limb(14, -24 + by, 30, -8 + by, 9, far); this.limb(-16, -24 + by, -32, -10 + by, 9, far); }
+    else { this.leg(14, -24 + by, this.legAngle(p, PI), this.legLift(p, PI), far); this.leg(-16, -24 + by, this.legAngle(p, 0), this.legLift(p, 0), far); }
+    this.tail(-25, -34 + by, p, air);
+    this.body(0, -32 + by, 28, 16, p.bodyTilt, () => { this.oval(4, -22 + by, 21, 8, b.belly, false); this.bodyPattern(0, -32 + by, 28, 16); });
+    if (air) { this.limb(20, -24 + by, 36, -10 + by, 9, this.legColor()); this.limb(-10, -24 + by, -26, -6 + by, 9, this.legColor()); }
+    else { this.leg(20, -24 + by, this.legAngle(p, 0), this.legLift(p, 0), this.legColor()); this.leg(-10, -24 + by, this.legAngle(p, PI), this.legLift(p, PI), this.legColor()); }
+    this.head(27 + p.headDx, -52 + by + p.headDy, 19, p);
+  },
+  sit(p) {
+    const br = p.breathe * 0.6, b = this.b;
+    this.groundTail(-16, -8, 20, -3, -14, 6, p);
+    this.oval(-8, -15, 17, 14, b.base);
+    this.body(-1, -31 - br, 15, 22 + br, 12, () => { this.oval(6, -31, 9, 15, b.belly, false); this.bodyPattern(-1, -31, 15, 22); });
+    this.limb(5, -26, 6, -2, 8.5, darker(this.legColor(), 0.85));
+    const pu = p.pawUp, fx = lerp(13, 22, pu), fy = lerp(-2, -46 + Math.sin(p.walkPhase) * 3, pu);
+    this.limb(12, -28, fx, fy, 8.5, this.legColor());
+    this.oval(-2, -5, 7, 4.5, this.legColor());
+    this.head(7 + p.headDx, -57 - br + p.headDy, 19, p);
+    if (pu > 0.5) this.limb(lerp(12, 18, pu), lerp(-28, -40, pu), fx, fy, 8.5, this.legColor());
+  },
+  lie(p) {
+    const br = p.breathe * 0.8, b = this.b;
+    this.groundTail(-26, -8, -50, -3, -40, -14, p);
+    this.body(0, -14 - br * 0.5, 31, 13 + br, 0, () => { this.oval(6, -6, 22, 6, b.belly, false); this.bodyPattern(0, -14, 31, 13); });
+    this.oval(-15, -12, 12, 10, b.base);
+    this.oval(25, -4, 10, 4.5, darker(this.legColor(), 0.88));
+    this.oval(31, -3, 10, 4.5, this.legColor());
+    this.head(27 + p.headDx, -28 + p.headDy, 18, p);
+  },
+  curl(p) {
+    const br = p.breathe, b = this.b, c = this.c;
+    this.body(0, -16 - br * 0.6, 30, 15.5 + br * 0.9, 0, () => { this.oval(8, -6, 22, 7, b.belly, false); this.bodyPattern(0, -16, 30, 16); });
+    this.head(16, -15 - br * 0.3, 15, p);
+    c.beginPath(); c.moveTo(-26, -6); c.quadraticCurveTo(-6, 6, 24 + Math.sin(p.tailAngle * 0.05) * 1.5, -3);
+    this.strokePath(b.tail === "long" ? 7 : 8, b.base);
+  },
+  stretch(p) {
+    const b = this.b;
+    this.tailRaw(-24, -42, -30, -64, -24, -84, p.tailAngle, 7);
+    this.limb(-14, -36, -16, -1, 9, darker(this.legColor(), 0.82));
+    this.limb(16, -14, 34, -2, 8.5, darker(this.legColor(), 0.82));
+    this.body(0, -27, 28, 13, 22, () => { this.oval(4, -19, 20, 6, b.belly, false); this.bodyPattern(0, -27, 28, 13); });
+    this.limb(-9, -34, -10, -1, 9, this.legColor());
+    this.limb(20, -14, 42, -2, 8.5, this.legColor());
+    this.head(30 + p.headDx, -20 + p.headDy, 18, p);
+  },
+  dangle(p) {
+    const c = this.c, b = this.b, hx = 0, hy = -78, kick = Math.sin(p.walkPhase) * 4, far = darker(this.legColor(), 0.82);
+    c.save(); rotAt(c, p.swing, hx, hy);
+    c.beginPath(); c.moveTo(0, -30); c.quadraticCurveTo(-6 + kick, -16, 2 - kick, -4); this.strokePath(7, b.base);
+    this.limb(-6, -62, -8 - kick * 0.5, -42, 8, far);
+    this.limb(-6, -36, -8 + kick, -16, 8.5, far);
+    this.body(0, -50, 14.5, 24, 0, () => { this.oval(4, -50, 8, 18, b.belly, false); this.bodyPattern(0, -50, 14.5, 24); });
+    this.limb(6, -62, 8 + kick * 0.5, -42, 8, this.legColor());
+    this.limb(6, -36, 8 - kick, -16, 8.5, this.legColor());
+    c.restore();
+    this.head(hx + p.headDx, hy + p.headDy, 19, p);
+  },
+
+  leg(hx, hy, angle, lift, color) {
+    const len = -hy, r = angle * D2R;
+    this.limb(hx, hy, hx + Math.sin(r) * len, Math.min(-1, hy + Math.cos(r) * len - lift), 9, color);
+  },
+  tail(bx, by, p, air) {
+    const b = this.b, c = this.c;
+    if (b.tail === "long") this.tailRaw(bx, by, bx - 16, by - 6 - (air ? 10 : 0), bx - 14, by - 40, p.tailAngle, 7);
+    else if (b.tail === "wag") {
+      this.tailRaw(bx, by, bx - 10, by - 6, bx - 12, by - 24, p.tailAngle, 6.5);
+      if (b.pattern === "saddle") { c.save(); rotAt(c, p.tailAngle, bx, by); c.fillStyle = b.belly; c.beginPath(); c.arc(bx - 12, by - 24, 3.6, 0, 2 * PI); c.fill(); c.restore(); }
+    } else {
+      c.save(); rotAt(c, p.tailAngle * 0.35, bx, by);
+      const cx = bx - 5, cy = by - 16, a0 = 100 * D2R, a1 = 400 * D2R;
+      c.beginPath(); c.ellipse(cx, cy, 8, 9, 0, a0, a1); c.strokeStyle = b.outline; c.lineWidth = 9 + OW; c.stroke();
+      c.beginPath(); c.ellipse(cx, cy, 8, 9, 0, a0, a1); c.strokeStyle = b.base; c.lineWidth = 9; c.stroke();
+      c.beginPath(); c.ellipse(cx, cy, 6.5, 7.5, 0, 160 * D2R, 360 * D2R); c.strokeStyle = b.belly; c.lineWidth = 3.2; c.stroke();
+      c.restore();
+    }
+  },
+  tailRaw(bx, by, cx, cy, ex, ey, angle, w) {
+    const c = this.c; c.save(); rotAt(c, angle, bx, by);
+    c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(cx, cy, ex, ey); this.strokePath(w, this.b.base);
+    c.restore();
+  },
+  groundTail(bx, by, ex, ey, cx, cy, p) {
+    const wag = Math.sin(p.tailAngle * D2R) * 8, c = this.c;
+    c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(cx, cy + wag * 0.4, ex + wag * 0.3, ey - wag);
+    this.strokePath(this.b.tail === "long" ? 7 : 8, this.b.base);
+  },
+  body(cx, cy, rx, ry, rot, inner) {
+    const c = this.c, b = this.b;
+    c.save(); rotAt(c, rot, cx, cy);
+    c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, 2 * PI); c.fillStyle = b.base; c.fill();
+    c.save(); c.clip(); inner(); c.restore();
+    c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, 2 * PI); c.strokeStyle = b.outline; c.lineWidth = OW; c.stroke();
+    c.restore();
+  },
+  bodyPattern(cx, cy, rx, ry) {
+    const c = this.c, b = this.b;
+    if (b.pattern === "stripes") {
+      c.strokeStyle = b.patch; c.lineWidth = 3; c.beginPath();
+      for (let i = -2; i <= 2; i++) { const x = cx + i * rx * 0.3; c.moveTo(x - 2, cy - ry); c.lineTo(x + 2, cy - ry * 0.25); }
+      c.stroke();
+    } else if (b.pattern === "calico") {
+      c.fillStyle = b.patch; c.beginPath(); c.arc(cx - rx * 0.35, cy - ry * 0.5, ry * 0.85, 0, 2 * PI); c.fill();
+      c.fillStyle = "#3A3436"; c.beginPath(); c.arc(cx + rx * 0.45, cy - ry * 0.7, ry * 0.6, 0, 2 * PI); c.fill();
+    } else if (b.pattern === "saddle") {
+      c.fillStyle = b.patch; c.beginPath();
+      c.ellipse(cx - rx * 0.15, cy - ry * 0.625, rx * 0.65, ry * 0.575, 0, 0, 2 * PI); c.fill();
+    }
+  },
+  head(hx, hy, r, p) {
+    const c = this.c, b = this.b, fs = p.look * r * 0.2, earUp = -p.earFlick * 3;
+    c.save(); rotAt(c, p.headTilt, hx, hy);
+    if (b.ear !== "floppy") {
+      for (const s of [-1, 1]) {
+        const sharp = b.ear === "cat";
+        const tipX = hx + fs * 0.4 + s * r * (sharp ? 0.78 : 0.72), tipY = hy - r * (sharp ? 1.38 : 1.3) + (s === 1 ? earUp : 0);
+        c.beginPath(); c.moveTo(hx + fs * 0.3 + s * r * 0.12, hy - r * 0.8); c.lineTo(tipX, tipY); c.lineTo(hx + fs * 0.3 + s * r * 0.98, hy - r * 0.22); c.closePath();
+        c.fillStyle = b.base; c.fill(); c.strokeStyle = b.outline; c.lineWidth = OW; c.stroke();
+        c.beginPath(); c.moveTo(hx + fs * 0.3 + s * r * 0.3, hy - r * 0.72);
+        c.lineTo(lerp(tipX, hx + s * r * 0.6, 0.25), lerp(tipY, hy - r * 0.5, 0.25));
+        c.lineTo(hx + fs * 0.3 + s * r * 0.82, hy - r * 0.38); c.closePath();
+        c.fillStyle = (b.pattern === "calico" && s === 1) ? "#3A3436" : (b.sp === "cat" ? PINK : b.belly); c.fill();
+      }
+    }
+    c.beginPath(); c.ellipse(hx, hy - r * 0.015, r * 1.08, r * 0.935, 0, 0, 2 * PI); c.fillStyle = b.base; c.fill();
+    c.save(); c.clip(); this.facePattern(hx, hy, r, fs); c.restore();
+    c.beginPath(); c.ellipse(hx, hy - r * 0.015, r * 1.08, r * 0.935, 0, 0, 2 * PI); c.strokeStyle = b.outline; c.lineWidth = OW; c.stroke();
+    if (b.ear === "floppy") {
+      for (const s of [-1, 1]) {
+        const ex = hx + fs * 0.3 + s * r * 0.92, ey = hy - r * 0.05 + (s === 1 ? earUp : 0);
+        c.save(); rotAt(c, s * (-14 - p.earFlick * 10), ex, hy - r * 0.6);
+        this.oval(ex, ey, r * 0.33, r * 0.62, darker(b.base, b.pattern === "saddle" ? 0.9 : 0.93));
+        c.restore();
+      }
+    }
+    const ey = hy - r * 0.04;
+    for (const s of [-1, 1]) this.eye(hx + fs + s * r * 0.42, ey, r, p.eyes);
+    const nx = hx + fs * 1.2, ny = hy + r * 0.24;
+    if (b.sp === "cat") {
+      c.beginPath(); c.moveTo(nx - r * 0.1, ny - r * 0.05); c.lineTo(nx + r * 0.1, ny - r * 0.05); c.lineTo(nx, ny + r * 0.06); c.closePath();
+      c.fillStyle = "#E8798F"; c.fill();
+    } else {
+      c.fillStyle = "#2B2221"; c.beginPath(); c.ellipse(nx, ny, r * 0.17, r * 0.1, 0, 0, 2 * PI); c.fill();
+      c.fillStyle = "rgba(255,255,255,.6)"; c.beginPath(); c.arc(nx - r * 0.05, ny - r * 0.04, r * 0.04, 0, 2 * PI); c.fill();
+    }
+    this.mouth(nx, ny + r * 0.1, r, p);
+    if (p.blush) {
+      c.fillStyle = "rgba(255,120,150,.43)";
+      for (const s of [-1, 1]) { c.beginPath(); c.ellipse(hx + fs + s * r * 0.66, hy + r * 0.24, r * 0.17, r * 0.1, 0, 0, 2 * PI); c.fill(); }
+    }
+    if (b.sp === "cat") {
+      c.strokeStyle = lum(b.base) < 0.3 ? "rgba(255,255,255,.6)" : "rgba(80,60,50,.47)"; c.lineWidth = 1.1; c.beginPath();
+      for (const s of [-1, 1]) {
+        const sx = nx + s * r * 0.45;
+        c.moveTo(sx, ny + r * 0.06); c.lineTo(sx + s * r * 0.75, ny - r * 0.08);
+        c.moveTo(sx, ny + r * 0.14); c.lineTo(sx + s * r * 0.75, ny + r * 0.2);
+      }
+      c.stroke();
+    }
+    c.restore();
+  },
+  facePattern(hx, hy, r, fs) {
+    const c = this.c, b = this.b;
+    if (b.pattern === "stripes") {
+      c.strokeStyle = b.patch; c.lineWidth = 2.6; c.beginPath();
+      for (let i = -1; i <= 1; i++) { const x = hx + fs * 0.5 + i * r * 0.22; c.moveTo(x, hy - r * 0.95); c.lineTo(x, hy - r * 0.55); }
+      c.stroke();
+    } else if (b.pattern === "calico") {
+      c.fillStyle = b.patch; c.beginPath(); c.arc(hx - r * 0.8, hy - r * 0.6, r * 0.62, 0, 2 * PI); c.fill();
+      c.fillStyle = "#3A3436"; c.beginPath(); c.arc(hx + r * 0.85, hy - r * 0.75, r * 0.55, 0, 2 * PI); c.fill();
+    } else if (b.pattern === "saddle") {
+      c.fillStyle = b.belly; c.beginPath(); c.roundRect(hx + fs - r * 0.16, hy - r, r * 0.32, r * 1.2, r * 0.16); c.fill();
+    } else if (b.pattern === "point") {
+      c.fillStyle = b.patch;
+      for (const s of [-1, 1]) { c.beginPath(); c.arc(hx + fs + s * r * 0.4, hy - r * 0.36, r * 0.11, 0, 2 * PI); c.fill(); }
+    }
+    c.fillStyle = b.belly;
+    if (b.sp === "dog") { c.beginPath(); c.ellipse(hx + fs, hy + r * 0.485, r * 0.62, r * 0.465, 0, 0, 2 * PI); c.fill(); }
+    else if (b.pattern !== "none" || b.base !== b.belly) { c.beginPath(); c.ellipse(hx + fs, hy + r * 0.37, r * 0.42, r * 0.25, 0, 0, 2 * PI); c.fill(); }
+  },
+  eye(x, y, r, e) {
+    const c = this.c, b = this.b, w = r * 0.15;
+    c.strokeStyle = INK; c.lineWidth = 2.2;
+    if (e === "open") {
+      if (b.sp === "cat") {
+        c.fillStyle = b.eye; c.beginPath(); c.ellipse(x, y, w, w * 1.25, 0, 0, 2 * PI); c.fill();
+        c.fillStyle = INK; c.beginPath(); c.ellipse(x, y, w * 0.55, w * 1.1, 0, 0, 2 * PI); c.fill();
+      } else { c.fillStyle = b.eye; c.beginPath(); c.ellipse(x, y, w * 0.95, w * 1.1, 0, 0, 2 * PI); c.fill(); }
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(x + w * 0.3, y - w * 0.45, w * 0.38, 0, 2 * PI); c.fill();
+    } else if (e === "wide") {
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(x, y, w * 1.35, 0, 2 * PI); c.fill(); c.lineWidth = 1.4; c.stroke();
+      c.fillStyle = INK; c.beginPath(); c.arc(x, y, w * 0.55, 0, 2 * PI); c.fill();
+    } else if (e === "blink") { c.beginPath(); c.moveTo(x - w, y); c.lineTo(x + w, y); c.stroke(); }
+    else if (e === "happy") { c.beginPath(); c.moveTo(x - w * 1.1, y + w * 0.4); c.quadraticCurveTo(x, y - w * 1.3, x + w * 1.1, y + w * 0.4); c.stroke(); }
+    else if (e === "sleep") { c.beginPath(); c.moveTo(x - w * 1.1, y - w * 0.2); c.quadraticCurveTo(x, y + w * 1.1, x + w * 1.1, y - w * 0.2); c.stroke(); }
+    else if (e === "half") {
+      c.fillStyle = b.sp === "cat" ? b.eye : INK; c.beginPath(); c.ellipse(x, y + w * 0.325, w, w * 0.475, 0, 0, 2 * PI); c.fill();
+      c.beginPath(); c.moveTo(x - w * 1.15, y - w * 0.1); c.lineTo(x + w * 1.15, y - w * 0.1); c.stroke();
+    } else if (e === "dizzy") {
+      c.lineWidth = 1.5; c.beginPath();
+      for (let a = 0, first = true; a < PI * 5; a += 0.35) {
+        const rr = w * 1.3 * (a / (PI * 5)), px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+        if (first) { c.moveTo(px, py); first = false; } else c.lineTo(px, py);
+      }
+      c.stroke();
+    } else if (e === "heart") { c.fillStyle = "#FF4F7B"; heartPath(c, x, y, w * 1.4); c.fill(); }
+  },
+  mouth(nx, ny, r, p) {
+    const c = this.c, w = r * 0.17;
+    c.strokeStyle = INK; c.lineWidth = 1.6;
+    const omega = () => {
+      c.beginPath(); c.moveTo(nx - w * 1.1, ny);
+      c.quadraticCurveTo(nx - w * 0.55, ny + w * 0.9, nx, ny); c.quadraticCurveTo(nx + w * 0.55, ny + w * 0.9, nx + w * 1.1, ny); c.stroke();
+    };
+    const m = p.mouth;
+    if (m === "smile") omega();
+    else if (m === "open" || m === "chew") {
+      const open = m === "chew" ? 0.25 + 0.75 * p.chew : 1;
+      const top = ny - w * 0.1, bot = ny + w * (0.2 + 1.3 * open);
+      c.fillStyle = "#9C3346"; c.beginPath(); c.ellipse(nx, (top + bot) / 2, w * 0.8, (bot - top) / 2, 0, 0, 2 * PI); c.fill();
+      if (open > 0.5) { const t2 = ny + w * 0.7 * open; c.fillStyle = TONGUE; c.beginPath(); c.ellipse(nx, (t2 + bot) / 2, w * 0.5, (bot - t2) / 2, 0, 0, 2 * PI); c.fill(); }
+    } else if (m === "tongue") {
+      omega(); c.fillStyle = TONGUE; c.beginPath(); c.ellipse(nx + w * 0.05, ny + w * 0.75, w * 0.4, w * 0.55, 0, 0, 2 * PI); c.fill();
+    } else if (m === "pant") {
+      c.fillStyle = "#9C3346"; c.beginPath(); c.moveTo(nx - w * 1.2, ny); c.quadraticCurveTo(nx, ny + w * 2.2, nx + w * 1.2, ny); c.closePath(); c.fill();
+      c.fillStyle = TONGUE; c.beginPath(); c.ellipse(nx, ny + w * 1.3, w * 0.6, w * 0.8, 0, 0, 2 * PI); c.fill();
+    }
+  },
+  limb(x1, y1, x2, y2, w, color) {
+    const c = this.c;
+    c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.strokeStyle = this.b.outline; c.lineWidth = w + OW * 1.6; c.stroke();
+    c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.strokeStyle = color; c.lineWidth = w; c.stroke();
+  },
+  strokePath(w, color) {
+    const c = this.c;
+    c.strokeStyle = this.b.outline; c.lineWidth = w + OW * 1.6; c.stroke();
+    c.strokeStyle = color; c.lineWidth = w; c.stroke();
+  },
+  oval(cx, cy, rx, ry, color, outlined = true) {
+    const c = this.c;
+    c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, 2 * PI); c.fillStyle = color; c.fill();
+    if (outlined) { c.strokeStyle = this.b.outline; c.lineWidth = OW; c.stroke(); }
+  },
+};
+
+// ======================================================================== 演出(ハート・Zzz など)
+class Effects {
+  constructor(unit) { this.u = unit; this.list = []; }
+  get empty() { return this.list.length === 0; }
+  emit(type, x, y) {
+    const u = this.u, r = v => (rnd() * 2 - 1) * v, r2 = (a, b) => a + rnd() * (b - a);
+    const P = (vx, vy, life, size, seed = rnd()) => ({ type, x, y, vx, vy, life, max: life, size, seed });
+    let p;
+    switch (type) {
+      case "heart": p = P(r(10) * u, -38 * u, 1.3, 7 * u); p.x += r(8) * u; break;
+      case "zzz": p = P(12 * u, -22 * u, 2, 9 * u); break;
+      case "note": p = P(r(14) * u, -30 * u, 1.4, 8 * u); p.x += r(6) * u; break;
+      case "star": p = P(0, 0, 2.2, 4 * u, rnd() * 6.28); break;
+      case "sweat": p = P(6 * u, 10 * u, 0.9, 5 * u); break;
+      case "bang": p = P(0, -10 * u, 0.9, 16 * u); break;
+      case "question": p = P(0, -8 * u, 1.3, 14 * u); break;
+      case "anger": p = P(0, -6 * u, 1, 7 * u); break;
+      case "dust": p = P(r(40) * u, -r2(6, 16) * u, 0.5, r2(3, 6) * u); break;
+      case "crumb": p = P(r(25) * u, -r2(10, 30) * u, 0.6, 1.6 * u); break;
+    }
+    this.list.push(p);
+    if (this.list.length > 40) this.list.shift();
+  }
+  update(dt, g) {
+    const u = this.u;
+    this.list = this.list.filter(p => {
+      p.life -= dt;
+      if (p.life <= 0) return false;
+      if (p.type === "crumb" || p.type === "sweat") p.vy += g * 0.25 * dt;
+      else if (p.type === "zzz") p.vx = 12 * u + Math.sin(p.life * 3) * 10 * u;
+      else if (p.type === "star") p.seed += dt * 4;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      return true;
+    });
+  }
+  draw(c) {
+    const u = this.u;
+    c.textAlign = "center"; c.textBaseline = "alphabetic";
+    for (const p of this.list) {
+      const t = p.life / p.max, a = Math.min(1, t * 2.5);
+      c.globalAlpha = a;
+      switch (p.type) {
+        case "heart": c.fillStyle = "#FF5A82"; heartPath(c, p.x, p.y, p.size * (0.7 + 0.3 * Math.min(1, (1 - t) * 4))); c.fill(); break;
+        case "zzz": c.fillStyle = "#6E82C8"; c.font = `900 ${p.size * (1.4 - t * 0.6)}px ${FONT}`; c.fillText("Z", p.x, p.y); break;
+        case "note": c.fillStyle = "#F0823C"; c.font = `900 ${p.size * 1.6}px ${FONT}`; c.fillText(p.seed > 0.5 ? "♪" : "♫", p.x, p.y); break;
+        case "star":
+          c.fillStyle = "#FFC828";
+          for (let i = 0; i < 3; i++) { const an = p.seed + i * 2.094; star(c, p.x + Math.cos(an) * 14 * u, p.y + Math.sin(an) * 4 * u, p.size); }
+          break;
+        case "sweat":
+          c.fillStyle = "#6EB4F0"; c.beginPath(); c.moveTo(p.x, p.y - p.size);
+          c.quadraticCurveTo(p.x + p.size * 0.9, p.y + p.size * 0.3, p.x, p.y + p.size * 0.6);
+          c.quadraticCurveTo(p.x - p.size * 0.9, p.y + p.size * 0.3, p.x, p.y - p.size); c.fill(); break;
+        case "bang": case "question":
+          c.fillStyle = p.type === "bang" ? "#F04646" : "#5A78DC"; c.font = `900 ${p.size}px ${FONT}`;
+          c.fillText(p.type === "bang" ? "!" : "?", p.x, p.y); break;
+        case "anger": {
+          c.strokeStyle = "#E63C3C"; c.lineWidth = 2 * u; c.lineCap = "round"; const s = p.size; c.beginPath();
+          for (let q = 0; q < 4; q++) {
+            const qx = q % 2 === 0 ? -1 : 1, qy = q < 2 ? -1 : 1;
+            c.moveTo(p.x + qx * s * 0.25, p.y + qy * s); c.quadraticCurveTo(p.x + qx * s * 0.3, p.y + qy * s * 0.3, p.x + qx * s, p.y + qy * s * 0.25);
+          }
+          c.stroke(); break;
+        }
+        case "dust": c.globalAlpha = a * 0.6; c.fillStyle = "#C8BEB4"; c.beginPath(); c.arc(p.x, p.y, p.size * (1.5 - t * 0.5), 0, 2 * PI); c.fill(); break;
+        case "crumb": c.fillStyle = "#C8A06E"; c.beginPath(); c.arc(p.x, p.y, p.size, 0, 2 * PI); c.fill(); break;
+      }
+    }
+    c.globalAlpha = 1;
+  }
+}
+function star(c, x, y, s) {
+  c.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 === 0 ? s : s * 0.45, a = -PI / 2 + i * PI / 5;
+    const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+    i === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
+  }
+  c.closePath(); c.fill();
+}
+const FONT = '"Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif';
+
+// ======================================================================== 頭脳
+class Pet {
+  constructor(breed, name, petPx, activity) {
+    this.breed = breed; this.name = name; this.activity = activity;
+    this.setSize(petPx);
+    this.pose = newPose();
+    this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.facing = 1;
+    this.surface = "air"; this.action = "fall"; this.t = 0; this.dur = 10; this.clock = 0; this.placed = false;
+    this.minX = 0; this.maxX = 0; this.floorY = 0; this.topY = 0;
+    this.hunger = 30; this.energy = 80; this.affection = 60;
+    this.targetX = 0; this.targetY = 0; this.climbDir = -1; this.next = null; this.thenClimb = false; this.zoomLaps = 0;
+    this.pendingFeed = false; this.pendingCall = false; this.pendingSleep = false;
+    this.greet = true; this.hardLanding = false; this.dizzyOnLand = false;
+    this.bubble = null; this.bubbleLeft = 0; this.blinkIn = 2; this.blinkLeft = 0; this.chatterIn = 30;
+    this.fxTimer = 0; this.idleLook = 1; this.swing = 0;
+    this.treatVisible = false; this.treatY = 0; this.treatScale = 1;
+    this.pressed = false; this.pressT = 0; this.dragging = false; this.petting = false;
+    this.downX = 0; this.downY = 0; this.grabDX = 0; this.grabDY = 0; this.lastX = 0; this.lastY = 0;
+    this.dragVx = 0; this.dragVy = 0; this.shake = 0; this.lastShakeSign = 0;
+    this.tapCount = 0; this.tapTimer = 0; this.tapStreak = 0;
+  }
+  setSize(petPx) {
+    const cx = this.x + (this.win || 0) / 2, bottom = this.y + (this.win || 0);
+    this.petPx = petPx; this.unit = petPx / 100; this.win = Math.round(petPx * 1.7);
+    this.fx = new Effects(this.unit);
+    if (this.placed) { this.x = cx - this.win / 2; this.y = bottom - this.win; }
+  }
+  get isCat() { return this.breed.sp === "cat"; }
+  get walkSpeed() { return this.petPx * 0.6 * this.activity; }
+  get runSpeed() { return this.petPx * 2 * (0.6 + this.activity * 0.4); }
+  get climbSpeed() { return this.petPx * 0.5 * this.activity; }
+  get gravity() { return this.petPx * 28; }
+  get surfaceRot() { return this.surface === "left" ? 90 : this.surface === "right" ? -90 : 0; }
+
+  setBounds(w, h, top, bottom) {
+    this.minX = 0; this.maxX = Math.max(0, w - this.win);
+    this.topY = top; this.floorY = Math.max(top, h - bottom - this.win);
+    if (!this.placed) {
+      this.placed = true;
+      this.x = this.minX + rnd() * (this.maxX - this.minX); this.y = this.topY;
+      this.vx = 0; this.vy = 0; this.surface = "air"; this.start("fall", 10);
+      return;
+    }
+    this.x = clamp(this.x, this.minX, this.maxX); this.y = clamp(this.y, this.topY, this.floorY);
+    if (this.surface === "floor") this.y = this.floorY;
+    else if (this.surface === "left") this.x = this.minX;
+    else if (this.surface === "right") this.x = this.maxX;
+    this.targetX = clamp(this.targetX, this.minX, this.maxX);
+  }
+
+  update(dtRaw) {
+    const dt = Math.min(dtRaw, 0.05);
+    this.clock += dt; this.t += dt;
+    this.needs(dt); this.blink(dt);
+    if (this.bubbleLeft > 0) { this.bubbleLeft -= dt; if (this.bubbleLeft <= 0) this.bubble = null; }
+    this.tapStreak = Math.max(0, this.tapStreak - dt * 0.6);
+    this.shake = Math.max(0, this.shake - dt * 1.5);
+    if (this.pressed && !this.dragging && !this.petting) {
+      this.pressT += dt;
+      if (this.pressT > 0.45 && this.action !== "fall" && this.surface === "floor") this.startPetting();
+    }
+    if (this.tapTimer > 0) {
+      this.tapTimer -= dt;
+      if (this.tapTimer <= 0) { this.tapCount >= 2 ? this.doubleTap() : this.singleTap(); this.tapCount = 0; }
+    }
+    this.chatterIn -= dt;
+    if (this.chatterIn <= 0) { this.chatterIn = 25 + rnd() * 40; this.chatter(); }
+    this.step(dt);
+    this.buildPose();
+    this.fx.update(dt, this.gravity);
+  }
+
+  step(dt) {
+    switch (this.action) {
+      case "idle":
+        if (this.t > this.dur) this.decide();
+        if (rnd() < dt * 0.4) this.idleLook = rnd() < 0.5 ? 1 : -0.6;
+        break;
+      case "walk": case "run": this.walkStep(dt, this.action === "run" ? this.runSpeed : this.walkSpeed); break;
+      case "zoomies": {
+        const sp = this.runSpeed * 1.25, dx = this.targetX - this.x;
+        if (Math.abs(dx) <= sp * dt + 1) {
+          this.x = this.targetX; this.zoomLaps--;
+          if (this.zoomLaps <= 0) { this.energy -= 8; this.say(this.isCat ? "ふぅ…" : "はぁはぁ♪"); this.start("idle", 1.5); }
+          else { this.targetX = this.targetX <= this.minX + 1 ? this.maxX : this.minX; this.dust(); }
+        } else { this.x += Math.sign(dx) * sp * dt; this.facing = dx > 0 ? 1 : -1; }
+        break;
+      }
+      case "sit": if (this.t > this.dur) { if (this.isCat && rnd() < 0.35) this.start("groom", 3.5); else this.decide(); } break;
+      case "lie": if (this.t > this.dur) { if (this.energy < 50 || night()) this.startSleep(); else this.decide(); } break;
+      case "sleep":
+        this.fxTimer -= dt;
+        if (this.fxTimer <= 0) { this.fxTimer = 1.5; this.fxHead("zzz", 6, -6); }
+        if (this.t > this.dur && this.energy > 85) { this.start("stretch", 1.8); this.say(night() ? "ふわぁ…" : "よくねた〜"); }
+        break;
+      case "stretch": case "groom": case "look": case "wave": case "beg": case "lonely": case "happy": case "surprised": case "dizzy":
+        if (this.t > this.dur) this.decide(); break;
+      case "spin":
+        this.fxTimer -= dt;
+        if (this.fxTimer <= 0) { this.fxTimer = 0.16; this.facing = -this.facing; }
+        if (this.t > this.dur) { this.start("dizzy", 1.2); this.fxHead("star", 0, -4); }
+        break;
+      case "climb": this.climbStep(dt); break;
+      case "hang":
+        if (this.t > this.dur) {
+          const r = rnd();
+          if (r < 0.35) { this.climbDir = 1; this.start("climb", 99); }
+          else if (r < 0.55 && this.y > this.topY + this.petPx) {
+            this.climbDir = -1; this.targetY = Math.max(this.topY, this.y - this.petPx * (1 + rnd() * 2)); this.start("climb", 99);
+          } else this.jumpOff(false);
+        }
+        break;
+      case "fall": this.fallStep(dt); break;
+      case "land": if (this.t > this.dur) this.afterLanding(); break;
+      case "dragged": {
+        const target = clamp(-this.dragVx / (this.petPx * 8) * 35, -55, 55);
+        this.swing += (target - this.swing) * Math.min(1, dt * 7);
+        if (this.shake > 2.5) { this.fxTimer -= dt; if (this.fxTimer <= 0) { this.fxTimer = 0.25; this.fxHead("sweat", 14, 0); } }
+        this.dragVx *= 0.9;
+        break;
+      }
+      case "petted":
+        this.affection = Math.min(100, this.affection + dt * 6);
+        this.fxTimer -= dt;
+        if (this.fxTimer <= 0) { this.fxTimer = 0.45; this.fxHead("heart", 0, -6); if (this.isCat && rnd() < 0.5) this.fxHead("note", 14, 0); }
+        break;
+      case "eat": this.eatStep(dt); break;
+    }
+  }
+  walkStep(dt, sp) {
+    const dx = this.targetX - this.x;
+    if (Math.abs(dx) <= sp * dt + 1) { this.x = this.targetX; this.arrive(); }
+    else { this.x += Math.sign(dx) * sp * dt; this.facing = dx > 0 ? 1 : -1; }
+  }
+  arrive() {
+    if (this.thenClimb) {
+      this.thenClimb = false;
+      this.surface = this.x <= this.minX + 1 ? "left" : "right";
+      this.climbDir = -1;
+      this.targetY = this.topY + (this.floorY - this.topY) * (0.15 + rnd() * 0.6);
+      this.start("climb", 99); this.say("よいしょ");
+      return;
+    }
+    const n = this.next; this.next = null;
+    if (!n) this.start("idle", 0.6 + rnd() * 1.5);
+    else if (n === "eat") this.startEat();
+    else if (n === "wave") { this.facing = rnd() < 0.5 ? 1 : -1; this.start("wave", 2.6); this.say(greeting()); this.fxHead("heart", 0, -6); }
+    else if (n === "beg") { this.start("beg", 4.5); this.say(pickOne(["おなかすいた…", "ごはんまだ?", "ダブルタップでごはん!"])); }
+    else if (n === "lonely") { this.start("lonely", 4.5); this.say(pickOne(["かまって〜", "なでて?", "あそぼ!"])); }
+    else this.start(n, 3);
+  }
+  climbStep(dt) {
+    this.y += this.climbDir * this.climbSpeed * dt;
+    this.facing = this.surface === "left" ? (this.climbDir < 0 ? -1 : 1) : (this.climbDir < 0 ? 1 : -1);
+    if (this.climbDir < 0) {
+      if (this.y <= this.topY) { this.y = this.topY; this.say("たかいたかい!"); this.start("hang", 2 + rnd() * 2); }
+      else if (this.y <= this.targetY) this.start("hang", 2 + rnd() * 3);
+    } else if (this.y >= this.floorY) {
+      this.y = this.floorY; this.surface = "floor"; this.facing = this.x <= this.minX + 1 ? 1 : -1; this.start("idle", 1);
+    }
+  }
+  jumpOff(scared) {
+    const away = this.surface === "left" ? 1 : -1;
+    this.surface = "air";
+    this.vx = away * this.petPx * (scared ? 2.5 : 4); this.vy = -this.petPx * (scared ? 2 : 5);
+    this.facing = away; this.start("fall", 99);
+  }
+  fallStep(dt) {
+    this.vy += this.gravity * dt; this.x += this.vx * dt; this.y += this.vy * dt;
+    if (this.y < this.topY) { this.y = this.topY; this.vy = Math.abs(this.vy) * 0.3; }
+    if (this.x < this.minX || this.x > this.maxX) {
+      const left = this.x < this.minX;
+      this.x = left ? this.minX : this.maxX;
+      if (this.isCat && this.vy > -this.petPx * 6 && this.y < this.floorY - this.petPx * 0.5 && rnd() < 0.55) {
+        this.surface = left ? "left" : "right"; this.vx = 0; this.vy = 0; this.climbDir = -1;
+        this.start("hang", 1.5 + rnd() * 2); this.say("しゅたっ");
+        return;
+      }
+      this.vx = -this.vx * 0.45;
+      if (Math.abs(this.vx) > this.petPx * 3) this.fxHead("star", 0, -4);
+    }
+    if (this.vx !== 0) this.facing = this.vx > 0 ? 1 : -1;
+    if (this.y >= this.floorY) {
+      this.y = this.floorY;
+      const impact = this.vy;
+      this.vy = 0; this.vx = 0; this.surface = "floor";
+      if (this.dizzyOnLand || impact > this.petPx * 26) {
+        this.dizzyOnLand = false; this.dust(); this.dust(); this.hardLanding = true;
+        this.start("dizzy", 2.4); this.fxHead("star", 0, -4); this.say("くらくら〜");
+      } else if (impact > this.petPx * 12) { this.dust(); this.hardLanding = true; this.start("land", 0.55); }
+      else { this.hardLanding = false; this.start("land", 0.3); }
+    }
+  }
+  afterLanding() {
+    if (this.greet) { this.greet = false; this.start("wave", 2.6); this.say(greeting()); this.fxHead("heart", 0, -6); return; }
+    if (this.hardLanding) { this.hardLanding = false; this.say(this.isCat && rnd() < 0.5 ? "スタッ!" : "びっくりした!"); }
+    this.decide();
+  }
+  eatStep(dt) {
+    const t = this.t;
+    if (t < 0.4) { const k = t / 0.4; this.treatY = lerp(-110, -6, k * k); this.treatScale = 1.1; }
+    else {
+      this.treatY = -6; this.treatScale = 1.1 * Math.max(0, 1 - (t - 0.5) / 2.6);
+      this.fxTimer -= dt; if (this.fxTimer <= 0) { this.fxTimer = 0.3; this.fxAt("crumb", 44, -10); }
+    }
+    if (t > 3.2) {
+      this.treatVisible = false;
+      this.hunger = Math.max(0, this.hunger - 45); this.affection = Math.min(100, this.affection + 5); this.energy = Math.min(100, this.energy + 5);
+      this.say(pickOne(["おいしい!", "ごちそうさま♪", "もっと!"])); this.start("happy", 1.3); this.fxHead("heart", 0, -6);
+    }
+  }
+
+  start(a, d) { this.action = a; this.t = 0; this.dur = d; this.fxTimer = 0; }
+  startSleep() { this.start("sleep", 25 + rnd() * 40); }
+  goTo(tx, run, then = null) {
+    this.targetX = clamp(tx, this.minX, this.maxX); this.next = then;
+    this.start(run ? "run" : "walk", 99);
+    if (Math.abs(this.targetX - this.x) < 2) this.arrive();
+  }
+  decide() {
+    if (this.surface !== "floor") return;
+    const center = (this.minX + this.maxX) / 2;
+    if (this.pendingFeed) { this.pendingFeed = false; this.goTo(this.x, false, "eat"); return; }
+    if (this.pendingCall) { this.pendingCall = false; this.goTo(center, true, "wave"); return; }
+    if (this.pendingSleep) { this.pendingSleep = false; this.start("lie", 1.5); this.energy = Math.min(this.energy, 40); return; }
+    const tired = this.energy < 35, r = rnd(), act = this.activity;
+    if (this.hunger > 70 && r < 0.45) { this.goTo(center + (rnd() - 0.5) * this.petPx * 2, false, "beg"); return; }
+    if (this.affection < 30 && r < 0.35) { this.goTo(center + (rnd() - 0.5) * this.petPx * 2, true, "lonely"); return; }
+    const choice = weighted([
+      ["walk", 3], ["idle", 1.5], ["sit", 2], ["lie", 1.2], ["look", 1],
+      ["sleep", (tired ? 4 : 0.25) + (night() ? 2.5 : 0)],
+      ["run", this.energy > 50 ? act : 0.1],
+      ["zoomies", this.energy > 70 ? 0.35 * act : 0],
+      ["climb", this.isCat && this.energy > 40 ? 0.8 * act : 0],
+      ["spin", !this.isCat && this.energy > 40 ? 0.5 * act : 0],
+      ["groom", this.isCat ? 0.8 : 0], ["stretch", 0.4],
+    ]);
+    switch (choice) {
+      case "walk": this.goTo(this.randomX(), false); break;
+      case "run": this.goTo(this.randomX(), true); break;
+      case "idle": this.start("idle", 1.5 + rnd() * 3); break;
+      case "sit": this.start("sit", 3 + rnd() * 5); break;
+      case "lie": this.start("lie", 4 + rnd() * 6); break;
+      case "look": this.start("look", 2.5); if (rnd() < 0.5) this.fxHead("question", 14, 0); break;
+      case "sleep": this.start("lie", 2); this.energy = Math.min(this.energy, 45); break;
+      case "zoomies":
+        this.zoomLaps = 2 + Math.floor(rnd() * 3);
+        this.targetX = this.x - this.minX > this.maxX - this.x ? this.minX : this.maxX;
+        this.start("zoomies", 99); this.fxHead("bang", 10, 0); this.say(this.isCat ? "うにゃにゃ!" : "わわわん!");
+        break;
+      case "climb":
+        this.thenClimb = true; this.targetX = this.x - this.minX < this.maxX - this.x ? this.minX : this.maxX;
+        this.next = null; this.start("walk", 99);
+        break;
+      case "spin": this.start("spin", 2.2); this.say("しっぽ!しっぽ!"); break;
+      case "groom": this.start("groom", 3.5); break;
+      case "stretch": this.start("stretch", 1.8); break;
+      default: this.start("idle", 2);
+    }
+  }
+  randomX() {
+    let tx = this.minX + rnd() * (this.maxX - this.minX);
+    if (Math.abs(tx - this.x) < this.petPx * 0.6) tx = clamp(this.x + this.petPx * (rnd() < 0.5 ? 1.5 : -1.5), this.minX, this.maxX);
+    return tx;
+  }
+  startEat() {
+    if (this.hunger < 10) { this.say("おなかいっぱい…"); this.start("look", 1.8); return; }
+    this.start("eat", 99); this.treatVisible = true; this.treatY = -110; this.treatScale = 1.1;
+    this.say(this.isCat ? "おさかな!" : "ほね!");
+  }
+  startPetting() {
+    this.petting = true;
+    if (this.action === "sleep") this.say(this.isCat ? "ごろごろ…" : "むにゃ…♪");
+    else this.say(this.isCat ? "ごろごろ♪" : "しあわせ〜");
+    this.start("petted", 99);
+  }
+
+  // ---- 外からの指示
+  feed() {
+    if (this.surface === "floor" && this.action !== "eat" && this.action !== "dragged") { this.next = null; this.thenClimb = false; this.startEat(); }
+    else { this.pendingFeed = true; if (this.surface === "left" || this.surface === "right") this.jumpOff(false); }
+  }
+  call() {
+    if (this.surface === "floor" && this.action !== "dragged" && this.action !== "eat") {
+      this.thenClimb = false; this.say(this.isCat ? "にゃ?" : "わん!"); this.goTo((this.minX + this.maxX) / 2, true, "wave");
+    } else { this.pendingCall = true; if (this.surface === "left" || this.surface === "right") this.jumpOff(false); }
+  }
+  sleepNow() {
+    if (this.surface === "floor" && this.action !== "dragged") {
+      this.thenClimb = false; this.say("おやすみ…"); this.start("lie", 1.5); this.energy = Math.min(this.energy, 40);
+    } else this.pendingSleep = true;
+  }
+
+  // ---- タッチ
+  touchDown(wx, wy) {
+    this.pressed = true; this.pressT = 0; this.dragging = false;
+    this.downX = wx; this.downY = wy; this.lastX = wx; this.lastY = wy;
+    this.grabDX = wx - this.x; this.grabDY = wy - this.y; this.dragVx = 0; this.dragVy = 0;
+  }
+  touchMove(wx, wy, dt) {
+    if (!this.pressed) return;
+    if (!this.dragging && !this.petting && Math.hypot(wx - this.downX, wy - this.downY) > this.petPx * 0.1) this.startDrag();
+    if (this.dragging) {
+      this.x = clamp(wx - this.grabDX, this.minX - this.win * 0.3, this.maxX + this.win * 0.3);
+      this.y = clamp(wy - this.grabDY, this.topY - this.win * 0.3, this.floorY);
+      if (dt > 0) {
+        const ivx = (wx - this.lastX) / dt, ivy = (wy - this.lastY) / dt;
+        this.dragVx = this.dragVx * 0.6 + ivx * 0.4; this.dragVy = this.dragVy * 0.6 + ivy * 0.4;
+        const s = Math.sign(ivx);
+        if (Math.abs(ivx) > this.petPx * 10 && s !== 0 && s !== this.lastShakeSign) {
+          this.lastShakeSign = s; this.shake += 1;
+          if (this.shake > 4 && !this.bubble) this.say("め、めがまわる〜");
+        }
+      }
+    }
+    this.lastX = wx; this.lastY = wy;
+  }
+  touchUp() {
+    if (!this.pressed) return;
+    this.pressed = false;
+    if (this.dragging) {
+      this.dragging = false;
+      const maxV = this.petPx * 22;
+      this.vx = clamp(this.dragVx, -maxV, maxV); this.vy = clamp(this.dragVy, -maxV, maxV);
+      this.dizzyOnLand = this.shake > 4; this.shake = 0; this.surface = "air"; this.start("fall", 99);
+    } else if (this.petting) {
+      this.petting = false; this.start("happy", 1.2); this.fxHead("heart", 0, -6);
+    } else { this.tapCount++; this.tapTimer = 0.28; }
+  }
+  startDrag() {
+    this.dragging = true; this.petting = false; this.next = null; this.thenClimb = false; this.treatVisible = false;
+    if (this.action === "eat") this.pendingFeed = false;
+    this.swing = 0; this.shake = 0; this.surface = "air";
+    const wasSleeping = this.action === "sleep";
+    this.start("dragged", 99);
+    this.say(wasSleeping ? "ふぇっ!?" : this.isCat ? pickOne(["にゃっ!?", "はなして〜", "どこいくの?"]) : pickOne(["わふっ!?", "たかーい!", "どこいくの?"]));
+  }
+  singleTap() {
+    this.tapStreak += 1; this.affection = Math.min(100, this.affection + 3);
+    if (this.action === "sleep") {
+      if (rnd() < 0.5) { this.say("むにゃ…"); this.t = Math.min(this.t, this.dur - 5); }
+      else { this.start("surprised", 0.9); this.fxHead("bang", 10, 0); this.say("ん…?"); }
+    } else if (this.surface === "left" || this.surface === "right") {
+      this.say(this.isCat ? "にゃっ!" : "わっ!"); this.fxHead("bang", 10, 0); this.jumpOff(true);
+    } else if (this.surface === "air" || this.action === "eat") {
+    } else if (this.tapStreak > 5) {
+      this.tapStreak = 0; this.affection = Math.max(0, this.affection - 6);
+      this.fxHead("anger", 14, 4); this.say("もう〜!");
+      this.goTo(this.x - this.minX > this.maxX - this.x ? this.minX + this.petPx * 0.3 : this.maxX - this.petPx * 0.3, true);
+    } else {
+      const r = rnd();
+      if (r < 0.45) { this.start("happy", 1.3); this.fxHead("heart", 0, -6); this.say(this.sound()); }
+      else if (r < 0.6) { this.start("surprised", 0.8); this.fxHead("bang", 10, 0); this.say(this.isCat ? "にゃ!" : "わん!"); }
+      else if (r < 0.75 && !this.isCat) { this.start("spin", 1.6); this.say("わーい!"); }
+      else if (r < 0.85) { this.start("wave", 2); this.say(this.affection > 70 ? `${this.name}だよ♪` : this.sound()); }
+      else { this.start("look", 1.8); this.fxHead("question", 14, 0); this.say("なぁに?"); }
+    }
+  }
+  doubleTap() {
+    if (this.surface === "floor" && this.action !== "eat") { this.next = null; this.thenClimb = false; this.startEat(); }
+    else this.singleTap();
+  }
+
+  // ---- 気分
+  needs(dt) {
+    this.hunger = Math.min(100, this.hunger + dt * 0.008);
+    this.affection = Math.max(0, this.affection - dt * 0.005);
+    if (this.action === "sleep") this.energy = Math.min(100, this.energy + dt * 0.25);
+    else if (this.action === "run" || this.action === "zoomies" || this.action === "spin") this.energy = Math.max(0, this.energy - dt * 0.08);
+    else this.energy = Math.max(0, this.energy - dt * 0.006);
+  }
+  advanceOffline(sec) {
+    const s = clamp(sec, 0, 86400);
+    this.hunger = Math.min(100, this.hunger + s * 0.008);
+    this.affection = Math.max(0, this.affection - s * 0.003);
+    this.energy = Math.min(100, this.energy + s * 0.05);
+  }
+  chatter() {
+    if (this.action === "sleep" || this.action === "dragged" || this.bubble) return;
+    let line;
+    if (this.hunger > 70) line = pickOne(["おなかすいた…", "ごはん〜", "ダブルタップでごはん!"]);
+    else if (this.affection < 30) line = pickOne(["かまって〜", "さみしいな…", "なでて?"]);
+    else if (this.energy < 25) line = pickOne(["ねむい…", "ふわぁ…"]);
+    else if (this.affection > 80) line = pickOne(["だいすき!", "いっしょだね♪", `${this.name}はしあわせ`]);
+    else line = pickOne([this.sound(), this.sound(), "おしごとがんばって!", "きゅうけいしよ?", "ひまだな〜", "ぽかぽか"]);
+    this.say(line);
+  }
+  sound() { return this.isCat ? pickOne(["にゃー", "にゃん♪", "みゃう", "にゃ〜ん"]) : pickOne(["わん!", "わんわん!", "くぅ〜ん", "へっへっ♪"]); }
+  say(text, secs = 2.4) { this.bubble = text; this.bubbleLeft = secs; }
+  blink(dt) {
+    if (this.blinkLeft > 0) { this.blinkLeft -= dt; return; }
+    this.blinkIn -= dt;
+    if (this.blinkIn <= 0) { this.blinkLeft = 0.12; this.blinkIn = 1.5 + rnd() * 3.5; }
+  }
+
+  // ---- 演出の位置
+  headUnit() {
+    switch (this.pose.posture) {
+      case "sit": return [7, -57];
+      case "lie": return [27, -28];
+      case "curl": return [16, -15];
+      case "stretch": return [30, -20];
+      case "dangle": return [0, -78];
+      default: return [27, -52];
+    }
+  }
+  toWin(ux, uy) {
+    const half = this.win / 2, px = half + ux * this.unit * this.facing, py = this.win + (uy + this.pose.hop) * this.unit;
+    const r = this.surfaceRot * D2R, c = Math.cos(r), s = Math.sin(r), dx = px - half, dy = py - half;
+    return [half + dx * c - dy * s, half + dx * s + dy * c];
+  }
+  headTop() { const [hx, hy] = this.headUnit(); return this.toWin(hx, hy - 30); }
+  fxHead(type, dx, dy) { const [hx, hy] = this.headUnit(); this.fxAt(type, hx + dx, hy - 22 + dy); }
+  fxAt(type, ux, uy) { const [wx, wy] = this.toWin(ux, uy); this.fx.emit(type, wx, wy); }
+  dust() { for (let i = 0; i < 4; i++) this.fxAt("dust", (rnd() - 0.5) * 50, -2); }
+
+  // ---- 姿勢づくり
+  buildPose() {
+    const p = this.pose, cl = this.clock, t = this.t, cat = this.isCat;
+    Object.assign(p, newPose());
+    p.walkPhase = cl * 9; p.breathe = Math.sin(cl * 2.2);
+    p.eyes = this.blinkLeft > 0 ? "blink" : "open";
+    p.tailAngle = (!cat && this.affection > 50) ? Math.sin(cl * 14) * 18 : Math.sin(cl * 1.8) * 9;
+    if (this.energy < 25 && p.eyes === "open") p.eyes = "half";
+    switch (this.action) {
+      case "idle": p.look = this.idleLook; p.headTilt = Math.sin(cl * 0.7) * 4; if (!cat && this.affection > 60) p.mouth = "pant"; break;
+      case "walk": p.walkAmp = 1; p.walkPhase = cl * 9 * (0.7 + this.activity * 0.3); p.bob = -Math.abs(Math.sin(p.walkPhase)) * 1.6; break;
+      case "run": case "zoomies":
+        p.walkAmp = 1.35; p.walkPhase = cl * 18; p.bob = -Math.abs(Math.sin(p.walkPhase)) * 4; p.bodyTilt = -4;
+        p.tailAngle = -18 + Math.sin(cl * 20) * 10; p.earFlick = 0.6; p.mouth = cat ? "smile" : "pant"; break;
+      case "sit": p.posture = "sit"; p.look = this.idleLook; p.headTilt = Math.sin(cl * 0.8) * 6; if (!cat) p.mouth = "pant"; break;
+      case "beg":
+        p.posture = "sit"; p.headTilt = 14; p.pawUp = cat ? 0 : 0.6 + Math.sin(cl * 6) * 0.15;
+        p.mouth = Math.sin(cl * 3) > 0.6 ? "open" : "smile"; if (p.eyes === "half") p.eyes = "open"; break;
+      case "lonely": p.posture = "sit"; p.headTilt = -10 + Math.sin(cl * 2) * 8; p.tailAngle = Math.sin(cl * 10) * 22; p.mouth = "open"; break;
+      case "wave":
+        p.posture = "sit"; p.pawUp = 0.75 + Math.sin(t * 10) * 0.25; p.walkPhase = t * 10; p.eyes = "happy"; p.blush = true;
+        p.mouth = cat ? "open" : "pant"; p.tailAngle = Math.sin(cl * 12) * 20; break;
+      case "groom": {
+        const lick = Math.sin(t * 7);
+        p.posture = "sit"; p.pawUp = 0.85 + lick * 0.15; p.walkPhase = t * 7; p.eyes = "happy"; p.headTilt = 12 + lick * 6; p.mouth = "tongue"; break;
+      }
+      case "lie": p.posture = "lie"; p.look = this.idleLook; if (this.energy < 50 && p.eyes !== "blink") p.eyes = "half"; break;
+      case "sleep": p.posture = "curl"; p.eyes = "sleep"; p.mouth = "none"; p.breathe = Math.sin(cl * 1.6); p.tailAngle = Math.sin(cl * 0.8) * 10; break;
+      case "stretch": p.posture = "stretch"; p.eyes = "happy"; p.mouth = (t > 0.3 && t < 1.3) ? "open" : "smile"; p.tailAngle = Math.sin(cl * 3) * 6; break;
+      case "look": p.look = Math.sin(t * 2.6) > 0 ? 1 : -1; p.headTilt = Math.sin(t * 2.6) * 12; p.earFlick = Math.sin(t * 5) > 0.8 ? 1 : 0; break;
+      case "spin": p.walkAmp = 1; p.walkPhase = cl * 18; p.hop = -Math.abs(Math.sin(t * 8)) * 6; p.eyes = "happy"; p.mouth = "pant"; p.tailAngle = Math.sin(cl * 20) * 25; break;
+      case "climb": p.walkAmp = 1; p.walkPhase = cl * 7; p.earFlick = 0.5; break;
+      case "hang": p.look = this.idleLook; p.headTilt = Math.sin(cl) * 8; p.tailAngle = Math.sin(cl * 2.5) * 14; break;
+      case "fall": {
+        const fast = this.vy > this.petPx * 8;
+        p.posture = "air"; p.eyes = fast ? "wide" : "open"; p.mouth = fast ? "open" : "smile";
+        p.bodyTilt = clamp(this.vy / (this.petPx * 20) * 20, -20, 25); p.earFlick = 1; break;
+      }
+      case "land": p.squash = 1 - (this.hardLanding ? 0.32 : 0.18) * (1 - t / this.dur); p.eyes = this.hardLanding ? "blink" : "open"; break;
+      case "dizzy": p.posture = "sit"; p.eyes = "dizzy"; p.headTilt = Math.sin(cl * 5) * 16; p.mouth = "open"; break;
+      case "dragged":
+        p.posture = "dangle"; p.swing = this.swing + Math.sin(cl * 3) * 4; p.walkPhase = cl * (this.shake > 2 ? 22 : 12);
+        p.headTilt = -this.swing * 0.3;
+        p.eyes = this.shake > 3 ? "dizzy" : t < 0.5 ? "wide" : this.affection > 70 ? "happy" : (this.blinkLeft > 0 ? "blink" : "open");
+        p.mouth = (t < 0.6 || this.shake > 2) ? "open" : "smile"; break;
+      case "petted":
+        p.posture = this.energy < 30 ? "lie" : "sit"; p.eyes = t > 2.5 ? "heart" : "happy"; p.blush = true;
+        p.headTilt = Math.sin(cl * 2) * 10; p.mouth = cat ? "smile" : "pant";
+        p.tailAngle = cat ? Math.sin(cl * 1.5) * 18 : Math.sin(cl * 18) * 25; p.earFlick = 0.3; break;
+      case "happy":
+        p.hop = -Math.abs(Math.sin(t * 9)) * 10 * Math.max(0, 1 - t / this.dur); p.walkAmp = 0.4; p.walkPhase = t * 12;
+        p.eyes = "happy"; p.blush = true; p.mouth = cat ? "open" : "pant"; p.tailAngle = Math.sin(cl * 16) * 22; break;
+      case "surprised":
+        p.hop = -Math.sin(Math.min(1, t / 0.35) * PI) * 12; p.eyes = "wide"; p.mouth = "open"; p.earFlick = 1; p.tailAngle = -25; break;
+      case "eat":
+        p.headDx = 6; p.headDy = 13; p.bodyTilt = 6; p.look = 1;
+        if (t > 0.4) { p.mouth = "chew"; p.chew = Math.abs(Math.sin(t * 11)); p.eyes = "happy"; p.headDy = 13 + p.chew * 2; }
+        else p.eyes = "wide";
+        p.tailAngle = Math.sin(cl * 12) * 18; break;
+    }
+  }
+}
+function weighted(opts) {
+  const total = opts.reduce((s, o) => s + o[1], 0);
+  let r = rnd() * total;
+  for (const [a, w] of opts) { r -= w; if (r <= 0) return a; }
+  return opts[0][0];
+}
+function hour() { return new Date().getHours(); }
+function night() { const h = hour(); return h >= 23 || h < 6; }
+function greeting() {
+  const h = hour();
+  return h >= 5 && h <= 10 ? "おはよう!" : h <= 16 && h >= 11 ? "こんにちは〜" : h >= 17 && h <= 21 ? "おつかれさま!" : "まだおきてるの?";
+}
+
+// ======================================================================== 保存
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("pp." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("pp." + k, JSON.stringify(v)); } catch {} },
+};
+const settings = {
+  breed: store.get("breed", "cat_orange"), name: store.get("name", "ミケ"),
+  size: store.get("size", 1), activity: store.get("activity", 1),
+};
+const petPxFor = s => [84, 108, 136][s] ?? 108;
+const actFor = a => [0.65, 1, 1.45][a] ?? 1;
+function saveMood() {
+  store.set("mood", { h: pet.hunger, e: pet.energy, a: pet.affection, at: Date.now() });
+}
+
+// ======================================================================== 画面
+const stage = document.getElementById("stage"), cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const hint = document.getElementById("hint");
+const pet = new Pet(breedById(settings.breed), settings.name, petPxFor(settings.size), actFor(settings.activity));
+{
+  const m = store.get("mood", null);
+  if (m) { pet.hunger = m.h; pet.energy = m.e; pet.affection = m.a; pet.advanceOffline((Date.now() - m.at) / 1000); }
+}
+let W = 0, H = 0, dpr = 1;
+function resize() {
+  const r = stage.getBoundingClientRect();
+  W = r.width; H = r.height; dpr = Math.min(3, window.devicePixelRatio || 1);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  // 床のラインに足がつくように(部屋の 72% が床)
+  const floorLine = H * 0.72 + pet.petPx * 0.18;
+  pet.setBounds(W, H, 0, Math.max(0, H - floorLine));
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+function drawBubble(c) {
+  const text = pet.bubble; if (!text) return;
+  const w = pet.win, u = pet.unit, a = Math.min(1, pet.bubbleLeft * 4);
+  let size = 15 * u;
+  c.font = `700 ${size}px ${FONT}`;
+  let tw = c.measureText(text).width;
+  const maxW = Math.max(w * 1.6, 140);
+  if (tw + 16 * u > maxW) { size *= maxW / (tw + 16 * u); c.font = `700 ${size}px ${FONT}`; tw = c.measureText(text).width; }
+  const bw = tw + 16 * u, bh = size + 11 * u;
+  const [hx0, hy0] = pet.headTop();
+  const hx = hx0 + pet.x, hy = hy0 + pet.y;
+  const cx = clamp(hx, bw / 2 + 4, W - bw / 2 - 4);
+  const bottom = Math.max(bh + 4, hy);
+  const left = cx - bw / 2, top = bottom - bh, r = bh / 2;
+  c.globalAlpha = a;
+  c.fillStyle = "#FFFFFF"; c.strokeStyle = "#5A4E5E"; c.lineWidth = 1.5 * u;
+  c.beginPath(); c.roundRect(left, top, bw, bh, r); c.fill(); c.stroke();
+  const tx = clamp(hx, left + r, left + bw - r);
+  c.beginPath(); c.moveTo(tx - 4 * u, bottom - 1); c.lineTo(tx, bottom + 6 * u); c.lineTo(tx + 4 * u, bottom - 1); c.fill();
+  c.beginPath(); c.moveTo(tx - 4 * u, bottom); c.lineTo(tx, bottom + 6 * u); c.lineTo(tx + 4 * u, bottom); c.stroke();
+  c.fillStyle = "#3A2E3C"; c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillText(text, cx, top + bh / 2 + 1);
+  c.globalAlpha = 1;
+}
+
+function render() {
+  const c = ctx;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, W, H);
+  c.save();
+  c.translate(pet.x, pet.y);
+  const w = pet.win, u = pet.unit;
+  if (pet.surface === "floor") {
+    const sw = (pet.pose.posture === "curl" || pet.pose.posture === "lie") ? 34 : 30, k = 1 + pet.pose.hop / 40;
+    c.fillStyle = "rgba(0,0,0,.14)"; c.beginPath(); c.ellipse(w / 2, w - 1.5 * u, sw * u * k, 2.5 * u, 0, 0, 2 * PI); c.fill();
+  }
+  c.save();
+  rotAt(c, pet.surfaceRot, w / 2, w / 2);
+  c.translate(w / 2, w);
+  c.scale(u * pet.facing, u);
+  Renderer.draw(c, pet.pose, pet.breed);
+  if (pet.treatVisible) Renderer.treat(c, pet.breed.sp, 46, pet.treatY, pet.treatScale);
+  c.restore();
+  pet.fx.draw(c);
+  c.restore();
+  drawBubble(c);
+}
+
+let last = 0, saveIn = 20, meterIn = 0;
+function frame(now) {
+  const dt = last ? (now - last) / 1000 : 0.016;
+  last = now;
+  pet.update(dt);
+  render();
+  saveIn -= dt; if (saveIn <= 0) { saveIn = 20; saveMood(); }
+  meterIn -= dt; if (meterIn <= 0) { meterIn = 1; updateMeters(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+document.addEventListener("visibilitychange", () => { if (document.hidden) saveMood(); else last = 0; });
+window.addEventListener("pagehide", saveMood);
+
+// ---- タッチ(ペットの近くを触ったときだけ反応)
+let activeId = null, lastMove = 0;
+stage.addEventListener("pointerdown", e => {
+  const r = stage.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  if (x < pet.x || x > pet.x + pet.win || y < pet.y || y > pet.y + pet.win) return;
+  activeId = e.pointerId; stage.setPointerCapture(e.pointerId); lastMove = performance.now();
+  pet.touchDown(x, y);
+  hint.classList.add("gone");
+});
+stage.addEventListener("pointermove", e => {
+  if (e.pointerId !== activeId) return;
+  const r = stage.getBoundingClientRect(), now = performance.now();
+  pet.touchMove(e.clientX - r.left, e.clientY - r.top, (now - lastMove) / 1000); lastMove = now;
+});
+const up = e => { if (e.pointerId !== activeId) return; activeId = null; pet.touchUp(); };
+stage.addEventListener("pointerup", up);
+stage.addEventListener("pointercancel", up);
+stage.addEventListener("contextmenu", e => e.preventDefault());
+
+document.getElementById("bFeed").onclick = () => pet.feed();
+document.getElementById("bCall").onclick = () => pet.call();
+document.getElementById("bSleep").onclick = () => pet.sleepNow();
+
+function updateMeters() {
+  document.getElementById("mHunger").style.setProperty("--v", (100 - pet.hunger).toFixed(0) + "%");
+  document.getElementById("mEnergy").style.setProperty("--v", pet.energy.toFixed(0) + "%");
+  document.getElementById("mLove").style.setProperty("--v", pet.affection.toFixed(0) + "%");
+}
+function updateHeader() {
+  document.getElementById("petName").textContent = pet.name;
+  document.getElementById("petBreed").textContent = pet.breed.label;
+}
+updateHeader();
+
+// ---- 設定シート
+const sheet = document.getElementById("sheet"), scrim = document.getElementById("scrim");
+function openSheet(v) { sheet.hidden = !v; scrim.hidden = !v; }
+document.getElementById("bSettings").onclick = () => openSheet(true);
+document.getElementById("bDone").onclick = () => openSheet(false);
+scrim.onclick = () => openSheet(false);
+
+function buildChips() {
+  for (const [sp, el] of [["cat", "catChips"], ["dog", "dogChips"]]) {
+    const box = document.getElementById(el); box.innerHTML = "";
+    for (const b of BREEDS.filter(b => b.sp === sp)) {
+      const btn = document.createElement("button");
+      btn.type = "button"; btn.className = "chip"; btn.setAttribute("aria-pressed", String(b.id === settings.breed));
+      btn.style.setProperty("--dot", b.base); btn.style.setProperty("--dotline", b.outline);
+      btn.innerHTML = `<span class="dot"></span>${b.label}`;
+      btn.onclick = () => {
+        settings.breed = b.id; store.set("breed", b.id);
+        pet.breed = b; pet.say(b.sp === "cat" ? "にゃー" : "わん!");
+        buildChips(); updateHeader();
+      };
+      box.appendChild(btn);
+    }
+  }
+}
+buildChips();
+const nameInput = document.getElementById("name");
+nameInput.value = settings.name;
+nameInput.addEventListener("input", () => {
+  const n = nameInput.value.trim().slice(0, 8) || "ペット";
+  settings.name = n; store.set("name", n); pet.name = n; updateHeader();
+});
+function seg(id, value, onPick) {
+  const btns = [...document.getElementById(id).children];
+  const paint = v => btns.forEach((b, i) => b.setAttribute("aria-pressed", String(i === v)));
+  btns.forEach((b, i) => b.onclick = () => { paint(i); onPick(i); });
+  paint(value);
+}
+seg("segSize", settings.size, i => { settings.size = i; store.set("size", i); pet.setSize(petPxFor(i)); resize(); });
+seg("segAct", settings.activity, i => { settings.activity = i; store.set("activity", i); pet.activity = actFor(i); });
+updateMeters();
+</script>

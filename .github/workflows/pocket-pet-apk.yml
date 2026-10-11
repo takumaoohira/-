@@ -1,0 +1,30 @@
+name: Build Pocket Pet APK
+
+on:
+  push:
+    paths:
+      - "desktop-pet/**"
+      - ".github/workflows/pocket-pet-apk.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desktop-pet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pocket-pet-apk
+          path: desktop-pet/app/build/outputs/apk/debug/app-debug.apk
