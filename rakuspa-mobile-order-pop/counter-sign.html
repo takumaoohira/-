@@ -5,54 +5,69 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>注文口 掲示POP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   @page { size: A4 landscape; margin: 0; }
   :root { --green: #5f8152; --green-dark: #3f5a36; --green-light: #e3ecdb; --cream: #fbfaf5; --ink: #2f2f2a; --accent: #d9822b; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #ccc; }
   body { font-family: "Zen Maru Gothic", "IPAGothic", sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .zh { font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
   .page {
     width: 297mm; height: 210mm; margin: 0 auto; background: var(--cream);
     position: relative; overflow: hidden;
-    display: grid; grid-template-columns: 1.45fr 1fr;
+    display: grid; grid-template-columns: 1.6fr 1fr;
   }
-  .left { padding: 16mm 10mm 14mm 16mm; display: flex; flex-direction: column; justify-content: center; }
-  .tag { align-self: flex-start; background: var(--accent); color: #fff; font-weight: 900; font-size: 15pt; padding: 1.5mm 7mm; border-radius: 99px; letter-spacing: .08em; }
-  h1 { margin-top: 6mm; font-size: 40pt; font-weight: 900; line-height: 1.25; color: var(--green-dark); }
+  .left { padding: 11mm 16mm 12mm 14mm; display: flex; flex-direction: column; justify-content: center; }
+  .tag { align-self: flex-start; background: var(--accent); color: #fff; font-weight: 900; font-size: 12.5pt; padding: 1.5mm 6mm; border-radius: 99px; letter-spacing: .04em; }
+  .tag .zh { font-weight: 700; font-size: 11pt; }
+  .tag .en { font-weight: 700; font-size: 10.5pt; }
+  h1 { margin-top: 5mm; font-size: 34pt; font-weight: 900; line-height: 1.22; color: var(--green-dark); }
   h1 em { font-style: normal; color: var(--accent); }
-  .lead { margin-top: 6mm; font-size: 15pt; font-weight: 700; line-height: 1.7; }
-  .flow { margin-top: 8mm; display: flex; align-items: center; gap: 2mm; flex-wrap: nowrap; }
-  .chip { background: #fff; border: .6mm solid var(--green); color: var(--green-dark); border-radius: 99px; padding: 2mm 4mm; font-size: 11.5pt; font-weight: 900; }
-  .arrow { color: var(--green); font-size: 16pt; font-weight: 900; }
-  .en { margin-top: 8mm; font-size: 11pt; font-weight: 500; color: #6b6b62; line-height: 1.5; }
-  .right { background: var(--green); display: flex; align-items: center; justify-content: center; padding: 12mm; position: relative; }
+  .h-zh { margin-top: 2.5mm; font-size: 21pt; font-weight: 900; color: var(--green); }
+  .h-en { margin-top: 1mm; font-size: 16pt; font-weight: 700; color: var(--green); }
+  .lead { margin-top: 4.5mm; font-size: 13pt; font-weight: 700; line-height: 1.55; }
+  .lead .zh, .lead .en { display: block; font-size: 10.5pt; font-weight: 500; color: #555; line-height: 1.5; }
+  .flow { margin-top: 5mm; display: flex; align-items: stretch; gap: 2mm; }
+  .chip { flex: 1; background: #fff; border: .6mm solid var(--green); color: var(--green-dark); border-radius: 4mm; padding: 2mm 2.5mm; text-align: center; font-size: 11pt; font-weight: 900; line-height: 1.3; }
+  .chip .zh, .chip .en { display: block; font-size: 8.5pt; font-weight: 700; color: var(--green); }
+  .chip .en { font-weight: 500; color: #6b6b62; }
+  .arrow { align-self: center; color: var(--green); font-size: 14pt; font-weight: 900; }
+  .staff { margin-top: 5mm; font-size: 11.5pt; font-weight: 700; color: var(--green-dark); background: var(--green-light); border-radius: 4mm; padding: 2.5mm 5mm; line-height: 1.5; }
+  .staff .zh, .staff .en { display: block; font-size: 9pt; font-weight: 500; }
+  .right { background: var(--green); display: flex; align-items: center; justify-content: center; padding: 12mm 10mm; position: relative; }
   .right::before { content: ""; position: absolute; left: -10mm; top: 0; bottom: 0; width: 20mm; background: var(--green); border-radius: 50% 0 0 50% / 50% 0 0 50%; }
-  .photo { position: relative; width: 100%; aspect-ratio: 3/4; max-height: 170mm; border-radius: 6mm; overflow: hidden; border: 2mm solid #fff; box-shadow: 0 3mm 8mm rgba(0,0,0,.2); }
+  .photo { position: relative; width: 100%; aspect-ratio: 3/4; max-height: 175mm; border-radius: 6mm; overflow: hidden; border: 2mm solid #fff; box-shadow: 0 3mm 8mm rgba(0,0,0,.2); }
   .photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; transform: scale(1.15); display: block; }
-  .photo .cap { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(63,90,54,.92); color: #fff; text-align: center; font-weight: 900; font-size: 14pt; padding: 3mm; }
-  .staff { margin-top: 7mm; font-size: 12pt; font-weight: 700; color: var(--green-dark); background: var(--green-light); border-radius: 4mm; padding: 3mm 5mm; }
-  .brand { position: absolute; left: 16mm; bottom: 5mm; font-size: 9pt; color: #8a8a80; letter-spacing: .08em; }
+  .photo .cap { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(63,90,54,.92); color: #fff; text-align: center; font-weight: 900; font-size: 13pt; padding: 2.5mm; line-height: 1.35; }
+  .photo .cap .zh, .photo .cap .en { display: block; font-size: 10pt; font-weight: 700; }
+  .photo .cap .en { font-weight: 500; }
+  .brand { position: absolute; left: 14mm; bottom: 4.5mm; font-size: 9pt; color: #8a8a80; letter-spacing: .08em; }
 </style>
 </head>
 <body>
 <div class="page">
   <div class="left">
-    <span class="tag">ご注文方法が変わりました</span>
-    <h1>ご注文は<br><em>お席の端末</em>から<br>お願いいたします</h1>
-    <p class="lead">こちらの注文口ではなく、<br>テーブルの端末からスマートフォンでご注文ください。</p>
+    <span class="tag">ご注文方法が変わりました ／ <span class="zh" lang="zh-CN">点餐方式已变更</span> ／ <span class="en" lang="en">New way to order</span></span>
+    <h1>ご注文は<em>お席の端末</em>から<br>お願いいたします</h1>
+    <p class="h-zh zh" lang="zh-CN">请使用座位上的终端点餐</p>
+    <p class="h-en" lang="en">Please order from the device at your table</p>
+    <p class="lead">こちらの注文口ではなく、<br>テーブルの端末からスマートフォンでご注文ください。
+      <span class="zh" lang="zh-CN">请勿在此柜台点餐，请通过座位上的终端用手机点餐。</span>
+      <span class="en" lang="en">Please do not order here. Use your smartphone with the device at your table.</span></p>
     <div class="flow">
-      <span class="chip">リストバンドをかざす</span><span class="arrow">▶</span>
-      <span class="chip">QRコードを読み取る</span><span class="arrow">▶</span>
-      <span class="chip">スマホで注文</span>
+      <span class="chip">リストバンドをかざす<span class="zh" lang="zh-CN">将手环靠近终端</span><span class="en" lang="en">Tap your wristband</span></span><span class="arrow">▶</span>
+      <span class="chip">QRコードを読み取る<span class="zh" lang="zh-CN">扫描二维码</span><span class="en" lang="en">Scan the QR code</span></span><span class="arrow">▶</span>
+      <span class="chip">スマホで注文<span class="zh" lang="zh-CN">用手机点餐</span><span class="en" lang="en">Order on your phone</span></span>
     </div>
-    <p class="staff">ご不明な点はお気軽にスタッフへお声がけください。</p>
-    <p class="en">We now take orders via mobile. Please tap your wristband on the device at your table and scan the QR code with your smartphone.</p>
+    <p class="staff">ご不明な点はお気軽にスタッフへお声がけください。
+      <span class="zh" lang="zh-CN">如有不明之处，请随时联系工作人员。</span>
+      <span class="en" lang="en">If you need help, please feel free to ask our staff.</span></p>
   </div>
   <div class="right">
     <div class="photo">
       <img src="img/qr.jpg" alt="卓席の端末にリストバンドをかざすとQRコードが表示される">
-      <div class="cap">テーブルにあるこの端末です</div>
+      <div class="cap">テーブルにあるこの端末です<span class="zh" lang="zh-CN">就是桌上的这台终端</span><span class="en" lang="en">This device is at your table</span></div>
     </div>
   </div>
   <div class="brand">RAKU SPA 1010 神田</div>
