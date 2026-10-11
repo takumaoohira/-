@@ -1090,10 +1090,33 @@ function saveMood() {
 // ======================================================================== 画面
 const stage = document.getElementById("stage"), cv = document.getElementById("cv"), ctx = cv.getContext("2d");
 const hint = document.getElementById("hint");
+// iPhoneアプリ版に組み込まれているときは、ウィジェットと気分を共有する
+const native = window.__pocketPetNative || null;
+const toNative = msg => { try { window.webkit?.messageHandlers?.pet?.postMessage(msg); } catch {} };
+if (native) {
+  if (native.breed && !store.get("breed", null)) settings.breed = native.breed;
+  if (native.name && !store.get("name", null)) settings.name = native.name;
+}
 const pet = new Pet(breedById(settings.breed), settings.name, petPxFor(settings.size), actFor(settings.activity));
 {
   const m = store.get("mood", null);
-  if (m) { pet.hunger = m.h; pet.energy = m.e; pet.affection = m.a; pet.advanceOffline((Date.now() - m.at) / 1000); }
+  if (native && (!m || native.at > m.at)) { pet.hunger = native.hunger; pet.energy = native.energy; pet.affection = native.affection; }
+  else if (m) { pet.hunger = m.h; pet.energy = m.e; pet.affection = m.a; pet.advanceOffline((Date.now() - m.at) / 1000); }
+}
+function postNative(event = "") {
+  toNative({ breed: pet.breed.id, name: pet.name, hunger: pet.hunger, energy: pet.energy, affection: pet.affection, event });
+}
+// ウィジェットや Dynamic Island でごはん・なでなでされたとき
+window.pocketPetSync = m => {
+  pet.hunger = m.hunger; pet.energy = m.energy; pet.affection = m.affection;
+  if (m.event === "fed") { pet.say("ごはんありがとう!"); if (pet.surface === "floor") pet.start("happy", 1.3); pet.fxHead("heart", 0, -6); }
+  else if (m.event === "petted") { pet.say("なでてくれた♪"); if (pet.surface === "floor") pet.start("happy", 1.3); pet.fxHead("heart", 0, -6); }
+  saveMood(); updateMeters();
+};
+{
+  const origEat = pet.startEat.bind(pet), origPetting = pet.startPetting.bind(pet);
+  pet.startEat = () => { origEat(); if (pet.action === "eat") setTimeout(() => postNative("fed"), 3300); };
+  pet.startPetting = () => { origPetting(); postNative("petted"); };
 }
 let W = 0, H = 0, dpr = 1;
 function resize() {
@@ -1155,18 +1178,22 @@ function render() {
   drawBubble(c);
 }
 
-let last = 0, saveIn = 20, meterIn = 0;
+let last = 0, saveIn = 20, meterIn = 0, nativeIn = 1;
 function frame(now) {
   const dt = last ? (now - last) / 1000 : 0.016;
   last = now;
   pet.update(dt);
   render();
   saveIn -= dt; if (saveIn <= 0) { saveIn = 20; saveMood(); }
+  nativeIn -= dt; if (native && nativeIn <= 0) { nativeIn = 5; postNative(); }
   meterIn -= dt; if (meterIn <= 0) { meterIn = 1; updateMeters(); }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-document.addEventListener("visibilitychange", () => { if (document.hidden) saveMood(); else last = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { saveMood(); postNative(); } else last = 0; });
+if (native) {
+  document.querySelector("#sheet .note").textContent = "ホーム画面のウィジェットや Dynamic Island のペットとも、おなか・げんき・なかよし度がつながっています。";
+}
 window.addEventListener("pagehide", saveMood);
 
 // ---- タッチ(ペットの近くを触ったときだけ反応)
@@ -1221,7 +1248,7 @@ function buildChips() {
       btn.onclick = () => {
         settings.breed = b.id; store.set("breed", b.id);
         pet.breed = b; pet.say(b.sp === "cat" ? "にゃー" : "わん!");
-        buildChips(); updateHeader();
+        buildChips(); updateHeader(); postNative();
       };
       box.appendChild(btn);
     }
@@ -1232,7 +1259,7 @@ const nameInput = document.getElementById("name");
 nameInput.value = settings.name;
 nameInput.addEventListener("input", () => {
   const n = nameInput.value.trim().slice(0, 8) || "ペット";
-  settings.name = n; store.set("name", n); pet.name = n; updateHeader();
+  settings.name = n; store.set("name", n); pet.name = n; updateHeader(); postNative();
 });
 function seg(id, value, onPick) {
   const btns = [...document.getElementById(id).children];
