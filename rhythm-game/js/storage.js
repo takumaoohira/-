@@ -5,7 +5,7 @@ RG.Storage = (function () {
 
   function defaults() {
     const records = {};
-    GAMES.forEach(id => { records[id] = { best: null, cleared: false, plays: 0, practiced: false, hardBest: null, hardCleared: false }; });
+    GAMES.forEach(id => { records[id] = { best: null, cleared: false, plays: 0, practiced: false, hardBest: null, hardCleared: false, endlessBest: null, endlessLevel: null, endlessPlays: 0 }; });
     return {
       version: 1,
       settings: {

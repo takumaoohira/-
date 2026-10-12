@@ -102,6 +102,19 @@ button { font-family: inherit; }
 .badge.rec { background: var(--mustard); color: var(--accent-ink); }
 .game-card .btns { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 8px; }
 .game-card .btns .btn { margin: 6px 0 0; padding: 10px 6px; font-size: 15px; }
+/* エンドレス */
+.group-head.endless span { color: var(--mustard); text-shadow: 2px 2px 0 var(--pink); }
+.game-card.endless {
+  background: linear-gradient(135deg, #3d1050 0%, #1b0a2e 60%, #2a0d3e 100%);
+  border-color: var(--mustard); box-shadow: 5px 5px 0 var(--pink), 9px 9px 0 var(--teal);
+}
+.game-card.endless .how b { color: var(--mustard); }
+.game-card.endless .btns { grid-template-columns: 1fr; }
+.btn.endless {
+  background: linear-gradient(90deg, var(--mustard), var(--accent), var(--pink)); color: var(--accent-ink);
+  font-family: var(--display); font-weight: 400; letter-spacing: .06em; font-size: 17px !important;
+}
+#screen-result.endless .res-rank { color: var(--mustard); }
 
 /* プレイ画面 */
 #screen-play { background: var(--play-bg); color: #fff; padding: 0; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -280,7 +293,7 @@ details.dev summary { font-weight: 800; cursor: pointer; }
       <table class="res-table">
         <tr><th>Perfect</th><td id="res-perfect"></td><th>Good</th><td id="res-good"></td></tr>
         <tr><th>Miss</th><td id="res-miss"></td><th>余分な入力</th><td id="res-extra"></td></tr>
-        <tr><th>最大コンボ</th><td id="res-combo"></td><th>判定数</th><td id="res-total"></td></tr>
+        <tr><th>最大コンボ</th><td id="res-combo"></td><th id="res-total-label">判定数</th><td id="res-total"></td></tr>
       </table>
       <ul id="res-advice" class="res-advice"></ul>
       <div class="res-buttons">
@@ -479,7 +492,7 @@ RG.Storage = (function () {
 
   function defaults() {
     const records = {};
-    GAMES.forEach(id => { records[id] = { best: null, cleared: false, plays: 0, practiced: false, hardBest: null, hardCleared: false }; });
+    GAMES.forEach(id => { records[id] = { best: null, cleared: false, plays: 0, practiced: false, hardBest: null, hardCleared: false, endlessBest: null, endlessLevel: null, endlessPlays: 0 }; });
     return {
       version: 1,
       settings: {
@@ -1647,8 +1660,26 @@ RG.Chart = class Chart {
     this.endBeat = null;
     this._id = 0;
   }
-  t(beat) { return this.offset + beat * this.spb; }
-  beatAt(time) { return (time - this.offset) / this.spb; }
+  // テンポの地図（エンドレスで曲の途中からテンポが上がる）。区間ごとに「拍→秒」を直線で変換する
+  t(beat) {
+    const T = this.tempo;
+    if (!T) return this.offset + beat * this.spb;
+    let s = T[0]; for (let i = 1; i < T.length && T[i].beat <= beat; i++) s = T[i];
+    return s.time + (beat - s.beat) * s.spb;
+  }
+  beatAt(time) {
+    const T = this.tempo;
+    if (!T) return (time - this.offset) / this.spb;
+    let s = T[0]; for (let i = 1; i < T.length && T[i].time <= time; i++) s = T[i];
+    return s.beat + (time - s.time) / s.spb;
+  }
+  // いま置こうとしている位置（cursor）からテンポを変える
+  setTempo(bpm) {
+    if (!this.tempo) this.tempo = [{ beat: 0, time: this.offset, spb: this.spb }];
+    const beat = this.cursor, time = this.t(beat);
+    this.tempo.push({ beat, time, spb: 60 / bpm });
+    this.bpm = bpm; this.spb = 60 / bpm;
+  }
 
   pattern(name) {
     if (name === 'count') return Chart.COUNT;
@@ -2968,7 +2999,7 @@ RG.D = (function () {
  */
 (function () {
   const { U, D, Music: M } = RG;
-  const DUR = { pong: 1, smash: 0.5, lob: 2 };
+  const DUR = { pong: 1, smash: 0.5, lob: 2, chance: 2 }; // chance：エンドレスの金色チャンスボール（ロブと同じ2拍、得点2倍）
 
   // [打球の種類, 相手が打つ拍] の並びからパターンを作る
   function rally(shots, len = 4) {
@@ -2989,6 +3020,12 @@ RG.D = (function () {
     O: rally([['pong', 0.5], ['pong', 2.5]]),             // 裏拍ラリー
     SS: rally([['smash', 0], ['smash', 1], ['pong', 2]]),   // スマッシュ連打
     LS: rally([['lob', 0], ['smash', 2.5]]),              // ロブ→すぐスマッシュ
+    // ---- エンドレス用 ----
+    X1: rally([['pong', 0.5], ['smash', 2], ['smash', 3]]),  // 裏拍から連続スマッシュ
+    X2: rally([['smash', 0], ['pong', 1], ['smash', 2.5]]),
+    chance: rally([['chance', 0]]),                       // 金色のチャンスボール（2拍あと・得点2倍）
+    // レベルアップの小節：打球なし。新しいテンポのカウント（3・4拍目）を聞かせる
+    lvup: { len: 4, active: false, inputs: [], cues: [{ b: 0, type: 'levelup' }, { b: 1, type: 'tick' }, { b: 2, type: 'tick' }], fx: [{ b: 0, type: 'levelup' }] },
     fin: { len: 4, end: true, cues: [{ b: 0, type: 'fin' }], fx: [{ b: 0, type: 'finale' }] }
   };
 
@@ -3037,11 +3074,18 @@ RG.D = (function () {
     const sec = info.sec, i = info.secBar;
     if (sec === 'count') return [{ b: 0, id: 'hh2:o:0.3', gain: 0.2 }, { b: 2, id: 'hh2:o:0.3', gain: 0.2 }];
     if (sec === 'end') return RG.Band.ending('Em7').concat([{ b: 0, id: 'brass:E4,G4,B4,D5:0.9', gain: 0.8, rev: 0.3 }]);
+    if (info.p === 'lvup') { // レベルアップ：音を薄くしてカウントとライザーで盛り上げる
+      const ev = RG.Band.bar(info, chart, { style: 'funk', chord: 'B7', drums: 0.45, comp: 0.4, bass: 0.6, clear: [1, 2, 3] });
+      ev.push({ b: 0, id: `rise:x:${(chart.spb * 4).toFixed(2)}`, gain: 0.55 });
+      return ev;
+    }
+    const heat = chart.endlessHeat || 0; // エンドレスのレベルに応じて音を厚くする
     const ev = RG.Band.bar(info, chart, {
-      style: 'funk', chord: info.chord, drums: 0.8, comp: 0.6, bass: 0.85, pad: sec === 'B' ? 0.2 : 0,
+      style: 'funk', chord: info.chord, drums: 0.8 + Math.min(0.12, heat * 0.02), comp: 0.6, bass: 0.85, pad: sec === 'B' || heat >= 4 ? 0.2 : 0,
+      clearCues: info.p === 'chance',
       mel: RIFFS[sec] ? RIFFS[sec][i % 4] : null, melInst: 'organ', melGain: 0.35, melPan: 0.3
     });
-    if (info.secBar % 4 === 0 && sec !== 'I' && sec !== 'P') { const ch = RG.Band.chord(info.chord); ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(n.replace(/-?\d$/, ''), 4, 0)).join(',')}:0.25`, gain: 0.3, pan: 0.2, rev: 0.2 }); }
+    if ((info.secBar % 4 === 0 || (heat >= 3 && info.secBar % 2 === 0)) && sec !== 'I' && sec !== 'P') { const ch = RG.Band.chord(info.chord); ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(n.replace(/-?\d$/, ''), 4, 0)).join(',')}:0.25`, gain: 0.3, pan: 0.2, rev: 0.2 }); }
     return ev;
   }
 
@@ -3050,10 +3094,13 @@ RG.D = (function () {
     const ch = CH[bar && bar.chord] || CH.Em7;
     const s = [{ id: 'pingHit', gain: 1 }, { id: `clav:${tr(ch.notes[tg.k % 3].replace(/\d$/, ''), 5, 0)}:0.2`, gain: 0.45 }];
     if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.4 });
+    if (tg.type === 'chance') s.push({ id: 'chime', gain: 0.7 }, { id: 'crash', gain: 0.35 });
     return s;
   }
-  function preload() {
-    const ids = ['pingHit', 'sparkle', 'miss', 'pong', 'pok', 'smash', 'lob', 'cheer'];
+  const ENDLESS_VOICES = ['voice:crowd:レベルアップ！', 'voice:gorilla:チャンス！', 'voice:gorilla:ゲームオーバー', 'voice:crowd:フィーバー！'];
+  function preload(chart) {
+    const ids = ['pingHit', 'sparkle', 'miss', 'pong', 'pok', 'smash', 'lob', 'cheer', 'chime', 'crash', 'boom'];
+    if (chart && chart.endless) ENDLESS_VOICES.forEach(id => ids.push(id));
     Object.values(CH).forEach(c => c.notes.forEach(n => ids.push(`clav:${tr(n.replace(/\d$/, ''), 5, 0)}:0.2`)));
     return ids;
   }
@@ -3070,7 +3117,16 @@ RG.D = (function () {
 
   // ---------------- 描画 ----------------
   const O = { x: 78, y: 292 }, OS = { x: 74, y: 236 }, B = { x: 240, y: 330 }, P = { x: 290, y: 296 }, B2 = { x: 116, y: 330 };
-  const H = { pong: [44, 34], smash: [-6, 18], lob: [150, 60] };
+  const H = { pong: [44, 34], smash: [-6, 18], lob: [150, 60], chance: [170, 64] };
+  // エンドレスの照明：[上, 下, 光A(rgb), 光B(rgb)]
+  const BG = [
+    ['#22102f', '#4d1a57', '255,122,26', '255,61,139'],
+    ['#0d1440', '#26307a', '90,200,255', '180,120,255'],
+    ['#06282a', '#0f5a52', '120,255,200', '255,230,90'],
+    ['#2f0a14', '#6e1430', '255,90,60', '255,200,60'],
+    ['#1a1a06', '#4a4210', '255,240,120', '120,255,160'],
+    ['#140626', '#3a0a5e', '255,80,220', '80,220,255']
+  ];
   const arc = (a, b, u, h) => ({ x: U.lerp(a.x, b.x, u), y: U.lerp(a.y, b.y, u) - Math.sin(Math.PI * U.clamp(u, 0, 1)) * h });
 
   function gorilla(g, x, y, beat, swing, kind, mood) {
@@ -3090,7 +3146,7 @@ RG.D = (function () {
     if (mood === 'wide') D.eyes(g, 0, -58, 10, 4, 'wide'); else D.shades(g, 0, -58, 10, 7, '#2b1640');
     D.mouth(g, 0, -42, 6, mood === 'happy' ? 'open' : mood === 'wide' ? 'o' : 'smile');
     // 腕とラケット
-    const ang = kind === 'lob' ? 1.6 - swing * 2.2 : kind === 'smash' ? -1.4 + swing * 2.6 : -0.6 + swing * 1.8;
+    const ang = kind === 'lob' || kind === 'chance' ? 1.6 - swing * 2.2 : kind === 'smash' ? -1.4 + swing * 2.6 : -0.6 + swing * 1.8;
     g.save(); g.translate(28, -6); g.rotate(ang);
     D.line(g, 0, 0, 0, 40, '#140c18', 14); D.line(g, 0, 0, 0, 40, '#3a2e3f', 9);
     D.line(g, 0, 40, 0, 54, '#8a5a32', 5); D.ell(g, 0, 66, 13, 15, '#e0313a', '#5a0a10', 2.5);
@@ -3151,7 +3207,7 @@ RG.D = (function () {
       const u = (beat - hb) / ret;
       if (u >= 1) return null;
       if (u < 0.5) return Object.assign(arc(P, B2, u * 2, 40), { k: 'ret', trail: 0.6 });
-      return Object.assign(arc(B2, next && next.type === 'smash' && next.beat - hb < 1.6 ? OS : O, (u - 0.5) * 2, next && next.type === 'lob' ? 10 : 34), { k: 'ret', trail: 0.6 });
+      return Object.assign(arc(B2, next && next.type === 'smash' && next.beat - hb < 1.6 ? OS : O, (u - 0.5) * 2, next && (next.type === 'lob' || next.type === 'chance') ? 10 : 34), { k: 'ret', trail: 0.6 });
     }
 
     return {
@@ -3166,22 +3222,38 @@ RG.D = (function () {
         const finFx = chart.fx.find(x => x.type === 'finale');
         const fin = finFx && beat >= finFx.beat ? beat - finFx.beat : null;
         const combo = session.judge.s.combo;
-        // 背景：ファンクな体育館
+        const E = session.endless, lv = E ? E.levelAt(beat) : 0, over = E && E.overBeat !== null && beat >= E.overBeat ? beat - E.overBeat : null;
+        const fever = E && combo >= E.cfg.feverCombo && over === null;
+        // 背景：ファンクな体育館（エンドレスはレベルごとに照明の色が変わる）
+        const pal = lv ? BG[(lv - 1) % BG.length] : BG[0];
         const grd = g.createLinearGradient(0, view.y0, 0, view.y1);
-        grd.addColorStop(0, '#22102f'); grd.addColorStop(1, '#4d1a57');
+        grd.addColorStop(0, pal[0]); grd.addColorStop(1, pal[1]);
         g.fillStyle = grd; g.fillRect(view.x0, view.y0, view.x1 - view.x0, view.y1 - view.y0);
-        g.save(); g.translate(180, 40); g.rotate(beat * 0.05);
-        for (let k = 0; k < 12; k++) { g.rotate(D.TAU / 12); g.beginPath(); g.moveTo(0, 0); g.lineTo(-40, 700); g.lineTo(40, 700); g.closePath(); g.fillStyle = k % 2 ? 'rgba(255,122,26,.08)' : 'rgba(255,61,139,.06)'; g.fill(); }
+        const lvFx = E ? E.sinceLevelUp(beat) : 99, flash = lvFx < 1 ? 1 - lvFx : 0;
+        g.save(); g.translate(180, 40); g.rotate(beat * (0.05 + Math.min(0.15, lv * 0.012)) + flash * 2);
+        const ba = (fever ? 2.2 : 1) + flash * 2;
+        for (let k = 0; k < 12; k++) { g.rotate(D.TAU / 12); g.beginPath(); g.moveTo(0, 0); g.lineTo(-40, 700); g.lineTo(40, 700); g.closePath(); g.fillStyle = k % 2 ? `rgba(${pal[2]},${0.08 * ba})` : `rgba(${pal[3]},${0.06 * ba})`; g.fill(); }
         g.restore();
+        // エンドレス：壁の電光掲示板（レベルとBPM）
+        if (E) {
+          D.rrect(g, 122, 84, 116, 40, 6, '#0b0612', '#ffc93a', 2.5);
+          for (let k = 0; k < 10; k++) D.circ(g, 128 + k * 11.6, 88, 1.6, (k + Math.floor(beat * 2)) % 3 ? '#5a3a10' : '#ffe066');
+          D.text(g, `LEVEL ${lv || 1}`, 180, 101, 13, '#ff7ad9', null, 'center', 900);
+          D.text(g, `♪ ${Math.round(E.bpmOf(lv || 1))} BPM`, 180, 116, 10, '#7affe0', null, 'center', 800);
+        }
         // ミラーボール
         D.line(g, 180, view.y0, 180, 34, '#888', 2);
         D.circ(g, 180, 50, 18, '#c8c8d8', '#6a6a80', 2);
         for (let k = 0; k < 6; k++) { const a = beat * 0.8 + k; D.rrect(g, 172 + Math.cos(a) * 9, 44 + (k % 3) * 5, 5, 4, 1, k % 2 ? '#ffffff' : '#9aa0c0'); }
         // 観客
         for (let i = 0; i < 9; i++) {
-          const x = 10 + i * 42, up = (combo >= 10 || fin !== null ? 10 : 4) * U.hop(beat + (i % 2) * 0.5);
+          const x = 10 + i * 42, up = (fever ? 16 : combo >= 10 || fin !== null ? 10 : 4) * U.hop(beat + (i % 2) * 0.5);
           D.circ(g, x, 450 - up, 15, '#170a20'); D.ell(g, x, 500 - up, 22, 36, '#170a20');
-          if (combo >= 10 && i % 3 === 1) { D.rrect(g, x - 16, 408 - up, 32, 18, 3, '#ffc93a'); D.text(g, 'FUNK', x, 417 - up, 9, '#2b1640'); }
+          if (fever && i % 3 !== 1) { // フィーバー：ペンライトを振る
+            const a = Math.sin(beat * Math.PI + i) * 0.5;
+            D.line(g, x + 10, 470 - up, x + 10 + Math.sin(a) * 26, 470 - up - Math.cos(a) * 26, i % 2 ? '#7affe0' : '#ff7ad9', 4);
+          }
+          if (combo >= 10 && i % 3 === 1) { D.rrect(g, x - 16, 408 - up, 32, 18, 3, '#ffc93a'); D.text(g, fever ? 'FEVER' : 'FUNK', x, 417 - up, 9, '#2b1640'); }
         }
         // 台
         g.fillStyle = '#103a35'; g.fillRect(70, 346, 8, 60); g.fillRect(282, 346, 8, 60);
@@ -3198,7 +3270,15 @@ RG.D = (function () {
         }
         const smashJump = oKind === 'smash' && oSwing > 0 ? 26 * oSwing : 0;
         const dMiss = beat - st.lastMiss, dHit = beat - st.lastHit;
-        gorilla(g, 42, 290 - smashJump, beat, Math.max(0, oSwing), oKind, fin !== null ? 'happy' : dMiss >= 0 && dMiss < 1 ? 'happy' : combo >= 10 ? 'wide' : 'normal');
+        if (lv >= 4 && over === null) { // 本気のゴリラ：レベルが上がるほど燃える
+          const n = Math.min(14, 4 + lv), r = 1 + U.hop(beat) * 0.15;
+          for (let k = 0; k < n; k++) {
+            const a = k / n * D.TAU + beat * 1.3, rr = (48 + Math.sin(beat * 6 + k * 2) * 6) * r;
+            g.globalAlpha = 0.18 + Math.min(0.25, lv * 0.02); D.ell(g, 42 + Math.cos(a) * rr * 0.7, 250 + Math.sin(a) * rr, 14, 22, k % 2 ? '#ff3d3d' : '#ffb03a');
+          }
+          g.globalAlpha = 1;
+        }
+        gorilla(g, 42, 290 - smashJump, beat, Math.max(0, oSwing), oKind, over !== null ? 'happy' : fin !== null ? 'happy' : dMiss >= 0 && dMiss < 1 ? 'happy' : combo >= 10 ? 'wide' : 'normal');
         if (smashJump > 4) for (let k = 0; k < 3; k++) D.line(g, 6 + k * 14, 340 - k * 4, 2 + k * 14, 360 - k * 4, 'rgba(255,200,80,.7)', 3);
 
         // ボール
@@ -3206,15 +3286,22 @@ RG.D = (function () {
         if (bs) {
           if (bs.k === 'smash') { for (let k = 1; k <= 4; k++) { g.globalAlpha = 0.5 / k; D.circ(g, bs.x - k * 7, bs.y - k * 5, 7 - k, '#ff7a1a'); } g.globalAlpha = 1; }
           if (bs.k === 'lob') { for (let k = 1; k <= 3; k++) D.star(g, bs.x - k * 9, bs.y + k * 6, 3, 1.2, 4, beat, 'rgba(255,240,150,.8)'); }
-          D.circ(g, bs.x, bs.y, 6, '#ffffff', '#c0a070', 1.5);
+          if (bs.k === 'chance') { // 金色のチャンスボール：光の輪と星の尾、「×2」
+            const pulse = 1 + 0.25 * Math.sin(beat * Math.PI * 4);
+            g.globalAlpha = 0.3; D.circ(g, bs.x, bs.y, 24 * pulse, '#ffe066'); g.globalAlpha = 0.5; D.circ(g, bs.x, bs.y, 16, '#fff3a0'); g.globalAlpha = 1;
+            for (let k = 1; k <= 7; k++) D.star(g, bs.x - k * 9, bs.y + k * 5 + Math.sin(beat * 8 + k) * 3, 6 - k * 0.6, 2.4, 4, beat * 3 + k, k % 2 ? '#ffe066' : '#ffffff');
+            D.circ(g, bs.x, bs.y, 11, '#ffd21a', '#a06a00', 2.5);
+            D.circ(g, bs.x - 4, bs.y - 4, 3.5, 'rgba(255,255,255,.9)');
+            D.text(g, '×2', bs.x - 8, bs.y - 30, 18, '#ffe066', '#2b1640', 'center', 900);
+          } else D.circ(g, bs.x, bs.y, 6, '#ffffff', '#c0a070', 1.5);
           D.ell(g, bs.x, 336, 5, 1.6, 'rgba(0,0,0,.25)');
         }
 
         // こちら（リーゼント・ダック）
         const dTap = beat - st.lastTap;
         const swing = dTap >= 0 && dTap < 0.3 ? Math.sin(Math.PI * Math.min(1, dTap / 0.3)) : 0;
-        const dizzy = dMiss >= 0 && dMiss < 1;
-        duck(g, 320, 300, beat, swing, fin !== null ? 'happy' : dizzy ? 'dizzy' : dHit >= 0 && dHit < 0.6 ? 'happy' : 'normal', combo >= 10, dizzy ? Math.sin(dMiss * 12) * 0.3 * (1 - dMiss) : 0);
+        const dizzy = (dMiss >= 0 && dMiss < 1) || over !== null;
+        duck(g, 320, 300, beat, swing, fin !== null ? 'happy' : dizzy ? 'dizzy' : dHit >= 0 && dHit < 0.6 ? 'happy' : 'normal', combo >= 10, over !== null ? Math.min(1.4, over * 1.5) : dizzy ? Math.sin(dMiss * 12) * 0.3 * (1 - dMiss) : 0);
         const dp = beat - st.perfect;
         if (dp >= 0 && dp < 0.5) { const s = 1 - dp / 0.5; D.star(g, P.x - 14, P.y - 22, 10 * s + 4, 4, 4, dp * 4, '#ffe066'); }
 
@@ -3244,13 +3331,30 @@ RG.D = (function () {
     howto: 'コン→1拍あと、パシッ（スマッシュ）→半拍あと、ポワーン（ロブ）→2拍あとに打ち返す',
     bpm: 116, offset: 0,
     patterns, main, hard, lessons, finalePattern: 'fin',
-    cueSounds: { pong: { id: 'pong', gain: 2.0 }, smash: { id: 'smash', gain: 0.9 }, lob: { id: 'lob', gain: 2.6 }, pok: { id: 'pok', gain: 1.5 }, fin: [{ id: 'cheer', gain: 0.8 }, { id: 'boom', gain: 0.6 }] },
+    // エンドレス：レベルが上がるたびにテンポ +6（上限なし）、使う打球が増え、むずかしい組み合わせが出やすくなる
+    endless: {
+      title: 'ピンポン・ファンク ∞',
+      bpm0: 96, bpmStep: 6, barsPerLevel: 8, lives: 3, feverCombo: 20,
+      secs: ['A', 'B', 'C'], levelPattern: 'lvup', chancePattern: 'chance', chanceFrom: 2,
+      intro: 'エンドレス！ ミス3回でゲームオーバー',
+      // [パターン, 出てくるレベル, むずかしさ 0〜4]
+      pool: [['N1', 1, 0], ['N', 1, 0], ['L', 2, 1], ['S', 3, 1], ['SN', 4, 2], ['O', 5, 2], ['SS', 6, 3], ['LS', 7, 3], ['X1', 8, 4], ['X2', 9, 4]],
+      tips: { 2: 'ロブ（ポワーン）登場', 3: 'スマッシュ（パシッ）登場', 4: 'ゴリラ本気モード！', 5: '裏拍ラリー登場', 6: 'スマッシュ連打！', 8: '裏拍から連続スマッシュ！' }
+    },
+    cueSounds: {
+      pong: { id: 'pong', gain: 2.0 }, smash: { id: 'smash', gain: 0.9 }, lob: { id: 'lob', gain: 2.6 }, pok: { id: 'pok', gain: 1.5 }, fin: [{ id: 'cheer', gain: 0.8 }, { id: 'boom', gain: 0.6 }],
+      // エンドレス：チャンスボール（1拍前にゴリラが「チャンス！」）、レベルアップ、新しいテンポのカウント
+      chance: [{ id: 'lob', gain: 2.6 }, { id: 'sparkle', gain: 0.7, pan: -0.3 }, { id: 'voice:gorilla:チャンス！', d: -1, bus: 'voice', gain: 0.95, say: 'チャンス！', who: 'gorilla' }],
+      levelup: [{ id: 'voice:crowd:レベルアップ！', bus: 'voice', gain: 0.8, say: 'レベルアップ！', who: 'crowd' }, { id: 'crash', gain: 0.35, pan: 0.3 }],
+      tick: { id: 'stick', gain: 0.9 }
+    },
     missSound: 'miss',
     anchors: { gorilla: { x: 60, y: 210 }, duck: { x: 300, y: 222 }, crowd: { x: 180, y: 400 } },
     quips: {
       miss: [{ id: 'voice:gorilla:ウホッ！', say: 'ウホッ！', who: 'gorilla' }, { id: 'voice:gorilla:アマイゼ', say: 'あまいぜ', who: 'gorilla' }],
       combo: [{ id: 'voice:duck:ナイス！', say: 'ナイス！', who: 'duck' }, { id: 'voice:crowd:ファンキー！', say: 'ファンキー！', who: 'crowd' }],
-      extra: [{ id: 'voice:gorilla:スカッ', say: 'スカッ', who: 'gorilla' }]
+      extra: [{ id: 'voice:gorilla:スカッ', say: 'スカッ', who: 'gorilla' }],
+      fever: [{ id: 'voice:crowd:フィーバー！', say: 'フィーバー！', who: 'crowd' }]
     },
     chordFor, music, hitSounds, preload, createScene, drawIcon, validate
   };
@@ -5695,6 +5799,261 @@ RG.D = (function () {
 
 ;
 /*
+ * エンドレスモード（いまはピンポン・ファンクのみ。ゲーム側の game.endless に設定を書く）
+ *  - 譜面は先へ先へと自動で組み立てる（いまの拍より12拍ぶん先まで）
+ *  - レベルは barsPerLevel 小節ごとに上がる。テンポは bpm0 + bpmStep ×（レベル−1）で、上限なし
+ *  - レベルが上がるたびに「レベルアップ」の小節（新しいテンポのカウント付き）→ 金色のチャンスボール（得点2倍）
+ *  - 得点：Perfect 100／Good 50 × レベル倍率（1 + 0.25×(レベル−1)）× コンボ倍率（1 + 0.02×コンボ、50コンボで最大2倍）
+ *          チャンスボールはさらに ×2
+ *  - ライフ3。Miss で1つ減る（チャンスボールの Miss は減らない）。レベルアップで1つ回復。0でゲームオーバー
+ * テンポが変わっても、判定は「拍→秒」に変換した時刻だけを見るので、判定処理は本編と同じものを使う。
+ */
+(function () {
+RG.Endless = class Endless {
+  constructor(session) {
+    this.s = session;
+    this.chart = session.chart;
+    this.game = session.game;
+    this.cfg = session.game.endless;
+    this.chart.endless = this;
+    this.level = 0;           // 譜面を置き終えたレベル（プレイヤーより先に進む）
+    this.lives = this.cfg.lives;
+    this.score = 0;
+    this.shown = 0;           // 画面に出している点数（カウントアップ）
+    this.chance = { hit: 0, total: 0 };
+    this.levels = [];         // [{level, beat, bpm, chance, applied}]
+    this.pops = [];           // 得点の吹き出し [{beat, text, sub, gold}]
+    this.over = false;
+    this.overBeat = null;
+    this.hurtBeat = -99;
+    this.left = 0;
+    this.recent = [];
+    this.seed = ((session.opts && session.opts.seed) || (Date.now() & 0xffffff) || 1) >>> 0;
+    this.chart.place({ p: 'count', sec: 'count', guide: this.cfg.intro });
+    this.fill(0);
+  }
+
+  rand() { this.seed = (Math.imul(this.seed, 1664525) + 1013904223) >>> 0; return this.seed / 4294967296; }
+  bpmOf(L) { return this.cfg.bpm0 + this.cfg.bpmStep * (L - 1); }
+  levelAt(beat) { let L = 1; for (const x of this.levels) { if (x.beat <= beat) L = x.level; else break; } return L; }
+  sinceLevelUp(beat) { let d = 99; for (const x of this.levels) { if (x.beat <= beat) d = beat - x.beat; else break; } return d; }
+  get reached() { let L = 1; for (const x of this.levels) if (x.applied) L = x.level; return L; }
+  comboMult(combo) { return 1 + Math.min(combo, 50) * 0.02; }
+  levelMult(L) { return 1 + 0.25 * (L - 1); }
+
+  // いまの拍の12拍先まで譜面を置く
+  fill(beat) {
+    const c = this.chart, before = c.audioQueue.length;
+    while (!this.over && c.cursor < beat + 12) {
+      if (this.left <= 0) this.nextLevel();
+      else { this.placeRally(); this.left--; }
+    }
+    // 新しいテンポで初めて使う音は、鳴らす前に作っておく（予約の時点で作ると処理が詰まることがある）
+    if (c.audioQueue.length > before && RG.Audio.ctx) RG.Audio.preload(c.audioQueue.slice(before).map(e => e.id));
+  }
+
+  nextLevel() {
+    const c = this.chart, cfg = this.cfg;
+    const L = ++this.level, bpm = this.bpmOf(L);
+    if (L > 1) c.setTempo(bpm);
+    c.endlessHeat = L - 1;
+    const tip = cfg.tips && cfg.tips[L];
+    const inst = c.place(L === 1
+      ? { p: 'rest', sec: 'I', level: L, guide: 'レベル1　コン・ポッ・カン（1拍あと）' }
+      : { p: cfg.levelPattern, sec: 'I', level: L, guide: tip ? `レベル${L}！ ${tip}` : `レベル${L}！ テンポアップ` });
+    const lv = { level: L, beat: inst.start, bpm, chance: L >= cfg.chanceFrom, applied: false };
+    this.levels.push(lv);
+    if (lv.chance) c.place({ p: cfg.chancePattern, sec: this.sec(L), level: L, guide: '金色のチャンスボール！ 2拍あと・得点2倍' });
+    this.left = cfg.barsPerLevel;
+    this.levelGuide = `LEVEL ${L}　BPM ${bpm}`;
+  }
+
+  sec(L) { const s = this.cfg.secs; return s[(L - 1) % s.length]; }
+
+  // レベルに合ったむずかしさのパターンを選ぶ（新しく出てきたパターンは出やすく、同じものの連続は出にくく）
+  placeRally() {
+    const L = this.level, target = Math.min(4, (L - 1) * 0.45);
+    const cand = this.cfg.pool.filter(p => p[1] <= L).map(([p, from, d]) => {
+      let w = Math.exp(-1.2 * Math.abs(d - target));
+      if (from === L) w *= 3;
+      if (this.recent[0] === p) w *= 0.25;
+      if (this.recent[1] === p) w *= 0.5;
+      return { p, w };
+    });
+    let r = this.rand() * cand.reduce((a, x) => a + x.w, 0), pick = cand[0].p;
+    for (const x of cand) { r -= x.w; if (r <= 0) { pick = x.p; break; } }
+    this.recent.unshift(pick); this.recent.length = 2;
+    this.chart.place({ p: pick, sec: this.sec(L), level: L, guide: this.levelGuide });
+    this.levelGuide = null;
+  }
+
+  // 毎フレーム
+  update(t, beat) {
+    this.fill(beat);
+    for (const x of this.levels) {
+      if (x.applied || beat < x.beat) continue;
+      x.applied = true;
+      if (x.level > 1 && !this.over && this.lives < this.cfg.lives) { this.lives++; this.pops.push({ beat, text: 'LIFE +1', sub: '', heart: true }); }
+    }
+    const d = this.score - this.shown;
+    this.shown = d <= 0 ? this.score : this.shown + Math.max(1, Math.ceil(d * 0.18));
+    this.pops = this.pops.filter(p => beat - p.beat < 2);
+  }
+
+  // 判定のたびに呼ばれる（input／押し忘れ）
+  onResult(tg, kind, beat) {
+    if (this.over || !tg || tg.demo) return;
+    const L = (tg.inst && tg.inst.tok.level) || 1, isCh = tg.type === 'chance';
+    if (isCh) this.chance.total++;
+    if (kind === 'miss') {
+      if (isCh) { this.pops.push({ beat, text: 'チャンス逃し…', sub: '', miss: true }); return; }
+      this.lives--;
+      this.hurtBeat = beat;
+      if (this.lives <= 0) this.gameOver(beat);
+      return;
+    }
+    if (isCh) this.chance.hit++;
+    const combo = this.s.judge.s.combo;
+    const pts = Math.round((kind === 'perfect' ? 100 : 50) * this.levelMult(L) * this.comboMult(combo) * (isCh ? 2 : 1) / 10) * 10;
+    this.score += pts;
+    this.pops.push({ beat, text: `+${pts}`, sub: isCh ? '×2 CHANCE!' : kind === 'perfect' ? 'PERFECT' : 'GOOD', gold: isCh });
+    if (combo === this.cfg.feverCombo) this.s.quip('fever');
+  }
+
+  gameOver(beat) {
+    this.over = true;
+    this.overBeat = beat;
+    const s = this.s, c = this.chart, A = RG.Audio;
+    // まだ予約していない音は捨て、曲と合図はすっと消す（効果音と声は残す）
+    s.events.length = s.evIdx;
+    if (s.sb && A.ctx) {
+      const now = A.ctx.currentTime;
+      ['bgm', 'cue', 'rev'].forEach(k => { const g = s.sb[k].gain; g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.setTargetAtTime(0, now, 0.06); });
+      A.play('boom', now + 0.02, s.sb.sfx, 0.7, s.sb);
+      [['E5', 0.15], ['D5', 0.33], ['B4', 0.51], ['G4', 0.69]].forEach(([n, d]) => A.play(`marimba:${n}:0.6`, now + d, s.sb.sfx, 0.7, s.sb));
+      A.play('voice:gorilla:ゲームオーバー', now + 0.9, s.sb.voice, 0.95, s.sb, 0, 0.15);
+    }
+    c.bubbles.push({ beat: c.beatAt(c.t(beat) + 0.9), text: 'ゲームオーバー', who: 'gorilla', len: c.beatAt(c.t(beat) + 2.6) - c.beatAt(c.t(beat) + 0.9) });
+    c.endBeat = c.beatAt(c.t(beat) + 3.2);
+  }
+
+  result() {
+    const j = this.s.judge.s;
+    const judged = this.chart.inputs.filter(x => !x.demo && x.judged && x.judged !== 'demo').length;
+    const adv = [];
+    if (this.chance.total) adv.push(`チャンスボール ${this.chance.hit}/${this.chance.total} 成功` + (this.chance.hit === this.chance.total ? '　パーフェクト！' : ''));
+    adv.push(...this.s.judge.advice());
+    return {
+      endless: true, score: this.score, level: this.reached, bpm: this.bpmOf(this.reached), chance: Object.assign({}, this.chance),
+      perfect: j.perfect, good: j.good, miss: j.miss, extra: j.extra, maxCombo: j.maxCombo, total: judged, advice: adv
+    };
+  }
+
+  infoText() {
+    const c = this.s.judge.s.combo;
+    if (this.over) return 'ゲームオーバー';
+    return c >= this.cfg.feverCombo ? `FEVER！ ${c} コンボ　×${this.comboMult(c).toFixed(2)}` : c >= 2 ? `${c} コンボ　×${this.comboMult(c).toFixed(2)}` : '';
+  }
+
+  // ---------------- 画面の上に重ねる表示（スコア・ライフ・レベルアップ・ゲームオーバー） ----------------
+  draw(g, beat, view) {
+    const D = RG.D, U = RG.U;
+    const combo = this.s.judge.s.combo, fever = combo >= this.cfg.feverCombo && !this.over;
+    const W = view.x1 - view.x0, H = view.y1 - view.y0;
+    // フィーバー：画面のふちが光る
+    if (fever) {
+      const a = 0.35 + 0.25 * U.hop(beat);
+      g.save(); g.lineWidth = 10; g.strokeStyle = `rgba(255,122,217,${a})`; g.strokeRect(view.x0 + 5, view.y0 + 5, W - 10, H - 10);
+      g.lineWidth = 3; g.strokeStyle = `rgba(122,255,224,${a})`; g.strokeRect(view.x0 + 12, view.y0 + 12, W - 24, H - 24); g.restore();
+    }
+    // ライフが最後の1つ：赤いふち
+    if (this.lives === 1 && !this.over) {
+      const a = 0.35 + 0.25 * U.hop(beat);
+      const rg = g.createRadialGradient(180, 270, 110, 180, 270, 360);
+      rg.addColorStop(0, 'rgba(255,0,40,0)'); rg.addColorStop(1, `rgba(255,0,40,${a})`);
+      g.fillStyle = rg; g.fillRect(view.x0, view.y0, W, H);
+    }
+    // Miss の瞬間：赤く光る
+    const dh = beat - this.hurtBeat;
+    if (dh >= 0 && dh < 0.5) { g.fillStyle = `rgba(255,30,60,${0.3 * (1 - dh / 0.5)})`; g.fillRect(view.x0, view.y0, W, H); }
+
+    // 上部：スコアとライフ
+    const y = Math.max(view.y0 + 6, -70);
+    D.rrect(g, 8, y, 344, 46, 12, 'rgba(11,6,18,.82)', '#ffc93a', 2);
+    D.text(g, 'SCORE', 22, y + 14, 10, '#ffc93a', null, 'left', 900);
+    D.text(g, String(this.shown).padStart(7, '0'), 22, y + 32, 22, '#ffffff', null, 'left', 900);
+    const L = this.levelAt(beat);
+    D.rrect(g, 150, y + 8, 64, 30, 8, '#ff3d6e', '#2b1640', 2);
+    D.text(g, `Lv ${L}`, 182, y + 24, 16, '#ffffff', null, 'center', 900);
+    for (let k = 0; k < this.cfg.lives; k++) {
+      const on = k < this.lives, last = on && this.lives === 1;
+      const sc = last ? 1 + 0.15 * U.hop(beat) : 1;
+      heart(g, 252 + k * 32, y + 23, 11 * sc, on ? '#ff3d6e' : 'rgba(255,255,255,.18)', on ? '#5a0a20' : 'rgba(255,255,255,.3)');
+    }
+    // コンボ倍率のメーター
+    if (combo >= 2 && !this.over) {
+      const k = Math.min(combo, 50) / 50;
+      D.rrect(g, 22, y + 50, 120, 8, 4, 'rgba(0,0,0,.45)');
+      D.rrect(g, 22, y + 50, Math.max(8, 120 * k), 8, 4, fever ? '#ff7ad9' : '#7affe0');
+      D.text(g, `×${this.comboMult(combo).toFixed(2)}`, 148, y + 55, 11, fever ? '#ff7ad9' : '#7affe0', null, 'left', 900);
+    }
+
+    // 得点の吹き出し（ダックの上に浮かぶ）
+    for (const p of this.pops) {
+      const d = beat - p.beat;
+      if (d < 0) continue;
+      const u = Math.min(1, d / 1.6), a = 1 - U.prog(d, 1.1, 1.6);
+      g.save(); g.globalAlpha = a;
+      if (p.heart) { heart(g, 300, 160 - u * 30, 12, '#ff3d6e', '#5a0a20'); D.text(g, p.text, 300, 186 - u * 30, 14, '#ff7a9a', '#2b1640', 'center', 900); }
+      else {
+        const s = p.gold ? 1 + 0.4 * U.ease.outBack(Math.min(1, d / 0.25)) : 1;
+        g.translate(290, 200 - u * 40); g.scale(s, s);
+        D.text(g, p.text, 0, 0, p.gold ? 22 : 17, p.miss ? '#c0b0d0' : p.gold ? '#ffe066' : '#ffffff', '#2b1640', 'center', 900);
+        if (p.sub) D.text(g, p.sub, 0, 17, 10, p.gold ? '#ffe066' : '#7affe0', '#2b1640', 'center', 900);
+      }
+      g.restore();
+    }
+
+    // レベルアップの帯
+    const lv = this.levels.find(x => beat >= x.beat && beat - x.beat < 3.6);
+    if (lv && !this.over) {
+      const d = beat - lv.beat;
+      const xin = d < 0.4 ? (1 - U.ease.outCubic(d / 0.4)) * 400 : d > 3.1 ? -U.ease.inCubic((d - 3.1) / 0.5) * 400 : 0;
+      g.save(); g.translate(180 + xin, 186); g.rotate(-0.08);
+      D.rrect(g, -200, -34, 400, 68, 0, 'rgba(255,61,110,.92)');
+      D.line(g, -200, -34, 200, -34, '#ffc93a', 4); D.line(g, -200, 34, 200, 34, '#ffc93a', 4);
+      D.text(g, lv.level === 1 ? 'START!' : `LEVEL ${lv.level}`, 0, -6, 34, '#ffffff', '#2b1640', 'center', 900);
+      D.text(g, lv.chance ? `BPM ${lv.bpm}　★ チャンスボール ×2 ★` : `BPM ${lv.bpm}`, 0, 22, 13, '#ffe066', '#2b1640', 'center', 900);
+      g.restore();
+    }
+
+    // ゲームオーバー
+    if (this.over) {
+      const d = beat - this.overBeat, k = U.prog(d, 0, 1.2);
+      g.fillStyle = `rgba(10,4,16,${0.6 * k})`; g.fillRect(view.x0, view.y0, W, H);
+      const s = U.ease.outBack(U.prog(d, 0.2, 0.8));
+      g.save(); g.translate(180, 220); g.scale(s, s); g.rotate(-0.05);
+      D.text(g, 'GAME OVER', 0, 0, 44, '#ff3d6e', '#ffffff', 'center', 900);
+      D.text(g, `SCORE ${this.score}`, 0, 44, 22, '#ffe066', '#2b1640', 'center', 900);
+      D.text(g, `レベル${this.reached} 到達`, 0, 74, 16, '#ffffff', '#2b1640', 'center', 900);
+      g.restore();
+    }
+  }
+};
+
+function heart(g, x, y, r, fill, stroke) {
+  g.save(); g.translate(x, y); g.beginPath();
+  g.moveTo(0, r * 0.9);
+  g.bezierCurveTo(-r * 1.6, -r * 0.2, -r * 0.8, -r * 1.3, 0, -r * 0.45);
+  g.bezierCurveTo(r * 0.8, -r * 1.3, r * 1.6, -r * 0.2, 0, r * 0.9);
+  g.closePath(); g.fillStyle = fill; g.fill();
+  if (stroke) { g.lineWidth = 2; g.strokeStyle = stroke; g.stroke(); }
+  g.restore();
+}
+})();
+
+;
+/*
  * メニューのBGM（タイトル・選択画面・設定で流れる、やる気の出るファンク）
  *   122BPM・16小節のループ（Aメロ8小節 → サビ8小節）。編曲は RG.Band を使う。
  *   ゲームを始めると0.3秒でフェードアウト。画面がバックグラウンドへ行くと止まる。
@@ -5782,11 +6141,11 @@ RG.Session = class Session {
   constructor(app, game, mode, opts = {}) {
     this.app = app;
     this.game = game;
-    this.mode = mode;            // 'main' | 'practice'
+    this.mode = mode;            // 'main' | 'practice' | 'endless'
     this.opts = opts;
     this.settings = RG.Storage.settings;
     this.hard = mode === 'main' && !!opts.hard && !!game.hard;
-    this.chart = new RG.Chart(game, this.hard ? { bpm: game.hard.bpm } : {});
+    this.chart = new RG.Chart(game, this.hard ? { bpm: game.hard.bpm } : mode === 'endless' ? { bpm: game.endless.bpm0 } : {});
     this.judge = new RG.Judge(this.chart, this.settings);
     this.events = [];
     this.evIdx = 0;
@@ -5799,6 +6158,7 @@ RG.Session = class Session {
     this.guideText = null;
     this.frameBound = () => this.frame();
     if (mode === 'main') { const toks = this.hard ? game.hard.main : game.main; toks.forEach((tok, i) => this.chart.place(tok, toks[i + 1])); }
+    else if (mode === 'endless') this.endless = new RG.Endless(this);
     else this.practice = new RG.Practice(this, opts.lesson || 0);
     this.scene = game.createScene(this);
     if (RG.DEV) { const p = this.chart.validate(); if (p.length) console.warn('[chart]', p); }
@@ -5890,7 +6250,7 @@ RG.Session = class Session {
   }
 
   input(tsMs, src) {
-    if (!this.running || this.finished) return;
+    if (!this.running || this.finished || (this.endless && this.endless.over)) return;
     const raw = RG.Audio.perfToHeard(tsMs) - this.startAt;
     if (raw - this.lastRaw < RG.CONFIG.judge.doubleInputGuardMs / 1000) return; // 二重入力の防止
     this.lastRaw = raw;
@@ -5911,6 +6271,7 @@ RG.Session = class Session {
       this.playNow('tap', 0.5);
     }
     if (r.target) this.scene.onJudge(r.target, r.kind, vbeat, r);
+    if (this.endless && r.target) this.endless.onResult(r.target, r.kind, vbeat);
     if (r.kind === 'perfect' || r.kind === 'good') { const c = this.judge.s.combo; if (c === 10 || c === 25 || c === 40) this.quip('combo'); }
     else if (r.kind === 'miss') this.quip('miss');
     else if (r.kind === 'extra') this.quip('extra');
@@ -5929,6 +6290,7 @@ RG.Session = class Session {
 
   updateInfo() {
     if (this.mode === 'practice') this.app.subInfo(this.practice.infoText());
+    else if (this.endless) this.app.subInfo(this.endless.infoText());
     else {
       const c = this.judge.s.combo;
       this.app.subInfo(c >= 10 ? `ノリノリ！ ${c} コンボ` : c >= 2 ? `${c} コンボ` : '');
@@ -5950,10 +6312,11 @@ RG.Session = class Session {
 
     // 押し忘れ → Miss。期限の判定は「前のフレームの時刻」で行う：
     // 主スレッドが一時的に止まった場合でも、その間に溜まった入力イベントが先に処理されてから期限切れを判断できる
-    const missed = this.prevT === undefined ? [] : this.judge.expire(this.prevT);
+    const missed = this.prevT === undefined || (this.endless && this.endless.over) ? [] : this.judge.expire(this.prevT);
     this.prevT = t;
     if (missed.length) {
       missed.forEach(tg => this.scene.onJudge(tg, 'miss', beatV, { kind: 'miss', target: tg, diff: null }));
+      if (this.endless) missed.forEach(tg => this.endless.onResult(tg, 'miss', beatV));
       this.playNow(this.game.missSound || 'miss', 0.8);
       this.quip('miss');
       if (this.mode === 'practice') this.app.feedback('押し忘れ', 'late');
@@ -5966,6 +6329,7 @@ RG.Session = class Session {
       if (tg.demo && !tg.judged) { tg.judged = 'demo'; this.scene.onJudge(tg, 'perfect', tg.beat, { kind: 'perfect', demo: true }); }
     }
     if (this.practice) this.practice.update(t, beatV);
+    if (this.endless) { const was = this.endless.over; this.endless.update(t, beatV); if (missed.length || was !== this.endless.over) this.updateInfo(); }
 
     // 上部の案内
     const g = this.chart.guideAt(beatV);
@@ -5987,6 +6351,7 @@ RG.Session = class Session {
     setTimeout(() => RG.Audio.destroySessionBus(sb), 2500); // 締めの余韻だけ残す
     this.sb = null;
     if (this.mode === 'main') this.app.onMainEnd(this, this.judge.result());
+    else if (this.mode === 'endless') this.app.onEndlessEnd(this, this.endless.result());
     else this.app.onPracticeEnd(this);
   }
 
@@ -6363,6 +6728,15 @@ RG.App = (function () {
       { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', key: 'sport' },
       { title: 'お笑い道場', sub: '3連符とフェイント', key: 'fun' }
     ].map(gr => Object.assign(gr, { ids: GAME_ORDER.filter(id => grp(id) === gr.key) }));
+    // エンドレス（いちばん上）
+    const ends = GAME_ORDER.filter(id => RG.Games[id].endless);
+    if (ends.length) {
+      const h = document.createElement('div');
+      h.className = 'group-head endless';
+      h.innerHTML = '<span>エンドレス ∞</span><small>どんどん速く・上限なし・スコアアタック</small>';
+      list.appendChild(h);
+      ends.forEach(id => list.appendChild(endlessCard(id)));
+    }
     groups.forEach(gr => {
       if (!gr.ids.length) return;
       const h = document.createElement('div');
@@ -6400,6 +6774,25 @@ RG.App = (function () {
       if (mode === 'hard') App.startGame(id, 'main', { hard: true });
       else App.startGame(id, mode);
     }));
+    return el;
+  }
+
+  function endlessCard(id) {
+    const game = RG.Games[id], cfg = game.endless, rec = RG.Storage.record(id);
+    const el = document.createElement('div');
+    el.className = 'game-card endless';
+    el.innerHTML = `
+      <canvas width="152" height="152"></canvas>
+      <h3>${cfg.title}</h3>
+      <p class="how">BPM ${cfg.bpm0}から始まり、レベルごとに速くなる（上限なし）。レベルアップのたびに金色の<b>チャンスボール</b>（得点2倍）。ミス${cfg.lives}回でゲームオーバー</p>
+      <div class="stat"><span>ハイスコア <b>${rec.endlessBest === null ? '―' : rec.endlessBest}</b></span>
+        <span>最高レベル <b>${rec.endlessLevel === null ? '―' : rec.endlessLevel}</b></span></div>
+      <div class="btns"><button class="btn endless" data-mode="endless">エンドレス開始</button></div>`;
+    const g = el.querySelector('canvas').getContext('2d');
+    game.drawIcon(g, 152, 152, 0.3);
+    g.save(); g.fillStyle = 'rgba(11,6,18,.75)'; g.fillRect(0, 112, 152, 40);
+    RG.D.text(g, '∞ ENDLESS', 76, 132, 20, '#ffe066', '#2b1640', 'center', 900); g.restore();
+    el.querySelector('button').addEventListener('click', () => App.startGame(id, 'endless'));
     return el;
   }
 
@@ -6503,6 +6896,7 @@ RG.App = (function () {
       const a = (session.scene.anchor && session.scene.anchor(b.who)) || (session.game.anchors && session.game.anchors[b.who]) || { x: 180, y: 150 };
       drawBubble(g, a.x, a.y, b.text, beat - b.beat, b.len);
     }
+    if (session.endless) session.endless.draw(g, beat, view);
     // カウント表示
     for (const c of session.chart.cues) {
       if (c.beat > beat + 0.05) break;
@@ -6550,18 +6944,42 @@ RG.App = (function () {
     setTimeout(() => App.showResult(session.game, res, isNew, prevBest), 350);
   };
 
+  App.onEndlessEnd = function (session, res) {
+    App.lastStats = { lateEvents: session.lateEvents || 0, maxClockErrMs: (session.maxClockErr || 0) * 1000, songTime: session.songTime() };
+    const rec = RG.Storage.record(session.game.id);
+    const prevBest = rec.endlessBest;
+    rec.endlessPlays = (rec.endlessPlays || 0) + 1;
+    rec.plays++;
+    const isNew = prevBest === null || res.score > prevBest;
+    if (isNew) rec.endlessBest = res.score;
+    if (rec.endlessLevel === null || res.level > rec.endlessLevel) rec.endlessLevel = res.level;
+    RG.Storage.save();
+    App.session = null;
+    setTimeout(() => App.showResult(session.game, res, isNew, prevBest), 350);
+  };
+
   App.showResult = function (game, res, isNew, prevBest) {
     App.show('result');
-    $('res-game').textContent = game.title + (res.hard ? '（ハード）' : '');
-    $('res-rank').textContent = res.rank.label;
-    $('res-best').textContent = isNew ? (prevBest === null ? 'はじめての記録！' : `最高記録 更新！（前回まで ${prevBest}点）`) : `最高記録 ${prevBest}点`;
+    $('screen-result').classList.toggle('endless', !!res.endless);
+    $('res-total-label').textContent = res.endless ? 'チャンス' : '判定数';
+    $('btn-retry').textContent = res.endless ? 'もう一度（エンドレス）' : 'もう一度';
+    if (res.endless) {
+      $('res-game').textContent = game.endless.title + '（エンドレス）';
+      $('res-rank').textContent = `レベル${res.level} 到達`;
+      $('res-best').textContent = (isNew ? (prevBest === null ? 'はじめての記録！' : `ハイスコア 更新！（前回まで ${prevBest}）`) : `ハイスコア ${prevBest}`) + `　BPM ${res.bpm}`;
+    }
+    else {
+      $('res-game').textContent = game.title + (res.hard ? '（ハード）' : '');
+      $('res-rank').textContent = res.rank.label;
+      $('res-best').textContent = isNew ? (prevBest === null ? 'はじめての記録！' : `最高記録 更新！（前回まで ${prevBest}点）`) : `最高記録 ${prevBest}点`;
+    }
     $('res-best').classList.toggle('new', isNew);
     $('res-perfect').textContent = res.perfect;
     $('res-good').textContent = res.good;
     $('res-miss').textContent = res.miss;
     $('res-extra').textContent = res.extra;
     $('res-combo').textContent = res.maxCombo;
-    $('res-total').textContent = res.total;
+    $('res-total').textContent = res.endless ? `${res.chance.hit}/${res.chance.total}` : res.total;
     const ul = $('res-advice'); ul.innerHTML = '';
     res.advice.forEach(a => { const li = document.createElement('li'); li.textContent = a; ul.appendChild(li); });
     // 点数のカウントアップ
@@ -6572,7 +6990,7 @@ RG.App = (function () {
       if (k < 1 && App.screen === 'result') requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-    App.jingle(res.rank.key);
+    App.jingle(res.endless ? (isNew ? 'superb' : 'great') : res.rank.key);
     // 連打の流れで誤って押さないよう、少しだけボタンを無効に
     ['btn-retry', 'btn-res-select'].forEach(b => { $(b).disabled = true; setTimeout(() => { $(b).disabled = false; }, 800); });
   };
@@ -6729,7 +7147,7 @@ RG.App = (function () {
     $('btn-restart').addEventListener('click', () => App.restart());
     $('btn-next-lesson').addEventListener('click', () => { App._resumeLesson = (App._resumeLesson || 0) + 1; App.restart(); });
     $('btn-quit').addEventListener('click', () => { $('overlay-pause').hidden = true; App.show('select'); });
-    $('btn-retry').addEventListener('click', () => App.startGame(App.last.id, 'main', App.last.opts));
+    $('btn-retry').addEventListener('click', () => App.startGame(App.last.id, App.last.mode === 'endless' ? 'endless' : 'main', App.last.opts));
     $('btn-res-select').addEventListener('click', () => App.show('select'));
     $('btn-pd-main').addEventListener('click', () => App.startGame(App.lastGame, 'main'));
     $('btn-pd-again').addEventListener('click', () => App.startGame(App.lastGame, 'practice'));

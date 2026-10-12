@@ -9,11 +9,11 @@ RG.Session = class Session {
   constructor(app, game, mode, opts = {}) {
     this.app = app;
     this.game = game;
-    this.mode = mode;            // 'main' | 'practice'
+    this.mode = mode;            // 'main' | 'practice' | 'endless'
     this.opts = opts;
     this.settings = RG.Storage.settings;
     this.hard = mode === 'main' && !!opts.hard && !!game.hard;
-    this.chart = new RG.Chart(game, this.hard ? { bpm: game.hard.bpm } : {});
+    this.chart = new RG.Chart(game, this.hard ? { bpm: game.hard.bpm } : mode === 'endless' ? { bpm: game.endless.bpm0 } : {});
     this.judge = new RG.Judge(this.chart, this.settings);
     this.events = [];
     this.evIdx = 0;
@@ -26,6 +26,7 @@ RG.Session = class Session {
     this.guideText = null;
     this.frameBound = () => this.frame();
     if (mode === 'main') { const toks = this.hard ? game.hard.main : game.main; toks.forEach((tok, i) => this.chart.place(tok, toks[i + 1])); }
+    else if (mode === 'endless') this.endless = new RG.Endless(this);
     else this.practice = new RG.Practice(this, opts.lesson || 0);
     this.scene = game.createScene(this);
     if (RG.DEV) { const p = this.chart.validate(); if (p.length) console.warn('[chart]', p); }
@@ -117,7 +118,7 @@ RG.Session = class Session {
   }
 
   input(tsMs, src) {
-    if (!this.running || this.finished) return;
+    if (!this.running || this.finished || (this.endless && this.endless.over)) return;
     const raw = RG.Audio.perfToHeard(tsMs) - this.startAt;
     if (raw - this.lastRaw < RG.CONFIG.judge.doubleInputGuardMs / 1000) return; // 二重入力の防止
     this.lastRaw = raw;
@@ -138,6 +139,7 @@ RG.Session = class Session {
       this.playNow('tap', 0.5);
     }
     if (r.target) this.scene.onJudge(r.target, r.kind, vbeat, r);
+    if (this.endless && r.target) this.endless.onResult(r.target, r.kind, vbeat);
     if (r.kind === 'perfect' || r.kind === 'good') { const c = this.judge.s.combo; if (c === 10 || c === 25 || c === 40) this.quip('combo'); }
     else if (r.kind === 'miss') this.quip('miss');
     else if (r.kind === 'extra') this.quip('extra');
@@ -156,6 +158,7 @@ RG.Session = class Session {
 
   updateInfo() {
     if (this.mode === 'practice') this.app.subInfo(this.practice.infoText());
+    else if (this.endless) this.app.subInfo(this.endless.infoText());
     else {
       const c = this.judge.s.combo;
       this.app.subInfo(c >= 10 ? `ノリノリ！ ${c} コンボ` : c >= 2 ? `${c} コンボ` : '');
@@ -177,10 +180,11 @@ RG.Session = class Session {
 
     // 押し忘れ → Miss。期限の判定は「前のフレームの時刻」で行う：
     // 主スレッドが一時的に止まった場合でも、その間に溜まった入力イベントが先に処理されてから期限切れを判断できる
-    const missed = this.prevT === undefined ? [] : this.judge.expire(this.prevT);
+    const missed = this.prevT === undefined || (this.endless && this.endless.over) ? [] : this.judge.expire(this.prevT);
     this.prevT = t;
     if (missed.length) {
       missed.forEach(tg => this.scene.onJudge(tg, 'miss', beatV, { kind: 'miss', target: tg, diff: null }));
+      if (this.endless) missed.forEach(tg => this.endless.onResult(tg, 'miss', beatV));
       this.playNow(this.game.missSound || 'miss', 0.8);
       this.quip('miss');
       if (this.mode === 'practice') this.app.feedback('押し忘れ', 'late');
@@ -193,6 +197,7 @@ RG.Session = class Session {
       if (tg.demo && !tg.judged) { tg.judged = 'demo'; this.scene.onJudge(tg, 'perfect', tg.beat, { kind: 'perfect', demo: true }); }
     }
     if (this.practice) this.practice.update(t, beatV);
+    if (this.endless) { const was = this.endless.over; this.endless.update(t, beatV); if (missed.length || was !== this.endless.over) this.updateInfo(); }
 
     // 上部の案内
     const g = this.chart.guideAt(beatV);
@@ -214,6 +219,7 @@ RG.Session = class Session {
     setTimeout(() => RG.Audio.destroySessionBus(sb), 2500); // 締めの余韻だけ残す
     this.sb = null;
     if (this.mode === 'main') this.app.onMainEnd(this, this.judge.result());
+    else if (this.mode === 'endless') this.app.onEndlessEnd(this, this.endless.result());
     else this.app.onPracticeEnd(this);
   }
 

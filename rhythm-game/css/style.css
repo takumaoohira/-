@@ -93,6 +93,19 @@ button { font-family: inherit; }
 .badge.rec { background: var(--mustard); color: var(--accent-ink); }
 .game-card .btns { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 8px; }
 .game-card .btns .btn { margin: 6px 0 0; padding: 10px 6px; font-size: 15px; }
+/* エンドレス */
+.group-head.endless span { color: var(--mustard); text-shadow: 2px 2px 0 var(--pink); }
+.game-card.endless {
+  background: linear-gradient(135deg, #3d1050 0%, #1b0a2e 60%, #2a0d3e 100%);
+  border-color: var(--mustard); box-shadow: 5px 5px 0 var(--pink), 9px 9px 0 var(--teal);
+}
+.game-card.endless .how b { color: var(--mustard); }
+.game-card.endless .btns { grid-template-columns: 1fr; }
+.btn.endless {
+  background: linear-gradient(90deg, var(--mustard), var(--accent), var(--pink)); color: var(--accent-ink);
+  font-family: var(--display); font-weight: 400; letter-spacing: .06em; font-size: 17px !important;
+}
+#screen-result.endless .res-rank { color: var(--mustard); }
 
 /* プレイ画面 */
 #screen-play { background: var(--play-bg); color: #fff; padding: 0; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }

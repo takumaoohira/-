@@ -71,6 +71,15 @@ RG.App = (function () {
       { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', key: 'sport' },
       { title: 'お笑い道場', sub: '3連符とフェイント', key: 'fun' }
     ].map(gr => Object.assign(gr, { ids: GAME_ORDER.filter(id => grp(id) === gr.key) }));
+    // エンドレス（いちばん上）
+    const ends = GAME_ORDER.filter(id => RG.Games[id].endless);
+    if (ends.length) {
+      const h = document.createElement('div');
+      h.className = 'group-head endless';
+      h.innerHTML = '<span>エンドレス ∞</span><small>どんどん速く・上限なし・スコアアタック</small>';
+      list.appendChild(h);
+      ends.forEach(id => list.appendChild(endlessCard(id)));
+    }
     groups.forEach(gr => {
       if (!gr.ids.length) return;
       const h = document.createElement('div');
@@ -108,6 +117,25 @@ RG.App = (function () {
       if (mode === 'hard') App.startGame(id, 'main', { hard: true });
       else App.startGame(id, mode);
     }));
+    return el;
+  }
+
+  function endlessCard(id) {
+    const game = RG.Games[id], cfg = game.endless, rec = RG.Storage.record(id);
+    const el = document.createElement('div');
+    el.className = 'game-card endless';
+    el.innerHTML = `
+      <canvas width="152" height="152"></canvas>
+      <h3>${cfg.title}</h3>
+      <p class="how">BPM ${cfg.bpm0}から始まり、レベルごとに速くなる（上限なし）。レベルアップのたびに金色の<b>チャンスボール</b>（得点2倍）。ミス${cfg.lives}回でゲームオーバー</p>
+      <div class="stat"><span>ハイスコア <b>${rec.endlessBest === null ? '―' : rec.endlessBest}</b></span>
+        <span>最高レベル <b>${rec.endlessLevel === null ? '―' : rec.endlessLevel}</b></span></div>
+      <div class="btns"><button class="btn endless" data-mode="endless">エンドレス開始</button></div>`;
+    const g = el.querySelector('canvas').getContext('2d');
+    game.drawIcon(g, 152, 152, 0.3);
+    g.save(); g.fillStyle = 'rgba(11,6,18,.75)'; g.fillRect(0, 112, 152, 40);
+    RG.D.text(g, '∞ ENDLESS', 76, 132, 20, '#ffe066', '#2b1640', 'center', 900); g.restore();
+    el.querySelector('button').addEventListener('click', () => App.startGame(id, 'endless'));
     return el;
   }
 
@@ -211,6 +239,7 @@ RG.App = (function () {
       const a = (session.scene.anchor && session.scene.anchor(b.who)) || (session.game.anchors && session.game.anchors[b.who]) || { x: 180, y: 150 };
       drawBubble(g, a.x, a.y, b.text, beat - b.beat, b.len);
     }
+    if (session.endless) session.endless.draw(g, beat, view);
     // カウント表示
     for (const c of session.chart.cues) {
       if (c.beat > beat + 0.05) break;
@@ -258,18 +287,42 @@ RG.App = (function () {
     setTimeout(() => App.showResult(session.game, res, isNew, prevBest), 350);
   };
 
+  App.onEndlessEnd = function (session, res) {
+    App.lastStats = { lateEvents: session.lateEvents || 0, maxClockErrMs: (session.maxClockErr || 0) * 1000, songTime: session.songTime() };
+    const rec = RG.Storage.record(session.game.id);
+    const prevBest = rec.endlessBest;
+    rec.endlessPlays = (rec.endlessPlays || 0) + 1;
+    rec.plays++;
+    const isNew = prevBest === null || res.score > prevBest;
+    if (isNew) rec.endlessBest = res.score;
+    if (rec.endlessLevel === null || res.level > rec.endlessLevel) rec.endlessLevel = res.level;
+    RG.Storage.save();
+    App.session = null;
+    setTimeout(() => App.showResult(session.game, res, isNew, prevBest), 350);
+  };
+
   App.showResult = function (game, res, isNew, prevBest) {
     App.show('result');
-    $('res-game').textContent = game.title + (res.hard ? '（ハード）' : '');
-    $('res-rank').textContent = res.rank.label;
-    $('res-best').textContent = isNew ? (prevBest === null ? 'はじめての記録！' : `最高記録 更新！（前回まで ${prevBest}点）`) : `最高記録 ${prevBest}点`;
+    $('screen-result').classList.toggle('endless', !!res.endless);
+    $('res-total-label').textContent = res.endless ? 'チャンス' : '判定数';
+    $('btn-retry').textContent = res.endless ? 'もう一度（エンドレス）' : 'もう一度';
+    if (res.endless) {
+      $('res-game').textContent = game.endless.title + '（エンドレス）';
+      $('res-rank').textContent = `レベル${res.level} 到達`;
+      $('res-best').textContent = (isNew ? (prevBest === null ? 'はじめての記録！' : `ハイスコア 更新！（前回まで ${prevBest}）`) : `ハイスコア ${prevBest}`) + `　BPM ${res.bpm}`;
+    }
+    else {
+      $('res-game').textContent = game.title + (res.hard ? '（ハード）' : '');
+      $('res-rank').textContent = res.rank.label;
+      $('res-best').textContent = isNew ? (prevBest === null ? 'はじめての記録！' : `最高記録 更新！（前回まで ${prevBest}点）`) : `最高記録 ${prevBest}点`;
+    }
     $('res-best').classList.toggle('new', isNew);
     $('res-perfect').textContent = res.perfect;
     $('res-good').textContent = res.good;
     $('res-miss').textContent = res.miss;
     $('res-extra').textContent = res.extra;
     $('res-combo').textContent = res.maxCombo;
-    $('res-total').textContent = res.total;
+    $('res-total').textContent = res.endless ? `${res.chance.hit}/${res.chance.total}` : res.total;
     const ul = $('res-advice'); ul.innerHTML = '';
     res.advice.forEach(a => { const li = document.createElement('li'); li.textContent = a; ul.appendChild(li); });
     // 点数のカウントアップ
@@ -280,7 +333,7 @@ RG.App = (function () {
       if (k < 1 && App.screen === 'result') requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-    App.jingle(res.rank.key);
+    App.jingle(res.endless ? (isNew ? 'superb' : 'great') : res.rank.key);
     // 連打の流れで誤って押さないよう、少しだけボタンを無効に
     ['btn-retry', 'btn-res-select'].forEach(b => { $(b).disabled = true; setTimeout(() => { $(b).disabled = false; }, 800); });
   };
@@ -437,7 +490,7 @@ RG.App = (function () {
     $('btn-restart').addEventListener('click', () => App.restart());
     $('btn-next-lesson').addEventListener('click', () => { App._resumeLesson = (App._resumeLesson || 0) + 1; App.restart(); });
     $('btn-quit').addEventListener('click', () => { $('overlay-pause').hidden = true; App.show('select'); });
-    $('btn-retry').addEventListener('click', () => App.startGame(App.last.id, 'main', App.last.opts));
+    $('btn-retry').addEventListener('click', () => App.startGame(App.last.id, App.last.mode === 'endless' ? 'endless' : 'main', App.last.opts));
     $('btn-res-select').addEventListener('click', () => App.show('select'));
     $('btn-pd-main').addEventListener('click', () => App.startGame(App.lastGame, 'main'));
     $('btn-pd-again').addEventListener('click', () => App.startGame(App.lastGame, 'practice'));

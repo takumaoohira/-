@@ -7,7 +7,7 @@
  */
 (function () {
   const { U, D, Music: M } = RG;
-  const DUR = { pong: 1, smash: 0.5, lob: 2 };
+  const DUR = { pong: 1, smash: 0.5, lob: 2, chance: 2 }; // chance：エンドレスの金色チャンスボール（ロブと同じ2拍、得点2倍）
 
   // [打球の種類, 相手が打つ拍] の並びからパターンを作る
   function rally(shots, len = 4) {
@@ -28,6 +28,12 @@
     O: rally([['pong', 0.5], ['pong', 2.5]]),             // 裏拍ラリー
     SS: rally([['smash', 0], ['smash', 1], ['pong', 2]]),   // スマッシュ連打
     LS: rally([['lob', 0], ['smash', 2.5]]),              // ロブ→すぐスマッシュ
+    // ---- エンドレス用 ----
+    X1: rally([['pong', 0.5], ['smash', 2], ['smash', 3]]),  // 裏拍から連続スマッシュ
+    X2: rally([['smash', 0], ['pong', 1], ['smash', 2.5]]),
+    chance: rally([['chance', 0]]),                       // 金色のチャンスボール（2拍あと・得点2倍）
+    // レベルアップの小節：打球なし。新しいテンポのカウント（3・4拍目）を聞かせる
+    lvup: { len: 4, active: false, inputs: [], cues: [{ b: 0, type: 'levelup' }, { b: 1, type: 'tick' }, { b: 2, type: 'tick' }], fx: [{ b: 0, type: 'levelup' }] },
     fin: { len: 4, end: true, cues: [{ b: 0, type: 'fin' }], fx: [{ b: 0, type: 'finale' }] }
   };
 
@@ -76,11 +82,18 @@
     const sec = info.sec, i = info.secBar;
     if (sec === 'count') return [{ b: 0, id: 'hh2:o:0.3', gain: 0.2 }, { b: 2, id: 'hh2:o:0.3', gain: 0.2 }];
     if (sec === 'end') return RG.Band.ending('Em7').concat([{ b: 0, id: 'brass:E4,G4,B4,D5:0.9', gain: 0.8, rev: 0.3 }]);
+    if (info.p === 'lvup') { // レベルアップ：音を薄くしてカウントとライザーで盛り上げる
+      const ev = RG.Band.bar(info, chart, { style: 'funk', chord: 'B7', drums: 0.45, comp: 0.4, bass: 0.6, clear: [1, 2, 3] });
+      ev.push({ b: 0, id: `rise:x:${(chart.spb * 4).toFixed(2)}`, gain: 0.55 });
+      return ev;
+    }
+    const heat = chart.endlessHeat || 0; // エンドレスのレベルに応じて音を厚くする
     const ev = RG.Band.bar(info, chart, {
-      style: 'funk', chord: info.chord, drums: 0.8, comp: 0.6, bass: 0.85, pad: sec === 'B' ? 0.2 : 0,
+      style: 'funk', chord: info.chord, drums: 0.8 + Math.min(0.12, heat * 0.02), comp: 0.6, bass: 0.85, pad: sec === 'B' || heat >= 4 ? 0.2 : 0,
+      clearCues: info.p === 'chance',
       mel: RIFFS[sec] ? RIFFS[sec][i % 4] : null, melInst: 'organ', melGain: 0.35, melPan: 0.3
     });
-    if (info.secBar % 4 === 0 && sec !== 'I' && sec !== 'P') { const ch = RG.Band.chord(info.chord); ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(n.replace(/-?\d$/, ''), 4, 0)).join(',')}:0.25`, gain: 0.3, pan: 0.2, rev: 0.2 }); }
+    if ((info.secBar % 4 === 0 || (heat >= 3 && info.secBar % 2 === 0)) && sec !== 'I' && sec !== 'P') { const ch = RG.Band.chord(info.chord); ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(n.replace(/-?\d$/, ''), 4, 0)).join(',')}:0.25`, gain: 0.3, pan: 0.2, rev: 0.2 }); }
     return ev;
   }
 
@@ -89,10 +102,13 @@
     const ch = CH[bar && bar.chord] || CH.Em7;
     const s = [{ id: 'pingHit', gain: 1 }, { id: `clav:${tr(ch.notes[tg.k % 3].replace(/\d$/, ''), 5, 0)}:0.2`, gain: 0.45 }];
     if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.4 });
+    if (tg.type === 'chance') s.push({ id: 'chime', gain: 0.7 }, { id: 'crash', gain: 0.35 });
     return s;
   }
-  function preload() {
-    const ids = ['pingHit', 'sparkle', 'miss', 'pong', 'pok', 'smash', 'lob', 'cheer'];
+  const ENDLESS_VOICES = ['voice:crowd:レベルアップ！', 'voice:gorilla:チャンス！', 'voice:gorilla:ゲームオーバー', 'voice:crowd:フィーバー！'];
+  function preload(chart) {
+    const ids = ['pingHit', 'sparkle', 'miss', 'pong', 'pok', 'smash', 'lob', 'cheer', 'chime', 'crash', 'boom'];
+    if (chart && chart.endless) ENDLESS_VOICES.forEach(id => ids.push(id));
     Object.values(CH).forEach(c => c.notes.forEach(n => ids.push(`clav:${tr(n.replace(/\d$/, ''), 5, 0)}:0.2`)));
     return ids;
   }
@@ -109,7 +125,16 @@
 
   // ---------------- 描画 ----------------
   const O = { x: 78, y: 292 }, OS = { x: 74, y: 236 }, B = { x: 240, y: 330 }, P = { x: 290, y: 296 }, B2 = { x: 116, y: 330 };
-  const H = { pong: [44, 34], smash: [-6, 18], lob: [150, 60] };
+  const H = { pong: [44, 34], smash: [-6, 18], lob: [150, 60], chance: [170, 64] };
+  // エンドレスの照明：[上, 下, 光A(rgb), 光B(rgb)]
+  const BG = [
+    ['#22102f', '#4d1a57', '255,122,26', '255,61,139'],
+    ['#0d1440', '#26307a', '90,200,255', '180,120,255'],
+    ['#06282a', '#0f5a52', '120,255,200', '255,230,90'],
+    ['#2f0a14', '#6e1430', '255,90,60', '255,200,60'],
+    ['#1a1a06', '#4a4210', '255,240,120', '120,255,160'],
+    ['#140626', '#3a0a5e', '255,80,220', '80,220,255']
+  ];
   const arc = (a, b, u, h) => ({ x: U.lerp(a.x, b.x, u), y: U.lerp(a.y, b.y, u) - Math.sin(Math.PI * U.clamp(u, 0, 1)) * h });
 
   function gorilla(g, x, y, beat, swing, kind, mood) {
@@ -129,7 +154,7 @@
     if (mood === 'wide') D.eyes(g, 0, -58, 10, 4, 'wide'); else D.shades(g, 0, -58, 10, 7, '#2b1640');
     D.mouth(g, 0, -42, 6, mood === 'happy' ? 'open' : mood === 'wide' ? 'o' : 'smile');
     // 腕とラケット
-    const ang = kind === 'lob' ? 1.6 - swing * 2.2 : kind === 'smash' ? -1.4 + swing * 2.6 : -0.6 + swing * 1.8;
+    const ang = kind === 'lob' || kind === 'chance' ? 1.6 - swing * 2.2 : kind === 'smash' ? -1.4 + swing * 2.6 : -0.6 + swing * 1.8;
     g.save(); g.translate(28, -6); g.rotate(ang);
     D.line(g, 0, 0, 0, 40, '#140c18', 14); D.line(g, 0, 0, 0, 40, '#3a2e3f', 9);
     D.line(g, 0, 40, 0, 54, '#8a5a32', 5); D.ell(g, 0, 66, 13, 15, '#e0313a', '#5a0a10', 2.5);
@@ -190,7 +215,7 @@
       const u = (beat - hb) / ret;
       if (u >= 1) return null;
       if (u < 0.5) return Object.assign(arc(P, B2, u * 2, 40), { k: 'ret', trail: 0.6 });
-      return Object.assign(arc(B2, next && next.type === 'smash' && next.beat - hb < 1.6 ? OS : O, (u - 0.5) * 2, next && next.type === 'lob' ? 10 : 34), { k: 'ret', trail: 0.6 });
+      return Object.assign(arc(B2, next && next.type === 'smash' && next.beat - hb < 1.6 ? OS : O, (u - 0.5) * 2, next && (next.type === 'lob' || next.type === 'chance') ? 10 : 34), { k: 'ret', trail: 0.6 });
     }
 
     return {
@@ -205,22 +230,38 @@
         const finFx = chart.fx.find(x => x.type === 'finale');
         const fin = finFx && beat >= finFx.beat ? beat - finFx.beat : null;
         const combo = session.judge.s.combo;
-        // 背景：ファンクな体育館
+        const E = session.endless, lv = E ? E.levelAt(beat) : 0, over = E && E.overBeat !== null && beat >= E.overBeat ? beat - E.overBeat : null;
+        const fever = E && combo >= E.cfg.feverCombo && over === null;
+        // 背景：ファンクな体育館（エンドレスはレベルごとに照明の色が変わる）
+        const pal = lv ? BG[(lv - 1) % BG.length] : BG[0];
         const grd = g.createLinearGradient(0, view.y0, 0, view.y1);
-        grd.addColorStop(0, '#22102f'); grd.addColorStop(1, '#4d1a57');
+        grd.addColorStop(0, pal[0]); grd.addColorStop(1, pal[1]);
         g.fillStyle = grd; g.fillRect(view.x0, view.y0, view.x1 - view.x0, view.y1 - view.y0);
-        g.save(); g.translate(180, 40); g.rotate(beat * 0.05);
-        for (let k = 0; k < 12; k++) { g.rotate(D.TAU / 12); g.beginPath(); g.moveTo(0, 0); g.lineTo(-40, 700); g.lineTo(40, 700); g.closePath(); g.fillStyle = k % 2 ? 'rgba(255,122,26,.08)' : 'rgba(255,61,139,.06)'; g.fill(); }
+        const lvFx = E ? E.sinceLevelUp(beat) : 99, flash = lvFx < 1 ? 1 - lvFx : 0;
+        g.save(); g.translate(180, 40); g.rotate(beat * (0.05 + Math.min(0.15, lv * 0.012)) + flash * 2);
+        const ba = (fever ? 2.2 : 1) + flash * 2;
+        for (let k = 0; k < 12; k++) { g.rotate(D.TAU / 12); g.beginPath(); g.moveTo(0, 0); g.lineTo(-40, 700); g.lineTo(40, 700); g.closePath(); g.fillStyle = k % 2 ? `rgba(${pal[2]},${0.08 * ba})` : `rgba(${pal[3]},${0.06 * ba})`; g.fill(); }
         g.restore();
+        // エンドレス：壁の電光掲示板（レベルとBPM）
+        if (E) {
+          D.rrect(g, 122, 84, 116, 40, 6, '#0b0612', '#ffc93a', 2.5);
+          for (let k = 0; k < 10; k++) D.circ(g, 128 + k * 11.6, 88, 1.6, (k + Math.floor(beat * 2)) % 3 ? '#5a3a10' : '#ffe066');
+          D.text(g, `LEVEL ${lv || 1}`, 180, 101, 13, '#ff7ad9', null, 'center', 900);
+          D.text(g, `♪ ${Math.round(E.bpmOf(lv || 1))} BPM`, 180, 116, 10, '#7affe0', null, 'center', 800);
+        }
         // ミラーボール
         D.line(g, 180, view.y0, 180, 34, '#888', 2);
         D.circ(g, 180, 50, 18, '#c8c8d8', '#6a6a80', 2);
         for (let k = 0; k < 6; k++) { const a = beat * 0.8 + k; D.rrect(g, 172 + Math.cos(a) * 9, 44 + (k % 3) * 5, 5, 4, 1, k % 2 ? '#ffffff' : '#9aa0c0'); }
         // 観客
         for (let i = 0; i < 9; i++) {
-          const x = 10 + i * 42, up = (combo >= 10 || fin !== null ? 10 : 4) * U.hop(beat + (i % 2) * 0.5);
+          const x = 10 + i * 42, up = (fever ? 16 : combo >= 10 || fin !== null ? 10 : 4) * U.hop(beat + (i % 2) * 0.5);
           D.circ(g, x, 450 - up, 15, '#170a20'); D.ell(g, x, 500 - up, 22, 36, '#170a20');
-          if (combo >= 10 && i % 3 === 1) { D.rrect(g, x - 16, 408 - up, 32, 18, 3, '#ffc93a'); D.text(g, 'FUNK', x, 417 - up, 9, '#2b1640'); }
+          if (fever && i % 3 !== 1) { // フィーバー：ペンライトを振る
+            const a = Math.sin(beat * Math.PI + i) * 0.5;
+            D.line(g, x + 10, 470 - up, x + 10 + Math.sin(a) * 26, 470 - up - Math.cos(a) * 26, i % 2 ? '#7affe0' : '#ff7ad9', 4);
+          }
+          if (combo >= 10 && i % 3 === 1) { D.rrect(g, x - 16, 408 - up, 32, 18, 3, '#ffc93a'); D.text(g, fever ? 'FEVER' : 'FUNK', x, 417 - up, 9, '#2b1640'); }
         }
         // 台
         g.fillStyle = '#103a35'; g.fillRect(70, 346, 8, 60); g.fillRect(282, 346, 8, 60);
@@ -237,7 +278,15 @@
         }
         const smashJump = oKind === 'smash' && oSwing > 0 ? 26 * oSwing : 0;
         const dMiss = beat - st.lastMiss, dHit = beat - st.lastHit;
-        gorilla(g, 42, 290 - smashJump, beat, Math.max(0, oSwing), oKind, fin !== null ? 'happy' : dMiss >= 0 && dMiss < 1 ? 'happy' : combo >= 10 ? 'wide' : 'normal');
+        if (lv >= 4 && over === null) { // 本気のゴリラ：レベルが上がるほど燃える
+          const n = Math.min(14, 4 + lv), r = 1 + U.hop(beat) * 0.15;
+          for (let k = 0; k < n; k++) {
+            const a = k / n * D.TAU + beat * 1.3, rr = (48 + Math.sin(beat * 6 + k * 2) * 6) * r;
+            g.globalAlpha = 0.18 + Math.min(0.25, lv * 0.02); D.ell(g, 42 + Math.cos(a) * rr * 0.7, 250 + Math.sin(a) * rr, 14, 22, k % 2 ? '#ff3d3d' : '#ffb03a');
+          }
+          g.globalAlpha = 1;
+        }
+        gorilla(g, 42, 290 - smashJump, beat, Math.max(0, oSwing), oKind, over !== null ? 'happy' : fin !== null ? 'happy' : dMiss >= 0 && dMiss < 1 ? 'happy' : combo >= 10 ? 'wide' : 'normal');
         if (smashJump > 4) for (let k = 0; k < 3; k++) D.line(g, 6 + k * 14, 340 - k * 4, 2 + k * 14, 360 - k * 4, 'rgba(255,200,80,.7)', 3);
 
         // ボール
@@ -245,15 +294,22 @@
         if (bs) {
           if (bs.k === 'smash') { for (let k = 1; k <= 4; k++) { g.globalAlpha = 0.5 / k; D.circ(g, bs.x - k * 7, bs.y - k * 5, 7 - k, '#ff7a1a'); } g.globalAlpha = 1; }
           if (bs.k === 'lob') { for (let k = 1; k <= 3; k++) D.star(g, bs.x - k * 9, bs.y + k * 6, 3, 1.2, 4, beat, 'rgba(255,240,150,.8)'); }
-          D.circ(g, bs.x, bs.y, 6, '#ffffff', '#c0a070', 1.5);
+          if (bs.k === 'chance') { // 金色のチャンスボール：光の輪と星の尾、「×2」
+            const pulse = 1 + 0.25 * Math.sin(beat * Math.PI * 4);
+            g.globalAlpha = 0.3; D.circ(g, bs.x, bs.y, 24 * pulse, '#ffe066'); g.globalAlpha = 0.5; D.circ(g, bs.x, bs.y, 16, '#fff3a0'); g.globalAlpha = 1;
+            for (let k = 1; k <= 7; k++) D.star(g, bs.x - k * 9, bs.y + k * 5 + Math.sin(beat * 8 + k) * 3, 6 - k * 0.6, 2.4, 4, beat * 3 + k, k % 2 ? '#ffe066' : '#ffffff');
+            D.circ(g, bs.x, bs.y, 11, '#ffd21a', '#a06a00', 2.5);
+            D.circ(g, bs.x - 4, bs.y - 4, 3.5, 'rgba(255,255,255,.9)');
+            D.text(g, '×2', bs.x - 8, bs.y - 30, 18, '#ffe066', '#2b1640', 'center', 900);
+          } else D.circ(g, bs.x, bs.y, 6, '#ffffff', '#c0a070', 1.5);
           D.ell(g, bs.x, 336, 5, 1.6, 'rgba(0,0,0,.25)');
         }
 
         // こちら（リーゼント・ダック）
         const dTap = beat - st.lastTap;
         const swing = dTap >= 0 && dTap < 0.3 ? Math.sin(Math.PI * Math.min(1, dTap / 0.3)) : 0;
-        const dizzy = dMiss >= 0 && dMiss < 1;
-        duck(g, 320, 300, beat, swing, fin !== null ? 'happy' : dizzy ? 'dizzy' : dHit >= 0 && dHit < 0.6 ? 'happy' : 'normal', combo >= 10, dizzy ? Math.sin(dMiss * 12) * 0.3 * (1 - dMiss) : 0);
+        const dizzy = (dMiss >= 0 && dMiss < 1) || over !== null;
+        duck(g, 320, 300, beat, swing, fin !== null ? 'happy' : dizzy ? 'dizzy' : dHit >= 0 && dHit < 0.6 ? 'happy' : 'normal', combo >= 10, over !== null ? Math.min(1.4, over * 1.5) : dizzy ? Math.sin(dMiss * 12) * 0.3 * (1 - dMiss) : 0);
         const dp = beat - st.perfect;
         if (dp >= 0 && dp < 0.5) { const s = 1 - dp / 0.5; D.star(g, P.x - 14, P.y - 22, 10 * s + 4, 4, 4, dp * 4, '#ffe066'); }
 
@@ -283,13 +339,30 @@
     howto: 'コン→1拍あと、パシッ（スマッシュ）→半拍あと、ポワーン（ロブ）→2拍あとに打ち返す',
     bpm: 116, offset: 0,
     patterns, main, hard, lessons, finalePattern: 'fin',
-    cueSounds: { pong: { id: 'pong', gain: 2.0 }, smash: { id: 'smash', gain: 0.9 }, lob: { id: 'lob', gain: 2.6 }, pok: { id: 'pok', gain: 1.5 }, fin: [{ id: 'cheer', gain: 0.8 }, { id: 'boom', gain: 0.6 }] },
+    // エンドレス：レベルが上がるたびにテンポ +6（上限なし）、使う打球が増え、むずかしい組み合わせが出やすくなる
+    endless: {
+      title: 'ピンポン・ファンク ∞',
+      bpm0: 96, bpmStep: 6, barsPerLevel: 8, lives: 3, feverCombo: 20,
+      secs: ['A', 'B', 'C'], levelPattern: 'lvup', chancePattern: 'chance', chanceFrom: 2,
+      intro: 'エンドレス！ ミス3回でゲームオーバー',
+      // [パターン, 出てくるレベル, むずかしさ 0〜4]
+      pool: [['N1', 1, 0], ['N', 1, 0], ['L', 2, 1], ['S', 3, 1], ['SN', 4, 2], ['O', 5, 2], ['SS', 6, 3], ['LS', 7, 3], ['X1', 8, 4], ['X2', 9, 4]],
+      tips: { 2: 'ロブ（ポワーン）登場', 3: 'スマッシュ（パシッ）登場', 4: 'ゴリラ本気モード！', 5: '裏拍ラリー登場', 6: 'スマッシュ連打！', 8: '裏拍から連続スマッシュ！' }
+    },
+    cueSounds: {
+      pong: { id: 'pong', gain: 2.0 }, smash: { id: 'smash', gain: 0.9 }, lob: { id: 'lob', gain: 2.6 }, pok: { id: 'pok', gain: 1.5 }, fin: [{ id: 'cheer', gain: 0.8 }, { id: 'boom', gain: 0.6 }],
+      // エンドレス：チャンスボール（1拍前にゴリラが「チャンス！」）、レベルアップ、新しいテンポのカウント
+      chance: [{ id: 'lob', gain: 2.6 }, { id: 'sparkle', gain: 0.7, pan: -0.3 }, { id: 'voice:gorilla:チャンス！', d: -1, bus: 'voice', gain: 0.95, say: 'チャンス！', who: 'gorilla' }],
+      levelup: [{ id: 'voice:crowd:レベルアップ！', bus: 'voice', gain: 0.8, say: 'レベルアップ！', who: 'crowd' }, { id: 'crash', gain: 0.35, pan: 0.3 }],
+      tick: { id: 'stick', gain: 0.9 }
+    },
     missSound: 'miss',
     anchors: { gorilla: { x: 60, y: 210 }, duck: { x: 300, y: 222 }, crowd: { x: 180, y: 400 } },
     quips: {
       miss: [{ id: 'voice:gorilla:ウホッ！', say: 'ウホッ！', who: 'gorilla' }, { id: 'voice:gorilla:アマイゼ', say: 'あまいぜ', who: 'gorilla' }],
       combo: [{ id: 'voice:duck:ナイス！', say: 'ナイス！', who: 'duck' }, { id: 'voice:crowd:ファンキー！', say: 'ファンキー！', who: 'crowd' }],
-      extra: [{ id: 'voice:gorilla:スカッ', say: 'スカッ', who: 'gorilla' }]
+      extra: [{ id: 'voice:gorilla:スカッ', say: 'スカッ', who: 'gorilla' }],
+      fever: [{ id: 'voice:crowd:フィーバー！', say: 'フィーバー！', who: 'crowd' }]
     },
     chordFor, music, hitSounds, preload, createScene, drawIcon, validate
   };

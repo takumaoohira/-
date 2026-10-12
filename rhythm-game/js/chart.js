@@ -29,8 +29,26 @@ RG.Chart = class Chart {
     this.endBeat = null;
     this._id = 0;
   }
-  t(beat) { return this.offset + beat * this.spb; }
-  beatAt(time) { return (time - this.offset) / this.spb; }
+  // テンポの地図（エンドレスで曲の途中からテンポが上がる）。区間ごとに「拍→秒」を直線で変換する
+  t(beat) {
+    const T = this.tempo;
+    if (!T) return this.offset + beat * this.spb;
+    let s = T[0]; for (let i = 1; i < T.length && T[i].beat <= beat; i++) s = T[i];
+    return s.time + (beat - s.beat) * s.spb;
+  }
+  beatAt(time) {
+    const T = this.tempo;
+    if (!T) return (time - this.offset) / this.spb;
+    let s = T[0]; for (let i = 1; i < T.length && T[i].time <= time; i++) s = T[i];
+    return s.beat + (time - s.time) / s.spb;
+  }
+  // いま置こうとしている位置（cursor）からテンポを変える
+  setTempo(bpm) {
+    if (!this.tempo) this.tempo = [{ beat: 0, time: this.offset, spb: this.spb }];
+    const beat = this.cursor, time = this.t(beat);
+    this.tempo.push({ beat, time, spb: 60 / bpm });
+    this.bpm = bpm; this.spb = 60 / bpm;
+  }
 
   pattern(name) {
     if (name === 'count') return Chart.COUNT;

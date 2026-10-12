@@ -121,6 +121,46 @@ const SHOTS = [
       }, [id, idx, kind, after]);
       await page.screenshot({ path: `${OUT}/screen_${id}_${name}.png` });
     }
+    // エンドレス（ピンポン・ファンク）
+    const EN = [
+      ['levelup', { level: 2, at: 'lv', after: 0.9, score: 4210, combo: 22 }],
+      ['chance', { level: 3, at: 'chance', after: -0.8, score: 11380, combo: 31 }],
+      ['fever', { level: 5, at: 'rally', after: 1.3, score: 38650, combo: 44 }],
+      ['lastlife', { level: 7, at: 'rally', after: 2.2, score: 76120, combo: 3, lives: 1 }],
+      ['gameover', { level: 8, at: 'rally', after: 1.6, score: 98770, combo: 0, lives: 0, over: true }]
+    ];
+    for (const [name, o] of EN) {
+      await page.evaluate(async o => {
+        await RG.App.startGame('pingpong', 'endless', { seed: 21 });
+        const s = RG.App.session; s.stop();
+        const E = s.endless;
+        while (E.level < o.level + 1) E.fill(s.chart.cursor);
+        const lv = E.levels.find(x => x.level === o.level);
+        let beat;
+        if (o.at === 'lv') beat = lv.beat + o.after;
+        else if (o.at === 'chance') beat = s.chart.inputs.find(x => x.type === 'chance' && x.beat > lv.beat).beat + o.after;
+        else beat = s.chart.inputs.find(x => x.beat > lv.beat + 12).beat + o.after;
+        // それまでの対象はすべて成功扱い
+        s.chart.inputs.filter(x => x.beat < beat - 0.6).forEach(x => { x.judged = 'perfect'; s.scene.onJudge(x, 'perfect', x.beat, { kind: 'perfect' }); });
+        E.levels.forEach(x => { if (x.beat <= beat) x.applied = true; });
+        E.score = E.shown = o.score; s.judge.s.combo = o.combo;
+        if (o.lives !== undefined) E.lives = o.lives;
+        E.pops.push({ beat: beat - 0.3, text: '+' + Math.round(100 * E.levelMult(o.level) * E.comboMult(o.combo) / 10) * 10, sub: 'PERFECT' });
+        if (o.at === 'chance') E.pops.length = 0;
+        if (o.over) { E.over = true; E.overBeat = beat - o.after; }
+        const g = s.chart.guideAt(beat);
+        RG.App.guide(g ? g.text : '');
+        RG.App.subInfo(E.infoText());
+        RG.App.render(s, beat);
+      }, o);
+      await page.screenshot({ path: `${OUT}/screen_endless_${name}.png` });
+    }
+    await page.evaluate(() => {
+      RG.App.showResult(RG.Games.pingpong, { endless: true, score: 98770, level: 8, bpm: 138, chance: { hit: 6, total: 7 }, perfect: 402, good: 31, miss: 4, extra: 2, maxCombo: 187, total: 437, advice: ['チャンスボール 6/7 成功', 'タイミングがとても安定しています！'] }, true, 76120);
+    });
+    await page.waitForTimeout(1200);
+    await page.screenshot({ path: `${OUT}/ui_result_endless.png` });
+
     // 画面サイズ違い
     for (const v of [{ w: 360, h: 640, n: 'small' }, { w: 1280, h: 720, n: 'pc' }, { w: 844, h: 390, n: 'landscape' }]) {
       await page.setViewportSize({ width: v.w, height: v.h });

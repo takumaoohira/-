@@ -12,6 +12,8 @@
  *   6. 再挑戦の連打 → セッションと音が重ならない
  *   7. 練習モードを最後まで → 練習完了画面へ
  *   8. Spaceキーの実入力が判定される
+ *   9. エンドレス（ピンポン・ファンク）：レベルが上がるとテンポが上がる・チャンスボールは得点2倍・ミス3回でゲームオーバー
+ *   ゲームIDの代わりに endless を指定すると、エンドレスのテストだけを実行します。
  */
 const { chromium } = require('playwright');
 const path = require('path');
@@ -43,6 +45,7 @@ window.__bot = function (opts) {
         const tg = ins[i];
         if (tg.demo) { i++; continue; }
         const err = typeof opts.err === 'function' ? opts.err(tg) : (opts.err || 0);
+        if (err === null) { i++; continue; } // null：この対象は押さない
         const perf = (s.startAt + tg.time + err - A._off) * 1000;
         if (perf > now) break;
         s.input(perf, 'bot'); i++;
@@ -101,7 +104,9 @@ function check(name, ok, detail) {
 
 (async () => {
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-  const games = ONLY.length ? ONLY : ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie', 'robot', 'shateki', 'dj', 'piano', 'hanabi'];
+  const RUN_ENDLESS = !ONLY.length || ONLY.includes('endless');
+  const OTHERS = !ONLY.length || ONLY.some(x => x !== 'endless');
+  const games = ONLY.length ? ONLY.filter(x => x !== 'endless') : ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie', 'robot', 'shateki', 'dj', 'piano', 'hanabi'];
   // 5つずつ並列に実行（同時に動かしすぎると、テスト環境のCPUが足りずに音の予約が遅れるため）
   const pool = async (list, fn) => { for (let i = 0; i < list.length; i += 5) await Promise.all(list.slice(i, i + 5).map(fn)); };
 
@@ -153,7 +158,7 @@ function check(name, ok, detail) {
   });
 
   // 6. 再挑戦の連打で音・入力が重ならない
-  {
+  if (OTHERS) {
     const page = await newPage(browser);
     for (let k = 0; k < 6; k++) {
       await page.evaluate(() => RG.App.startGame('mochi', 'main'));
@@ -219,8 +224,77 @@ function check(name, ok, detail) {
     await page.close();
   });
 
+  // 9. エンドレス
+  if (RUN_ENDLESS) {
+    const page = await newPage(browser);
+    // レベル1〜3はぴったり、レベル4からは何も押さない → レベル4でゲームオーバー
+    await page.evaluate(() => {
+      const orig = RG.App.onEndlessEnd;
+      RG.App.onEndlessEnd = (s, r) => { window.__end = s; orig(s, r); };
+      return RG.App.startGame('pingpong', 'endless', { seed: 11 });
+    });
+    const sel0 = await page.evaluate(() => RG.App.session.mode);
+    await page.evaluate(() => window.__bot({ err: tg => (tg.inst.tok.level >= 4 ? null : 0) }));
+    await page.waitForFunction(() => RG.App.screen === 'result', null, { timeout: 200000 });
+    await page.waitForTimeout(1200);
+    const e = await page.evaluate(() => {
+      const s = window.__end, E = s.endless, c = s.chart;
+      // 得点を判定結果から計算し直す（Perfect 100 × レベル倍率 × コンボ倍率 × チャンス2倍）
+      let combo = 0, exp = 0;
+      const judged = c.inputs.filter(x => x.judged && x.judged !== 'demo').sort((a, b) => a.time - b.time);
+      judged.forEach(tg => {
+        if (tg.judged === 'miss') { combo = 0; return; }
+        combo++;
+        const L = tg.inst.tok.level;
+        exp += Math.round(100 * (1 + 0.25 * (L - 1)) * (1 + Math.min(combo, 50) * 0.02) * (tg.type === 'chance' ? 2 : 1) / 10) * 10;
+      });
+      // 「コン」（相手が打つ）から打ち返すまで＝1拍の秒数 → そのレベルのBPM
+      const beatSec = L => { const cue = c.cues.find(x => x.type === 'pong' && x.target && x.inst.tok.level === L); return cue ? cue.target.time - cue.time : null; };
+      const gap1 = beatSec(1), gap3 = beatSec(3);
+      const chanceTg = judged.filter(x => x.type === 'chance');
+      return {
+        mode: RG.App.last.mode, score: E.score, expected: exp, reached: E.reached, lives: E.lives, chance: E.chance,
+        miss: s.judge.s.miss, perfect: s.judge.s.perfect, gap1, gap3, bpm1: gap1 ? 60 / gap1 : null, bpm3: gap3 ? 60 / gap3 : null,
+        chanceJudged: chanceTg.map(x => x.judged), late: s.lateEvents || 0, clockErrMs: (s.maxClockErr || 0) * 1000,
+        resScore: +document.getElementById('res-score').textContent, resRank: document.getElementById('res-rank').textContent,
+        resChance: document.getElementById('res-total').textContent, label: document.getElementById('res-total-label').textContent,
+        rec: RG.Storage.record('pingpong')
+      };
+    });
+    check('エンドレス：選択画面から開始 → エンドレスのセッション', sel0 === 'endless' && e.mode === 'endless', JSON.stringify({ sel0, mode: e.mode }));
+    check('エンドレス：レベルごとにテンポが上がる（Lv1=96 → Lv3=108 BPM）', Math.abs(e.bpm1 - 96) < 0.01 && Math.abs(e.bpm3 - 108) < 0.01, JSON.stringify({ bpm1: e.bpm1, bpm3: e.bpm3 }));
+    check('エンドレス：レベルアップ毎にチャンスボール（Lv2・Lv3は成功、Lv4は見送り）', e.chance.hit === 2 && e.chance.total === 3 && e.resChance === '2/3' && e.label === 'チャンス', JSON.stringify({ chance: e.chance, judged: e.chanceJudged, res: e.resChance }));
+    check('エンドレス：得点＝Perfect100×レベル倍率×コンボ倍率（チャンスは2倍）', e.score === e.expected && e.score > 0 && e.resScore === e.score, JSON.stringify({ score: e.score, expected: e.expected, res: e.resScore }));
+    check('エンドレス：ミス3回でゲームオーバー（チャンスの見送りはライフ減なし）→ レベル4到達', e.lives === 0 && e.miss === 4 && e.reached === 4 && e.resRank.includes('レベル4'), JSON.stringify({ lives: e.lives, miss: e.miss, reached: e.reached, rank: e.resRank }));
+    check('エンドレス：テンポが変わっても予約遅れなし・時計の誤差<8ms', e.late === 0 && e.clockErrMs < 8, JSON.stringify({ late: e.late, clockErrMs: e.clockErrMs }));
+    check('エンドレス：ハイスコアと最高レベルを保存', e.rec.endlessBest === e.score && e.rec.endlessLevel === 4, JSON.stringify(e.rec));
+    await page.screenshot({ path: `${OUT}/test_endless_result.png` });
+    // 譜面を先までまとめて作る：レベル25（BPM 240）まで入力どうしの間隔と返球の時間がOK
+    const v = await page.evaluate(() => {
+      const fake = { opts: { seed: 5 }, judge: { s: { combo: 0 } } };
+      fake.chart = new RG.Chart(RG.Games.pingpong, { bpm: RG.Games.pingpong.endless.bpm0 });
+      fake.game = RG.Games.pingpong;
+      const E = new RG.Endless(fake);
+      while (E.level < 26) E.fill(fake.chart.cursor);
+      const until = E.levels.find(x => x.level === 26).beat;
+      const c = fake.chart;
+      c.inputs = c.inputs.filter(x => x.beat < until); c.cues = c.cues.filter(x => x.beat < until);
+      const used = new Set(c.instances.map(i => i.p));
+      return { problems: c.validate(), level: E.level, bpm25: E.bpmOf(25), used: [...used] };
+    });
+    check('エンドレス：レベル25（BPM 240）まで譜面の検証OK・全パターンが登場', !v.problems.length && ['X1', 'X2', 'LS', 'SS', 'chance', 'lvup'].every(p => v.used.includes(p)), JSON.stringify(v).slice(0, 400));
+    // もう一度 → エンドレスで再開
+    await page.click('#btn-retry');
+    await page.waitForTimeout(600);
+    const again = await page.evaluate(() => RG.App.session && RG.App.session.mode);
+    check('エンドレス：結果画面の「もう一度」→ エンドレスで再開', again === 'endless', String(again));
+    await page.evaluate(() => RG.App.stopSession());
+    console.log('endless errors:', page.errors.filter(e => !e.includes('ERR_CERT_AUTHORITY_INVALID')));
+    await page.close();
+  }
+
   // 声の合図は「最初の母音」が拍ちょうどに来るように予約される
-  {
+  if (OTHERS) {
     const page = await newPage(browser);
     const v = await page.evaluate(() => {
       const c = new RG.Chart(RG.Games.disco); RG.Games.disco.main.forEach((t, i, a) => c.place(t, a[i + 1]));
@@ -232,7 +306,7 @@ function check(name, ok, detail) {
   }
 
   // 保存が再読み込み後も残る
-  {
+  if (OTHERS) {
     const page = await newPage(browser);
     await page.evaluate(() => { RG.Storage.settings.inputOffsetMs = 42; RG.Storage.record('mochi').best = 77; RG.Storage.save(); });
     await page.reload();

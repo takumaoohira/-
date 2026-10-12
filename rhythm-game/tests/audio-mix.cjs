@@ -13,10 +13,21 @@ const path = require('path');
   await p.goto('file://' + path.resolve(__dirname, '../index.html'));
   const res = await p.evaluate(async () => {
     const out = {};
-    for (const id of Object.keys(RG.Games)) {
-      const game = RG.Games[id];
-      const chart = new RG.Chart(game);
-      game.main.forEach((t, i, a) => chart.place(t, a[i + 1]));
+    // エンドレスはレベル6の頭まで（テンポ 96→126）を書き出す
+    const endlessChart = id => {
+      const game = RG.Games[id], fake = { opts: { seed: 3 }, judge: { s: { combo: 0 } }, game };
+      fake.chart = new RG.Chart(game, { bpm: game.endless.bpm0 });
+      const E = new RG.Endless(fake);
+      while (E.level < 6) E.fill(fake.chart.cursor);
+      fake.chart.endBeat = E.levels.find(x => x.level === 6).beat;
+      return fake.chart;
+    };
+    const keys = Object.keys(RG.Games).concat(Object.keys(RG.Games).filter(id => RG.Games[id].endless).map(id => id + '_endless'));
+    for (const id of keys) {
+      const game = RG.Games[id.replace('_endless', '')];
+      let chart;
+      if (id.endsWith('_endless')) chart = endlessChart(game.id);
+      else { chart = new RG.Chart(game); game.main.forEach((t, i, a) => chart.place(t, a[i + 1])); }
       const evs = chart.drainAudio();
       const sr = 44100, len = Math.ceil((chart.t(chart.endBeat) + 3) * sr);
       const S = RG.Storage.defaults().settings.vol;
@@ -42,11 +53,12 @@ const path = require('path');
       const rms = (a, t0, ms) => { const i0 = Math.floor((t0 + 0.1) * sr), n = Math.floor(ms / 1000 * sr); let s = 0; for (let i = i0; i < i0 + n && i < a.length; i++) s += a[i] * a[i]; return Math.sqrt(s / n) + 1e-9; };
       const snr = {};
       chart.cues.forEach(c => {
-        if (['count', 'fin', 'tickL', 'tickR', 'swish', 'sing'].includes(c.type)) return;
+        if (c.time > chart.t(chart.endBeat)) return;
+        if (['count', 'fin', 'tickL', 'tickR', 'swish', 'sing', 'levelup'].includes(c.type)) return;
         const d = 20 * Math.log10(rms(cue, c.time, 60) / rms(bgm, c.time, 60));
         (snr[c.type] = snr[c.type] || []).push(d);
       });
-      chart.cues.filter(c => c.type === 'sing').forEach(c => { const d = 20 * Math.log10(rms(cue, c.time, 200) / rms(bgm, c.time, 200)); (snr.sing = snr.sing || []).push(d); });
+      chart.cues.filter(c => c.type === 'sing' && c.time < len / sr).forEach(c => { const d = 20 * Math.log10(rms(cue, c.time, 200) / rms(bgm, c.time, 200)); (snr.sing = snr.sing || []).push(d); });
       const summary = {};
       for (const k in snr) { const a = snr[k].sort((x, y) => x - y); summary[k] = { min: a[0].toFixed(1), median: a[a.length >> 1].toFixed(1), n: a.length }; }
       const sp = {}; for (const e of evs) if (!sp[e.id]) { const d = RG.Synth.render(e.id, sr); let m = 0; for (const v of d) m = Math.max(m, Math.abs(v)); sp[e.id] = +m.toFixed(2); }
