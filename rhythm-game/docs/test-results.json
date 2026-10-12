@@ -2,7 +2,7 @@
   {
     "name": "pingpong: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":5.476500000046847,\"songTime\":49.663899355703606}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":5.595042837445496,\"songTime\":49.663961535986154}"
   },
   {
     "name": "pingpong: 全部ぴったり → 100点",
@@ -12,7 +12,7 @@
   {
     "name": "golf: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":3.0704718007468212,\"songTime\":51.43044986648217}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":2.4486735539435145,\"songTime\":51.42980016316561}"
   },
   {
     "name": "golf: 全部ぴったり → 100点",
@@ -22,7 +22,7 @@
   {
     "name": "mochi: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":2.9552529461951416,\"songTime\":55.39476950405778}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":2.1636816866873465,\"songTime\":55.38801618818565}"
   },
   {
     "name": "mochi: 全部ぴったり → 100点",
@@ -32,7 +32,7 @@
   {
     "name": "penguin: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":4.208399999983903,\"songTime\":57.61770442802282}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":2.161577458908437,\"songTime\":57.61798625829514}"
   },
   {
     "name": "penguin: 全部ぴったり → 100点",
@@ -42,7 +42,7 @@
   {
     "name": "echo: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":3.465384677412864,\"songTime\":62.50701529134973}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":2.3670778195329367,\"songTime\":62.51516136749784}"
   },
   {
     "name": "echo: 全部ぴったり → 100点",
@@ -102,22 +102,22 @@
   {
     "name": "pingpong: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":35,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":35,\"total\":35,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":6.633749420571267,\"songTime\":49.664348979132996}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":35,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":35,\"total\":35,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":4.418421321888966,\"songTime\":49.664636875935855}}"
   },
   {
     "name": "golf: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":26,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":26,\"total\":26,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":4.554000000013048,\"songTime\":51.434327165809435}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":26,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":26,\"total\":26,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":4.905630000012984,\"songTime\":51.452622991095666}}"
   },
   {
     "name": "mochi: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":27,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":27,\"total\":27,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":5.618014769840474,\"songTime\":55.394857179793604}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":27,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":27,\"total\":27,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":4.44101700903432,\"songTime\":55.39497446410749}}"
   },
   {
     "name": "penguin: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":24,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":24,\"total\":24,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":5.454899999989493,\"songTime\":57.605879116369266}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":24,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":24,\"total\":24,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":5.097600000047442,\"songTime\":57.608815084004846}}"
   },
   {
     "name": "pingpong: ハード版 全部ぴったり → 100点・譜面の検証OK",
@@ -127,7 +127,7 @@
   {
     "name": "echo: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":32,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":32,\"total\":32,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":3.4343567611350156,\"songTime\":62.50877918532305}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":32,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":32,\"total\":32,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":5.298556496751372,\"songTime\":62.50994851518783}}"
   },
   {
     "name": "golf: ハード版 全部ぴったり → 100点・譜面の検証OK",
@@ -152,7 +152,7 @@
   {
     "name": "pingpong: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "golf: ハード版 −75ms早め → 全Good・早めの助言",
@@ -162,7 +162,7 @@
   {
     "name": "golf: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "echo: ハード版 全部ぴったり → 100点・譜面の検証OK",
@@ -177,7 +177,7 @@
   {
     "name": "mochi: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "penguin: ハード版 −75ms早め → 全Good・早めの助言",
@@ -187,7 +187,7 @@
   {
     "name": "penguin: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "echo: ハード版 −75ms早め → 全Good・早めの助言",
@@ -197,7 +197,7 @@
   {
     "name": "echo: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "mochi: 入力なし → 0点・全Miss",
@@ -207,17 +207,17 @@
   {
     "name": "mochi: 60msごとの連打 → 0点",
     "ok": true,
-    "detail": "{\"score\":0,\"rank\":\"もう一度！\",\"perfect\":0,\"good\":6,\"miss\":21,\"extra\":711,\"combo\":1,\"total\":27,\"advice\":[\"少し早めに押す傾向があります（平均 119ms 早い）\",\"毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください\",\"合図のないところで押しています。押すのは決まった拍だけ！\"]}"
+    "detail": "{\"score\":0,\"rank\":\"もう一度！\",\"perfect\":0,\"good\":10,\"miss\":17,\"extra\":711,\"combo\":1,\"total\":27,\"advice\":[\"少し早めに押す傾向があります（平均 111ms 早い）\",\"毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください\",\"合図のないところで押しています。押すのは決まった拍だけ！\"]}"
   },
   {
     "name": "mochi: 250msごとの連打 → 高得点にならない(<40)",
     "ok": true,
-    "detail": "{\"score\":0,\"rank\":\"もう一度！\",\"perfect\":12,\"good\":10,\"miss\":5,\"extra\":157,\"combo\":2,\"total\":27,\"advice\":[\"少し早めに押す傾向があります（平均 20ms 早い）\",\"合図のないところで押しています。押すのは決まった拍だけ！\"]}"
+    "detail": "{\"score\":0,\"rank\":\"もう一度！\",\"perfect\":11,\"good\":10,\"miss\":6,\"extra\":157,\"combo\":2,\"total\":27,\"advice\":[\"少し早めに押す傾向があります（平均 28ms 早い）\",\"合図のないところで押しています。押すのは決まった拍だけ！\"]}"
   },
   {
     "name": "disco: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":4.45108647786685,\"songTime\":50.848997991967636}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":6.537690394132767,\"songTime\":50.85007350387933}"
   },
   {
     "name": "disco: 全部ぴったり → 100点",
@@ -227,7 +227,7 @@
   {
     "name": "pie: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":3.8373187977055467,\"songTime\":57.69468374376377}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":6.817433394231132,\"songTime\":57.696859110066676}"
   },
   {
     "name": "pie: 全部ぴったり → 100点",
@@ -237,7 +237,7 @@
   {
     "name": "rope: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":5.919180725528328,\"songTime\":60.01015005284466}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":6.46064100094168,\"songTime\":60.004920350408895}"
   },
   {
     "name": "rope: 全部ぴったり → 100点",
@@ -247,7 +247,7 @@
   {
     "name": "karaoke: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":4.991871243033685,\"songTime\":62.51252375186947}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":7.057430726746028,\"songTime\":62.51421174858542}"
   },
   {
     "name": "karaoke: 全部ぴったり → 100点",
@@ -257,7 +257,7 @@
   {
     "name": "kime: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":5.183065606314097,\"songTime\":65.45947571903073}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":4.524475044612952,\"songTime\":65.45981676693741}"
   },
   {
     "name": "kime: 全部ぴったり → 100点",
@@ -317,22 +317,22 @@
   {
     "name": "disco: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":30,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":30,\"total\":30,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":6.030367146571236,\"songTime\":50.8549631948585}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":30,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":30,\"total\":30,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":5.864399999901959,\"songTime\":50.86287221069827}}"
   },
   {
     "name": "pie: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":33,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":33,\"total\":33,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":4.371713746713857,\"songTime\":57.898644201747516}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":33,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":33,\"total\":33,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":6.5530588445945614,\"songTime\":57.848326784281966}}"
   },
   {
     "name": "rope: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":48,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":48,\"total\":48,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":7.065100676208358,\"songTime\":60.002240384595154}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":48,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":48,\"total\":48,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":6.845399999957591,\"songTime\":60.01373278823996}}"
   },
   {
     "name": "karaoke: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":30,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":30,\"total\":30,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":3.9709554086237997,\"songTime\":62.51680051378497}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":30,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":30,\"total\":30,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":6.9561934848880735,\"songTime\":62.50796510916422}}"
   },
   {
     "name": "disco: ハード版 全部ぴったり → 100点・譜面の検証OK",
@@ -342,7 +342,7 @@
   {
     "name": "kime: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":20,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":20,\"total\":20,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":2.664900000050374,\"songTime\":65.46523350710373}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":20,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":20,\"total\":20,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":7.093633856829484,\"songTime\":65.48155482150614}}"
   },
   {
     "name": "pie: ハード版 全部ぴったり → 100点・譜面の検証OK",
@@ -362,7 +362,7 @@
   {
     "name": "disco: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "karaoke: ハード版 全部ぴったり → 100点・譜面の検証OK",
@@ -382,7 +382,7 @@
   {
     "name": "pie: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "rope: ハード版 −75ms早め → 全Good・早めの助言",
@@ -392,7 +392,7 @@
   {
     "name": "rope: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "karaoke: ハード版 −75ms早め → 全Good・早めの助言",
@@ -402,7 +402,7 @@
   {
     "name": "karaoke: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "kime: ハード版 −75ms早め → 全Good・早めの助言",
@@ -412,12 +412,12 @@
   {
     "name": "kime: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "dj: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":4.0968602575508495,\"songTime\":46.88608992754365}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":6.363000000085162,\"songTime\":46.87931377535946}"
   },
   {
     "name": "dj: 全部ぴったり → 100点",
@@ -427,7 +427,7 @@
   {
     "name": "shateki: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":2.4259422879401304,\"songTime\":53.58057231032434}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":6.998399999999849,\"songTime\":53.57526898474001}"
   },
   {
     "name": "shateki: 全部ぴったり → 100点",
@@ -437,7 +437,7 @@
   {
     "name": "hanabi: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":4.128793038396306,\"songTime\":60.00545529206887}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":5.5139063137037425,\"songTime\":60.00974199009629}"
   },
   {
     "name": "hanabi: 全部ぴったり → 100点",
@@ -447,7 +447,7 @@
   {
     "name": "robot: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":2.720911783511082,\"songTime\":62.23358986930912}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":6.522303463957213,\"songTime\":62.23322660699864}"
   },
   {
     "name": "robot: 全部ぴったり → 100点",
@@ -457,7 +457,7 @@
   {
     "name": "piano: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし",
     "ok": true,
-    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":3.8338406389569757,\"songTime\":62.50518623676202}"
+    "detail": "{\"lateEvents\":0,\"maxClockErrMs\":3.8326487992224045,\"songTime\":62.507241626129755}"
   },
   {
     "name": "piano: 全部ぴったり → 100点",
@@ -510,24 +510,24 @@
     "detail": "{\"score\":60,\"rank\":\"クリア！\",\"perfect\":0,\"good\":36,\"miss\":0,\"extra\":0,\"combo\":36,\"total\":36,\"advice\":[\"少し遅れて押す傾向があります（平均 75ms 遅い）\",\"毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください\"]}"
   },
   {
+    "name": "dj: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
+    "ok": true,
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":35,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":35,\"total\":35,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":2.7686576518646255,\"songTime\":46.891264079963435}}"
+  },
+  {
     "name": "piano: +75ms遅れ（補正なし） → 全Good・遅れの助言",
     "ok": true,
     "detail": "{\"score\":60,\"rank\":\"クリア！\",\"perfect\":0,\"good\":20,\"miss\":0,\"extra\":0,\"combo\":20,\"total\":20,\"advice\":[\"少し遅れて押す傾向があります（平均 75ms 遅い）\",\"毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください\"]}"
   },
   {
-    "name": "dj: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
-    "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":35,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":35,\"total\":35,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":5.702966153949829,\"songTime\":46.88010326186483}}"
-  },
-  {
     "name": "shateki: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":32,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":32,\"total\":32,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":3.349319030503617,\"songTime\":53.580635038187154}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":32,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":32,\"total\":32,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":3.2954458678280396,\"songTime\":53.5782578164731}}"
   },
   {
     "name": "hanabi: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":33,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":33,\"total\":33,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":4.838000022647448,\"songTime\":60.00297787531653}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":33,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":33,\"total\":33,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":5.510872171233583,\"songTime\":60.01648588403387}}"
   },
   {
     "name": "dj: ハード版 全部ぴったり → 100点・譜面の検証OK",
@@ -537,12 +537,12 @@
   {
     "name": "robot: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":36,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":36,\"total\":36,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":4.44457209746707,\"songTime\":62.225361140190444}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":36,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":36,\"total\":36,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":5.792324607133192,\"songTime\":62.226774631172475}}"
   },
   {
     "name": "piano: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms",
     "ok": true,
-    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":20,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":20,\"total\":20,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":6.3707731126094735,\"songTime\":62.517053368224936}}"
+    "detail": "{\"score\":100,\"rank\":\"大成功！\",\"perfect\":20,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":20,\"total\":20,\"advice\":[\"タイミングがとても安定しています！\"],\"stats\":{\"lateEvents\":0,\"maxClockErrMs\":4.904319094680254,\"songTime\":62.515705176370005}}"
   },
   {
     "name": "shateki: ハード版 全部ぴったり → 100点・譜面の検証OK",
@@ -562,17 +562,17 @@
   {
     "name": "dj: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
-  },
-  {
-    "name": "piano: ハード版 全部ぴったり → 100点・譜面の検証OK",
-    "ok": true,
-    "detail": "{\"hp\":{\"score\":100,\"rank\":\"大成功！\",\"perfect\":20,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":20,\"total\":20,\"advice\":[\"タイミングがとても安定しています！\"]},\"hproblems\":{\"hard\":[],\"normal\":[],\"hardSec\":\"51.1\",\"normalSec\":\"62.5\"}}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "robot: ハード版 全部ぴったり → 100点・譜面の検証OK",
     "ok": true,
     "detail": "{\"hp\":{\"score\":100,\"rank\":\"大成功！\",\"perfect\":48,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":48,\"total\":48,\"advice\":[\"タイミングがとても安定しています！\"]},\"hproblems\":{\"hard\":[],\"normal\":[],\"hardSec\":\"54.0\",\"normalSec\":\"62.2\"}}"
+  },
+  {
+    "name": "piano: ハード版 全部ぴったり → 100点・譜面の検証OK",
+    "ok": true,
+    "detail": "{\"hp\":{\"score\":100,\"rank\":\"大成功！\",\"perfect\":20,\"good\":0,\"miss\":0,\"extra\":0,\"combo\":20,\"total\":20,\"advice\":[\"タイミングがとても安定しています！\"]},\"hproblems\":{\"hard\":[],\"normal\":[],\"hardSec\":\"51.1\",\"normalSec\":\"62.5\"}}"
   },
   {
     "name": "shateki: ハード版 −75ms早め → 全Good・早めの助言",
@@ -582,7 +582,7 @@
   {
     "name": "shateki: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "hanabi: ハード版 −75ms早め → 全Good・早めの助言",
@@ -592,7 +592,7 @@
   {
     "name": "hanabi: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "piano: ハード版 −75ms早め → 全Good・早めの助言",
@@ -602,7 +602,7 @@
   {
     "name": "piano: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "robot: ハード版 −75ms早め → 全Good・早めの助言",
@@ -612,7 +612,7 @@
   {
     "name": "robot: ハードの記録は別に保存",
     "ok": true,
-    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true}"
+    "detail": "{\"best\":100,\"cleared\":true,\"plays\":6,\"practiced\":false,\"hardBest\":100,\"hardCleared\":true,\"endlessBest\":null,\"endlessLevel\":null,\"endlessPlays\":0}"
   },
   {
     "name": "開始ボタンの連打（3回同時）→ 動くセッションは1つ",
@@ -642,7 +642,7 @@
   {
     "name": "バックグラウンドで中断 → 再開で最初（カウント）から",
     "ok": true,
-    "detail": "{\"intr\":{\"overlay\":true,\"session\":false,\"title\":\"中断しました\"},\"resumed\":{\"t\":0.09027295270970193,\"running\":true}}"
+    "detail": "{\"intr\":{\"overlay\":true,\"session\":false,\"title\":\"中断しました\"},\"resumed\":{\"t\":0.08838102839381179,\"running\":true}}"
   },
   {
     "name": "mochi: 練習を最後まで（1回目は失敗）→ 練習完了・保存",
@@ -718,6 +718,51 @@
     "name": "hanabi: 練習を最後まで（1回目は失敗）→ 練習完了・保存",
     "ok": true,
     "detail": "{\"practiced\":true,\"title\":\"練習クリア！\"}"
+  },
+  {
+    "name": "エンドレス：選択画面から開始 → エンドレスのセッション",
+    "ok": true,
+    "detail": "{\"sel0\":\"endless\",\"mode\":\"endless\"}"
+  },
+  {
+    "name": "エンドレス：レベルごとにテンポが上がる（Lv1=96 → Lv3=108 BPM）",
+    "ok": true,
+    "detail": "{\"bpm1\":96,\"bpm3\":107.99999999999969}"
+  },
+  {
+    "name": "エンドレス：レベルアップ毎にチャンスボール（Lv2・Lv3は成功、Lv4は見送り）",
+    "ok": true,
+    "detail": "{\"chance\":{\"hit\":2,\"total\":3},\"judged\":[\"perfect\",\"perfect\",\"miss\"],\"res\":\"2/3\"}"
+  },
+  {
+    "name": "エンドレス：得点＝Perfect100×レベル倍率×コンボ倍率（チャンスは2倍）",
+    "ok": true,
+    "detail": "{\"score\":6970,\"expected\":6970,\"res\":6970}"
+  },
+  {
+    "name": "エンドレス：ミス3回でゲームオーバー（チャンスの見送りはライフ減なし）→ レベル4到達",
+    "ok": true,
+    "detail": "{\"lives\":0,\"miss\":4,\"reached\":4,\"rank\":\"レベル4 到達\"}"
+  },
+  {
+    "name": "エンドレス：テンポが変わっても予約遅れなし・時計の誤差<8ms",
+    "ok": true,
+    "detail": "{\"late\":0,\"clockErrMs\":3.610297036150234}"
+  },
+  {
+    "name": "エンドレス：ハイスコアと最高レベルを保存",
+    "ok": true,
+    "detail": "{\"best\":null,\"cleared\":false,\"plays\":1,\"practiced\":false,\"hardBest\":null,\"hardCleared\":false,\"endlessBest\":6970,\"endlessLevel\":4,\"endlessPlays\":1}"
+  },
+  {
+    "name": "エンドレス：レベル25（BPM 240）まで譜面の検証OK・全パターンが登場",
+    "ok": true,
+    "detail": "{\"problems\":[],\"level\":26,\"bpm25\":240,\"used\":[\"count\",\"rest\",\"N1\",\"N\",\"lvup\",\"chance\",\"L\",\"S\",\"SN\",\"O\",\"SS\",\"LS\",\"X1\",\"X2\"]}"
+  },
+  {
+    "name": "エンドレス：結果画面の「もう一度」→ エンドレスで再開",
+    "ok": true,
+    "detail": "endless"
   },
   {
     "name": "声の合図：母音の頭が拍ちょうど（予約時刻＝拍の時刻−母音までの長さ）",

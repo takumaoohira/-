@@ -1,12 +1,12 @@
-✔ pingpong: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":5.476500000046847,"songTime":49.663899355703606}
+✔ pingpong: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":5.595042837445496,"songTime":49.663961535986154}
 ✔ pingpong: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"]}
-✔ golf: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":3.0704718007468212,"songTime":51.43044986648217}
+✔ golf: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.4486735539435145,"songTime":51.42980016316561}
 ✔ golf: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":26,"good":0,"miss":0,"extra":0,"combo":26,"total":26,"advice":["タイミングがとても安定しています！"]}
-✔ mochi: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.9552529461951416,"songTime":55.39476950405778}
+✔ mochi: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.1636816866873465,"songTime":55.38801618818565}
 ✔ mochi: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":27,"good":0,"miss":0,"extra":0,"combo":27,"total":27,"advice":["タイミングがとても安定しています！"]}
-✔ penguin: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":4.208399999983903,"songTime":57.61770442802282}
+✔ penguin: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.161577458908437,"songTime":57.61798625829514}
 ✔ penguin: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":24,"good":0,"miss":0,"extra":0,"combo":24,"total":24,"advice":["タイミングがとても安定しています！"]}
-✔ echo: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":3.465384677412864,"songTime":62.50701529134973}
+✔ echo: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.3670778195329367,"songTime":62.51516136749784}
 ✔ echo: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"]}
 ✔ pingpong: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"]}
 ✔ golf: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":26,"good":0,"miss":0,"extra":0,"combo":26,"total":26,"advice":["タイミングがとても安定しています！"]}
@@ -18,43 +18,43 @@
 ✔ mochi: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":27,"miss":0,"extra":0,"combo":27,"total":27,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
 ✔ penguin: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":24,"miss":0,"extra":0,"combo":24,"total":24,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
 ✔ echo: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":32,"miss":0,"extra":0,"combo":32,"total":32,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ pingpong: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":6.633749420571267,"songTime":49.664348979132996}}
-✔ golf: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":26,"good":0,"miss":0,"extra":0,"combo":26,"total":26,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":4.554000000013048,"songTime":51.434327165809435}}
-✔ mochi: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":27,"good":0,"miss":0,"extra":0,"combo":27,"total":27,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":5.618014769840474,"songTime":55.394857179793604}}
-✔ penguin: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":24,"good":0,"miss":0,"extra":0,"combo":24,"total":24,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":5.454899999989493,"songTime":57.605879116369266}}
+✔ pingpong: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":4.418421321888966,"songTime":49.664636875935855}}
+✔ golf: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":26,"good":0,"miss":0,"extra":0,"combo":26,"total":26,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":4.905630000012984,"songTime":51.452622991095666}}
+✔ mochi: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":27,"good":0,"miss":0,"extra":0,"combo":27,"total":27,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":4.44101700903432,"songTime":55.39497446410749}}
+✔ penguin: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":24,"good":0,"miss":0,"extra":0,"combo":24,"total":24,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":5.097600000047442,"songTime":57.608815084004846}}
 ✔ pingpong: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":49,"good":0,"miss":0,"extra":0,"combo":49,"total":49,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"47.6","normalSec":"49.7"}}
-✔ echo: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":3.4343567611350156,"songTime":62.50877918532305}}
+✔ echo: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":5.298556496751372,"songTime":62.50994851518783}}
 ✔ golf: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":36,"good":0,"miss":0,"extra":0,"combo":36,"total":36,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"46.0","normalSec":"51.4"}}
 ✔ mochi: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":36,"good":0,"miss":0,"extra":0,"combo":36,"total":36,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"47.6","normalSec":"55.4"}}
 ✔ penguin: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":28,"good":0,"miss":0,"extra":0,"combo":28,"total":28,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"46.8","normalSec":"57.6"}}
 ✔ pingpong: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":49,"miss":0,"extra":0,"combo":49,"total":49,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ pingpong: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ pingpong: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 pingpong errors: []
 ✔ golf: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":36,"miss":0,"extra":0,"combo":36,"total":36,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ golf: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ golf: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 golf errors: []
 ✔ echo: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":40,"good":0,"miss":0,"extra":0,"combo":40,"total":40,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"61.1","normalSec":"62.5"}}
 ✔ mochi: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":36,"miss":0,"extra":0,"combo":36,"total":36,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ mochi: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ mochi: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 ✔ penguin: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":28,"miss":0,"extra":0,"combo":28,"total":28,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ penguin: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ penguin: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 penguin errors: []
 ✔ echo: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":40,"miss":0,"extra":0,"combo":40,"total":40,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ echo: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ echo: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 echo errors: []
 ✔ mochi: 入力なし → 0点・全Miss  {"score":0,"rank":"もう一度！","perfect":0,"good":0,"miss":27,"extra":0,"combo":0,"total":27,"advice":["押し忘れが多めです。合図のあとの拍を心の中で数えてみよう"]}
-✔ mochi: 60msごとの連打 → 0点  {"score":0,"rank":"もう一度！","perfect":0,"good":6,"miss":21,"extra":711,"combo":1,"total":27,"advice":["少し早めに押す傾向があります（平均 119ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください","合図のないところで押しています。押すのは決まった拍だけ！"]}
-✔ mochi: 250msごとの連打 → 高得点にならない(<40)  {"score":0,"rank":"もう一度！","perfect":12,"good":10,"miss":5,"extra":157,"combo":2,"total":27,"advice":["少し早めに押す傾向があります（平均 20ms 早い）","合図のないところで押しています。押すのは決まった拍だけ！"]}
+✔ mochi: 60msごとの連打 → 0点  {"score":0,"rank":"もう一度！","perfect":0,"good":10,"miss":17,"extra":711,"combo":1,"total":27,"advice":["少し早めに押す傾向があります（平均 111ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください","合図のないところで押しています。押すのは決まった拍だけ！"]}
+✔ mochi: 250msごとの連打 → 高得点にならない(<40)  {"score":0,"rank":"もう一度！","perfect":11,"good":10,"miss":6,"extra":157,"combo":2,"total":27,"advice":["少し早めに押す傾向があります（平均 28ms 早い）","合図のないところで押しています。押すのは決まった拍だけ！"]}
 mochi errors: []
-✔ disco: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":4.45108647786685,"songTime":50.848997991967636}
+✔ disco: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":6.537690394132767,"songTime":50.85007350387933}
 ✔ disco: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":30,"good":0,"miss":0,"extra":0,"combo":30,"total":30,"advice":["タイミングがとても安定しています！"]}
-✔ pie: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":3.8373187977055467,"songTime":57.69468374376377}
+✔ pie: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":6.817433394231132,"songTime":57.696859110066676}
 ✔ pie: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":33,"good":0,"miss":0,"extra":0,"combo":33,"total":33,"advice":["タイミングがとても安定しています！"]}
-✔ rope: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":5.919180725528328,"songTime":60.01015005284466}
+✔ rope: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":6.46064100094168,"songTime":60.004920350408895}
 ✔ rope: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":48,"good":0,"miss":0,"extra":0,"combo":48,"total":48,"advice":["タイミングがとても安定しています！"]}
-✔ karaoke: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":4.991871243033685,"songTime":62.51252375186947}
+✔ karaoke: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":7.057430726746028,"songTime":62.51421174858542}
 ✔ karaoke: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":30,"good":0,"miss":0,"extra":0,"combo":30,"total":30,"advice":["タイミングがとても安定しています！"]}
-✔ kime: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":5.183065606314097,"songTime":65.45947571903073}
+✔ kime: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":4.524475044612952,"songTime":65.45981676693741}
 ✔ kime: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":20,"good":0,"miss":0,"extra":0,"combo":20,"total":20,"advice":["タイミングがとても安定しています！"]}
 ✔ disco: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":30,"good":0,"miss":0,"extra":0,"combo":30,"total":30,"advice":["タイミングがとても安定しています！"]}
 ✔ pie: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":33,"good":0,"miss":0,"extra":0,"combo":33,"total":33,"advice":["タイミングがとても安定しています！"]}
@@ -66,40 +66,40 @@ mochi errors: []
 ✔ rope: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":48,"miss":0,"extra":0,"combo":48,"total":48,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
 ✔ karaoke: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":30,"miss":0,"extra":0,"combo":30,"total":30,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
 ✔ kime: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":20,"miss":0,"extra":0,"combo":20,"total":20,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ disco: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":30,"good":0,"miss":0,"extra":0,"combo":30,"total":30,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":6.030367146571236,"songTime":50.8549631948585}}
-✔ pie: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":33,"good":0,"miss":0,"extra":0,"combo":33,"total":33,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":4.371713746713857,"songTime":57.898644201747516}}
-✔ rope: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":48,"good":0,"miss":0,"extra":0,"combo":48,"total":48,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":7.065100676208358,"songTime":60.002240384595154}}
-✔ karaoke: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":30,"good":0,"miss":0,"extra":0,"combo":30,"total":30,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":3.9709554086237997,"songTime":62.51680051378497}}
+✔ disco: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":30,"good":0,"miss":0,"extra":0,"combo":30,"total":30,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":5.864399999901959,"songTime":50.86287221069827}}
+✔ pie: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":33,"good":0,"miss":0,"extra":0,"combo":33,"total":33,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":6.5530588445945614,"songTime":57.848326784281966}}
+✔ rope: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":48,"good":0,"miss":0,"extra":0,"combo":48,"total":48,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":6.845399999957591,"songTime":60.01373278823996}}
+✔ karaoke: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":30,"good":0,"miss":0,"extra":0,"combo":30,"total":30,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":6.9561934848880735,"songTime":62.50796510916422}}
 ✔ disco: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":39,"good":0,"miss":0,"extra":0,"combo":39,"total":39,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"46.9","normalSec":"50.8"}}
-✔ kime: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":20,"good":0,"miss":0,"extra":0,"combo":20,"total":20,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":2.664900000050374,"songTime":65.46523350710373}}
+✔ kime: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":20,"good":0,"miss":0,"extra":0,"combo":20,"total":20,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":7.093633856829484,"songTime":65.48155482150614}}
 ✔ pie: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":36,"good":0,"miss":0,"extra":0,"combo":36,"total":36,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"47.6","normalSec":"57.7"}}
 ✔ rope: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":53,"good":0,"miss":0,"extra":0,"combo":53,"total":53,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"49.3","normalSec":"60.0"}}
 ✔ disco: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":39,"miss":0,"extra":0,"combo":39,"total":39,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ disco: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ disco: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 disco errors: []
 ✔ karaoke: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":43,"good":0,"miss":0,"extra":0,"combo":43,"total":43,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"52.1","normalSec":"62.5"}}
 ✔ kime: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":23,"good":0,"miss":0,"extra":0,"combo":23,"total":23,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"48.0","normalSec":"65.5"}}
 ✔ pie: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":36,"miss":0,"extra":0,"combo":36,"total":36,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ pie: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ pie: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 pie errors: []
 ✔ rope: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":53,"miss":0,"extra":0,"combo":53,"total":53,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ rope: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ rope: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 rope errors: []
 ✔ karaoke: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":43,"miss":0,"extra":0,"combo":43,"total":43,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ karaoke: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ karaoke: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 karaoke errors: []
 ✔ kime: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":23,"miss":0,"extra":0,"combo":23,"total":23,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ kime: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ kime: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 kime errors: []
-✔ dj: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":4.0968602575508495,"songTime":46.88608992754365}
+✔ dj: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":6.363000000085162,"songTime":46.87931377535946}
 ✔ dj: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"]}
-✔ shateki: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.4259422879401304,"songTime":53.58057231032434}
+✔ shateki: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":6.998399999999849,"songTime":53.57526898474001}
 ✔ shateki: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"]}
-✔ hanabi: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":4.128793038396306,"songTime":60.00545529206887}
+✔ hanabi: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":5.5139063137037425,"songTime":60.00974199009629}
 ✔ hanabi: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":33,"good":0,"miss":0,"extra":0,"combo":33,"total":33,"advice":["タイミングがとても安定しています！"]}
-✔ robot: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":2.720911783511082,"songTime":62.23358986930912}
+✔ robot: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":6.522303463957213,"songTime":62.23322660699864}
 ✔ robot: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":36,"good":0,"miss":0,"extra":0,"combo":36,"total":36,"advice":["タイミングがとても安定しています！"]}
-✔ piano: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":3.8338406389569757,"songTime":62.50518623676202}
+✔ piano: 曲の最後まで時計の誤差が小さい（<8ms）・予約遅れなし  {"lateEvents":0,"maxClockErrMs":3.8326487992224045,"songTime":62.507241626129755}
 ✔ piano: 全部ぴったり → 100点  {"score":100,"rank":"大成功！","perfect":20,"good":0,"miss":0,"extra":0,"combo":20,"total":20,"advice":["タイミングがとても安定しています！"]}
 ✔ dj: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"]}
 ✔ shateki: +35ms遅れ＆補正+35ms → 全Perfect  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"]}
@@ -110,38 +110,38 @@ kime errors: []
 ✔ shateki: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":32,"miss":0,"extra":0,"combo":32,"total":32,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
 ✔ hanabi: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":33,"miss":0,"extra":0,"combo":33,"total":33,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
 ✔ robot: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":36,"miss":0,"extra":0,"combo":36,"total":36,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
+✔ dj: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":2.7686576518646255,"songTime":46.891264079963435}}
 ✔ piano: +75ms遅れ（補正なし） → 全Good・遅れの助言  {"score":60,"rank":"クリア！","perfect":0,"good":20,"miss":0,"extra":0,"combo":20,"total":20,"advice":["少し遅れて押す傾向があります（平均 75ms 遅い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ dj: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":5.702966153949829,"songTime":46.88010326186483}}
-✔ shateki: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":3.349319030503617,"songTime":53.580635038187154}}
-✔ hanabi: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":33,"good":0,"miss":0,"extra":0,"combo":33,"total":33,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":4.838000022647448,"songTime":60.00297787531653}}
+✔ shateki: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":32,"good":0,"miss":0,"extra":0,"combo":32,"total":32,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":3.2954458678280396,"songTime":53.5782578164731}}
+✔ hanabi: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":33,"good":0,"miss":0,"extra":0,"combo":33,"total":33,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":5.510872171233583,"songTime":60.01648588403387}}
 ✔ dj: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":35,"good":0,"miss":0,"extra":0,"combo":35,"total":35,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"51.2","normalSec":"46.9"}}
-✔ robot: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":36,"good":0,"miss":0,"extra":0,"combo":36,"total":36,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":4.44457209746707,"songTime":62.225361140190444}}
-✔ piano: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":20,"good":0,"miss":0,"extra":0,"combo":20,"total":20,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":6.3707731126094735,"songTime":62.517053368224936}}
+✔ robot: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":36,"good":0,"miss":0,"extra":0,"combo":36,"total":36,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":5.792324607133192,"songTime":62.226774631172475}}
+✔ piano: 主スレッドが定期的に250ms止まっても判定がずれない・時計の誤差<10ms  {"score":100,"rank":"大成功！","perfect":20,"good":0,"miss":0,"extra":0,"combo":20,"total":20,"advice":["タイミングがとても安定しています！"],"stats":{"lateEvents":0,"maxClockErrMs":4.904319094680254,"songTime":62.515705176370005}}
 ✔ shateki: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":36,"good":0,"miss":0,"extra":0,"combo":36,"total":36,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"46.5","normalSec":"53.6"}}
 ✔ hanabi: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":55,"good":0,"miss":0,"extra":0,"combo":55,"total":55,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"49.3","normalSec":"60.0"}}
 ✔ dj: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":35,"miss":0,"extra":0,"combo":35,"total":35,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ dj: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ dj: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 dj errors: []
-✔ piano: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":20,"good":0,"miss":0,"extra":0,"combo":20,"total":20,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"51.1","normalSec":"62.5"}}
 ✔ robot: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":48,"good":0,"miss":0,"extra":0,"combo":48,"total":48,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"54.0","normalSec":"62.2"}}
+✔ piano: ハード版 全部ぴったり → 100点・譜面の検証OK  {"hp":{"score":100,"rank":"大成功！","perfect":20,"good":0,"miss":0,"extra":0,"combo":20,"total":20,"advice":["タイミングがとても安定しています！"]},"hproblems":{"hard":[],"normal":[],"hardSec":"51.1","normalSec":"62.5"}}
 ✔ shateki: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":36,"miss":0,"extra":0,"combo":36,"total":36,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ shateki: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ shateki: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 shateki errors: []
 ✔ hanabi: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":55,"miss":0,"extra":0,"combo":55,"total":55,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ hanabi: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ hanabi: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 hanabi errors: []
 ✔ piano: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":20,"miss":0,"extra":0,"combo":20,"total":20,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ piano: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ piano: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 piano errors: []
 ✔ robot: ハード版 −75ms早め → 全Good・早めの助言  {"score":60,"rank":"クリア！","perfect":0,"good":48,"miss":0,"extra":0,"combo":48,"total":48,"advice":["少し早めに押す傾向があります（平均 75ms 早い）","毎回同じ方向にずれる場合は、設定の「タイミング調整」を試してください"]}
-✔ robot: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true}
+✔ robot: ハードの記録は別に保存  {"best":100,"cleared":true,"plays":6,"practiced":false,"hardBest":100,"hardCleared":true,"endlessBest":null,"endlessLevel":null,"endlessPlays":0}
 robot errors: []
 ✔ 開始ボタンの連打（3回同時）→ 動くセッションは1つ  running=1
 ✔ 再挑戦を6回連続 → 入力は1回につき1件・旧セッションの音は停止  {"sources":10,"logAdded":1,"connected":true}
 ✔ Spaceキーの長押し → 入力は1回だけ  1
 ✔ 画面タップ（タッチ） → 入力は1回だけ（click等と重複しない）  1
 ✔ 一時停止ボタン → 判定に入らず一時停止
-✔ バックグラウンドで中断 → 再開で最初（カウント）から  {"intr":{"overlay":true,"session":false,"title":"中断しました"},"resumed":{"t":0.09027295270970193,"running":true}}
+✔ バックグラウンドで中断 → 再開で最初（カウント）から  {"intr":{"overlay":true,"session":false,"title":"中断しました"},"resumed":{"t":0.08838102839381179,"running":true}}
 retry errors: [ 'Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID' ]
 ✔ mochi: 練習を最後まで（1回目は失敗）→ 練習完了・保存  {"practiced":true,"title":"練習クリア！"}
 mochi practice errors: []
@@ -173,8 +173,18 @@ dj practice errors: []
 piano practice errors: []
 ✔ hanabi: 練習を最後まで（1回目は失敗）→ 練習完了・保存  {"practiced":true,"title":"練習クリア！"}
 hanabi practice errors: []
+✔ エンドレス：選択画面から開始 → エンドレスのセッション  {"sel0":"endless","mode":"endless"}
+✔ エンドレス：レベルごとにテンポが上がる（Lv1=96 → Lv3=108 BPM）  {"bpm1":96,"bpm3":107.99999999999969}
+✔ エンドレス：レベルアップ毎にチャンスボール（Lv2・Lv3は成功、Lv4は見送り）  {"chance":{"hit":2,"total":3},"judged":["perfect","perfect","miss"],"res":"2/3"}
+✔ エンドレス：得点＝Perfect100×レベル倍率×コンボ倍率（チャンスは2倍）  {"score":6970,"expected":6970,"res":6970}
+✔ エンドレス：ミス3回でゲームオーバー（チャンスの見送りはライフ減なし）→ レベル4到達  {"lives":0,"miss":4,"reached":4,"rank":"レベル4 到達"}
+✔ エンドレス：テンポが変わっても予約遅れなし・時計の誤差<8ms  {"late":0,"clockErrMs":3.610297036150234}
+✔ エンドレス：ハイスコアと最高レベルを保存  {"best":null,"cleared":false,"plays":1,"practiced":false,"hardBest":null,"hardCleared":false,"endlessBest":6970,"endlessLevel":4,"endlessPlays":1}
+✔ エンドレス：レベル25（BPM 240）まで譜面の検証OK・全パターンが登場  {"problems":[],"level":26,"bpm25":240,"used":["count","rest","N1","N","lvup","chance","L","S","SN","O","SS","LS","X1","X2"]}
+✔ エンドレス：結果画面の「もう一度」→ エンドレスで再開  endless
+endless errors: []
 ✔ 声の合図：母音の頭が拍ちょうど（予約時刻＝拍の時刻−母音までの長さ）  {"cueTime":4.067796610169491,"eventTime":4.0177966101694915,"onset":0.05}
 ✔ 再読み込み後も設定と記録が残る  {"off":42,"best":77}
 
-146/146 passed
-EXIT 0
+155/155 passed
+exit=0
