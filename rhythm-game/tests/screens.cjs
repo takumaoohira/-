@@ -67,7 +67,17 @@ const SHOTS = [
   ['shateki', 'hit', 1, 'perfect', 0.15],
   ['shateki', 'balloons', 'cue:balloon', null, 1.6],
   ['shateki', 'oji', 'cue:oji', null, 0.8],
-  ['shateki', 'finale', -1, 'fin', 1.0]
+  ['shateki', 'finale', -1, 'fin', 1.0],
+  ['dj', 'build', 'cue:build', null, 3.2],
+  ['dj', 'drop', 0, 'perfect', 0.3],
+  ['dj', 'stab', 2, 'perfect', 0.1],
+  ['piano', 'run', 'cue:note', null, 2.2],
+  ['piano', 'resolve', 1, 'perfect', 0.2],
+  ['piano', 'eighth', 'cue:note', null, 0.1],
+  ['hanabi', 'rising', 0, null, -0.6],
+  ['hanabi', 'burst', 1, 'perfect', 0.35],
+  ['hanabi', 'triple', 'cue:launch', null, 0.4],
+  ['hanabi', 'finale', -1, 'fin', 0.7]
 ];
 
 (async () => {

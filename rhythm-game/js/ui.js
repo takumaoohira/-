@@ -1,7 +1,7 @@
 /* 画面遷移・入力の受付・保存（タイトル → 選択 → 練習／本編 → 結果） */
 RG.App = (function () {
   const $ = id => document.getElementById(id);
-  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'robot', 'shateki', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
+  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'dj', 'piano', 'hanabi', 'robot', 'shateki', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
   const DESIGN_W = 360, DESIGN_H = 540;
 
   const App = {
@@ -66,7 +66,7 @@ RG.App = (function () {
     const groups = [
       { title: 'リズムあそび', sub: 'まずはここから', key: 'basic' },
       { title: 'ダンス', sub: '先生の声で踊る・跳ぶ', key: 'dance' },
-      { title: '音ハメ', sub: '曲のキメ・歌のすきまにピタッと', key: 'beat' },
+      { title: '音ハメ', sub: 'ドロップ・最後の一音・花火をピタッと', key: 'beat' },
       { title: 'アクション', sub: 'ロボ組み立て・射的', key: 'action' },
       { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', key: 'sport' },
       { title: 'お笑い道場', sub: '3連符とフェイント', key: 'fun' }

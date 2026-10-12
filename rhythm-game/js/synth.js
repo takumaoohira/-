@@ -367,6 +367,40 @@ RG.Synth = (function () {
     drill(sr) { const a = buf(sr, 0.18); let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr; ph += TAU * (900 + 900 * t / 0.18) / sr; a[i] = 0.25 * (Math.sin(ph) > 0 ? 1 : -1) * (0.6 + 0.4 * Math.sin(TAU * 60 * t)) * Math.min(1, t / 0.01) * (1 - t / 0.18); } let y = 0; const c = coef(3000, sr); for (let i = 0; i < a.length; i++) { y += c * (a[i] - y); a[i] = y; } tone(a, sr, 2600, 0.15, 30, 0.13); return fadeEdges(a, sr); },
     cork(sr) { const a = buf(sr, 0.2); noise(a, sr, 0.6, 60, 4000, 300, 0.002); sweep(a, sr, 900, 300, 40, 0.35, 25); return fadeEdges(a, sr); },
     pop(sr) { const a = buf(sr, 0.15); noise(a, sr, 0.8, 45, 7000, 600); tone(a, sr, 400, 0.2, 40); return fadeEdges(a, sr); },
+    piano(sr, n, d) { // ピアノ（倍音ごとに減衰の速さを変える＋ハンマーの音）
+      const f = freq(n), dur = d || 1.5, a = buf(sr, dur + 0.4);
+      const H = [[1, 1, 1.6], [2, 0.5, 2.4], [3, 0.28, 3.5], [4, 0.16, 4.8], [5, 0.1, 6.5], [6, 0.06, 8]];
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr; let v = 0;
+        for (const [h, g, k] of H) v += g * Math.sin(TAU * f * h * (1 + 0.0004 * h * h) * t) * Math.exp(-t * k * (f > 600 ? 1.6 : 1));
+        const rel = t > dur ? Math.max(0, 1 - (t - dur) / 0.4) : 1;
+        a[i] = 0.26 * v * Math.min(1, t / 0.002) * rel;
+      }
+      noise(a, sr, 0.08, 120, 3000, 400);
+      return fadeEdges(a, sr, 1, 30);
+    },
+    fwhistle(sr, n, d) { // 花火の「ヒュ〜」：長さ d 秒で音が上がりきる
+      const dur = d || 1, a = buf(sr, dur + 0.02); let ph = 0;
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr, u = Math.min(1, t / dur), f = 700 + 1900 * u * u + 40 * Math.sin(TAU * 9 * t);
+        ph += TAU * f / sr;
+        a[i] = 0.22 * Math.sin(ph) * Math.min(1, t / 0.03) * (0.5 + 0.5 * u) * (t > dur - 0.02 ? Math.max(0, (dur - t) / 0.02 + 0.0) : 1);
+      }
+      noise(a, sr, 0.05, 1, 9000, 3000, 0.1);
+      return fadeEdges(a, sr);
+    },
+    firework(sr) { // 「ドーン」＋パチパチ
+      const a = buf(sr, 1.6);
+      sweep(a, sr, 120, 40, 8, 0.8, 4); noise(a, sr, 0.55, 9, 1200, 0, 0.003);
+      for (let k = 0; k < 40; k++) { const st = 0.25 + (k * 0.6180339 % 1) * 1.1; noise(a, sr, 0.18 * (1 - st / 1.5), 120, 9000, 2500, 0, st); }
+      return fadeEdges(a, sr, 1, 60);
+    },
+    bassdrop(sr) { // EDMのドロップ（太い低音＋シンバル的なノイズ）
+      const a = buf(sr, 1.2);
+      sweep(a, sr, 90, 45, 3, 0.9, 2.4); noise(a, sr, 0.3, 3.5, 12000, 3000, 0.002);
+      let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr; ph += TAU * 55 / sr; a[i] += 0.25 * Math.tanh(3 * Math.sin(ph)) * Math.exp(-t * 2.5); }
+      return fadeEdges(a, sr, 1, 60);
+    },
     stab(sr, ns, d) { // オーケストラ・ヒット風（キメ用）
       const notes = ns.split(',').map(freq), dur = d || 0.35, a = buf(sr, dur + 0.25);
       notes.forEach(f => [0.996, 1.004].forEach(dt => {

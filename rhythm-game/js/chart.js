@@ -80,7 +80,8 @@ RG.Chart = class Chart {
       this.cues.push(cue);
       inst.cues.push(cue);
       // 合図ごとに音を指定できる（歌詞など）。なければゲーム共通の cueSounds
-      const snd = c.snd || (pat === Chart.COUNT ? Chart.COUNT_SOUNDS : this.game.cueSounds)[c.type];
+      let snd = c.snd || (pat === Chart.COUNT ? Chart.COUNT_SOUNDS : this.game.cueSounds)[c.type];
+      if (typeof snd === 'function') snd = snd(cue, this); // 例：花火の「ヒュ〜」はテンポで長さが変わる
       if (snd) (Array.isArray(snd) ? snd : [snd]).forEach(s => {
         const o = typeof s === 'string' ? { id: s } : s;
         this.queue(beat + (o.d || 0), o.id, o.bus || 'cue', o.gain || 1, o);
