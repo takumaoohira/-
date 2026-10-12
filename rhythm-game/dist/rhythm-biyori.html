@@ -219,7 +219,7 @@ details.dev summary { font-weight: 800; cursor: pointer; }
     <div class="title-wrap">
       <canvas id="title-canvas" class="title-canvas" aria-hidden="true"></canvas>
       <h1 class="logo">リズム<span>びより</span></h1>
-      <p class="tagline">FUNKY RHYTHM GAMES ×12</p>
+      <p class="tagline">FUNKY RHYTHM GAMES ×15</p>
       <p class="tagline-jp">聴いて、数えて、ノって、タップ。</p>
       <button id="btn-start" class="btn big primary">タップしてはじめる</button>
       <p class="note">音が出ます。音量にご注意ください。<br>イヤホン推奨（Bluetoothは遅れることがあります）</p>
@@ -475,7 +475,7 @@ RG.U = (function () {
 /* 端末内保存（localStorage）。使えない環境でもゲームは動くようにする */
 RG.Storage = (function () {
   const KEY = 'rhythm-biyori-save-v1';
-  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie', 'robot', 'shateki'];
+  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie', 'robot', 'shateki', 'dj', 'piano', 'hanabi'];
 
   function defaults() {
     const records = {};
@@ -906,6 +906,40 @@ RG.Synth = (function () {
     drill(sr) { const a = buf(sr, 0.18); let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr; ph += TAU * (900 + 900 * t / 0.18) / sr; a[i] = 0.25 * (Math.sin(ph) > 0 ? 1 : -1) * (0.6 + 0.4 * Math.sin(TAU * 60 * t)) * Math.min(1, t / 0.01) * (1 - t / 0.18); } let y = 0; const c = coef(3000, sr); for (let i = 0; i < a.length; i++) { y += c * (a[i] - y); a[i] = y; } tone(a, sr, 2600, 0.15, 30, 0.13); return fadeEdges(a, sr); },
     cork(sr) { const a = buf(sr, 0.2); noise(a, sr, 0.6, 60, 4000, 300, 0.002); sweep(a, sr, 900, 300, 40, 0.35, 25); return fadeEdges(a, sr); },
     pop(sr) { const a = buf(sr, 0.15); noise(a, sr, 0.8, 45, 7000, 600); tone(a, sr, 400, 0.2, 40); return fadeEdges(a, sr); },
+    piano(sr, n, d) { // ピアノ（倍音ごとに減衰の速さを変える＋ハンマーの音）
+      const f = freq(n), dur = d || 1.5, a = buf(sr, dur + 0.4);
+      const H = [[1, 1, 1.6], [2, 0.5, 2.4], [3, 0.28, 3.5], [4, 0.16, 4.8], [5, 0.1, 6.5], [6, 0.06, 8]];
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr; let v = 0;
+        for (const [h, g, k] of H) v += g * Math.sin(TAU * f * h * (1 + 0.0004 * h * h) * t) * Math.exp(-t * k * (f > 600 ? 1.6 : 1));
+        const rel = t > dur ? Math.max(0, 1 - (t - dur) / 0.4) : 1;
+        a[i] = 0.26 * v * Math.min(1, t / 0.002) * rel;
+      }
+      noise(a, sr, 0.08, 120, 3000, 400);
+      return fadeEdges(a, sr, 1, 30);
+    },
+    fwhistle(sr, n, d) { // 花火の「ヒュ〜」：長さ d 秒で音が上がりきる
+      const dur = d || 1, a = buf(sr, dur + 0.02); let ph = 0;
+      for (let i = 0; i < a.length; i++) {
+        const t = i / sr, u = Math.min(1, t / dur), f = 700 + 1900 * u * u + 40 * Math.sin(TAU * 9 * t);
+        ph += TAU * f / sr;
+        a[i] = 0.22 * Math.sin(ph) * Math.min(1, t / 0.03) * (0.5 + 0.5 * u) * (t > dur - 0.02 ? Math.max(0, (dur - t) / 0.02 + 0.0) : 1);
+      }
+      noise(a, sr, 0.05, 1, 9000, 3000, 0.1);
+      return fadeEdges(a, sr);
+    },
+    firework(sr) { // 「ドーン」＋パチパチ
+      const a = buf(sr, 1.6);
+      sweep(a, sr, 120, 40, 8, 0.8, 4); noise(a, sr, 0.55, 9, 1200, 0, 0.003);
+      for (let k = 0; k < 40; k++) { const st = 0.25 + (k * 0.6180339 % 1) * 1.1; noise(a, sr, 0.18 * (1 - st / 1.5), 120, 9000, 2500, 0, st); }
+      return fadeEdges(a, sr, 1, 60);
+    },
+    bassdrop(sr) { // EDMのドロップ（太い低音＋シンバル的なノイズ）
+      const a = buf(sr, 1.2);
+      sweep(a, sr, 90, 45, 3, 0.9, 2.4); noise(a, sr, 0.3, 3.5, 12000, 3000, 0.002);
+      let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr; ph += TAU * 55 / sr; a[i] += 0.25 * Math.tanh(3 * Math.sin(ph)) * Math.exp(-t * 2.5); }
+      return fadeEdges(a, sr, 1, 60);
+    },
     stab(sr, ns, d) { // オーケストラ・ヒット風（キメ用）
       const notes = ns.split(',').map(freq), dur = d || 0.35, a = buf(sr, dur + 0.25);
       notes.forEach(f => [0.996, 1.004].forEach(dt => {
@@ -1447,6 +1481,10 @@ RG.Band = (function () {
       case 'folk':
         R('x.......x.......', 'kick2', 0.3); R('..o...o...o...o.', 'shaker', 0.5, 0.3);
         break;
+      case 'edm': // 4つ打ち＋裏のオープンハイハット
+        R('x...x...x...x...', 'kick2', 0.6); R('....x.......x...', 'clap', 0.42, 0, 0.2);
+        [0.5, 1.5, 2.5, 3.5].forEach(b => at(b, 'hh2:o:0.2', 0.2, 0.25)); R('xoxoxoxoxoxoxoxo', 'hh2', 0.1, -0.25);
+        break;
       case 'electro': // 4つ打ちのエレクトロ
         R('x...x...x...x...', 'kick2', 0.55); R('....x.......x...', 'clap', 0.4, 0, 0.15);
         R('oxoxoxoxoxoxoxox', 'hh2', 0.14, 0.3); [0.5, 1.5, 2.5, 3.5].forEach(b => at(b, 'hh2:o:0.15', 0.14, -0.2));
@@ -1481,10 +1519,11 @@ RG.Band = (function () {
     polka: [[0, 0, 0.35], [2, 7, 0.35]],
     folk: [[0, 0, 1.0], [2, 7, 0.8]],
     pop: [[0, 0, 0.4], [1.5, 0, 0.2], [2, 7, 0.4], [3.5, 0, 0.2]],
+    edm: [[0.5, 0, 0.18], [1.5, 0, 0.18], [2.5, 0, 0.18], [3.5, 12, 0.18]],
     electro: [[0, 0, 0.15], [0.5, 12, 0.12], [1, 0, 0.15], [1.5, 7, 0.12], [2, 0, 0.15], [2.5, 12, 0.12], [3, 'b7', 0.15], [3.5, 7, 0.12]],
     matsuri: [[0, 0, 0.6], [2, 0, 0.4], [3, 7, 0.4]]
   };
-  const BASS_INST = { funk: 'sbass', disco: 'synb', hiphop: 'synb', lofi: 'bass', shuffle: 'bass', ballad: 'bass', polka: 'bass', folk: 'bass', pop: 'sbass', electro: 'synb', matsuri: 'bass' };
+  const BASS_INST = { funk: 'sbass', disco: 'synb', hiphop: 'synb', lofi: 'bass', shuffle: 'bass', ballad: 'bass', polka: 'bass', folk: 'bass', pop: 'sbass', electro: 'synb', matsuri: 'bass', edm: 'synb' };
   function bass(style, ch, g) {
     const inst = BASS_INST[style] || 'bass';
     return (BASS[style] || BASS.pop).map(([b, s, d]) => {
@@ -1522,6 +1561,9 @@ RG.Band = (function () {
         break;
       case 'folk':
         chordAt(0, 'gtr', 1.6, 0.34, -0.35, 0.15); chordAt(2, 'gtr', 1.2, 0.24, -0.35, 0.15); chordAt(3, 'gtr', 0.6, 0.14, -0.35, 0.15);
+        break;
+      case 'edm': // 裏拍で刻むスーパーソウ（ポンピング風）
+        [0.5, 1.5, 2.5, 3.5].forEach(b => ev.push({ b, id: `str:${ch.notes.join(',')}:0.2`, gain: 0.28 * g, pan: 0, rev: 0.2 }));
         break;
       case 'electro':
         [0.5, 1.75, 2.5, 3.75].forEach(b => chordAt(b, 'lead', 0.12, 0.07, 0.3, 0.2, top3));
@@ -1656,7 +1698,8 @@ RG.Chart = class Chart {
       this.cues.push(cue);
       inst.cues.push(cue);
       // 合図ごとに音を指定できる（歌詞など）。なければゲーム共通の cueSounds
-      const snd = c.snd || (pat === Chart.COUNT ? Chart.COUNT_SOUNDS : this.game.cueSounds)[c.type];
+      let snd = c.snd || (pat === Chart.COUNT ? Chart.COUNT_SOUNDS : this.game.cueSounds)[c.type];
+      if (typeof snd === 'function') snd = snd(cue, this); // 例：花火の「ヒュ〜」はテンポで長さが変わる
       if (snd) (Array.isArray(snd) ? snd : [snd]).forEach(s => {
         const o = typeof s === 'string' ? { id: s } : s;
         this.queue(beat + (o.d || 0), o.id, o.bus || 'cue', o.gain || 1, o);
@@ -5069,6 +5112,589 @@ RG.D = (function () {
 
 ;
 /*
+ * ミニゲーム⑬「フロア爆上げDJ」（音ハメ）
+ *   ビルドアップ（ゴーッと上がる音＋スネアの連打＋「スリー・ツー・ワン」）のあと、次の小節の頭でタップ → ドロップ！
+ *   DJのシンセ「ジャ・ジャ・ジャン」には、同じリズムで答える（コール＆レスポンス）。
+ *   ハードには「フェイク」：ビルドアップのあと「マダダヨ〜」で落とさない。押したら負け。
+ */
+(function () {
+  const { U, D } = RG;
+  const patterns = {
+    D: { len: 8, cues: [{ b: 0, type: 'build' }], inputs: [{ b: 4, type: 'drop' }] },
+    S: { len: 4, cues: [0, 0.5, 1.5].map(b => ({ b, type: 'call' })), inputs: [2, 2.5, 3.5].map(b => ({ b, type: 'stab' })) },
+    S2: { len: 4, cues: [0, 1, 1.5].map(b => ({ b, type: 'call' })), inputs: [2, 3, 3.5].map(b => ({ b, type: 'stab' })) },
+    F: { len: 8, cues: [{ b: 0, type: 'build' }, { b: 4, type: 'fake' }], inputs: [], activeAlways: true, active: [3.7, 7.6] },
+    G: { len: 4, cues: [], inputs: [] },
+    fin: { len: 4, end: true, cues: [{ b: 0, type: 'fin' }], fx: [{ b: 0, type: 'finale' }] }
+  };
+  const seq = (s, sec, first) => s.split(' ').map((p, i) => ({ p, sec, guide: i === 0 ? first : null }));
+  const main = [
+    { p: 'count', sec: 'count', guide: 'フロア爆上げDJ、スタート！' },
+    { p: 'G', sec: 'I', guide: '「スリー・ツー・ワン」の次で、ドロップ！' },
+    ...seq('D G S S G S', 'A'),
+    ...seq('D S2 S S2 D', 'B', 'ジャ・ジャ・ジャンには同じリズムで答える'),
+    ...seq('S S2 D S S2 D', 'C', 'フロア最高潮！'),
+    { p: 'fin', sec: 'end', guide: 'オールナイト！' }
+  ];
+  const hard = {
+    bpm: 136,
+    main: [
+      { p: 'count', sec: 'count', guide: 'ハード！ 朝までノンストップ' },
+      { p: 'G', sec: 'I', guide: '「マダダヨ〜」はフェイク。落とすな！' },
+      ...seq('D S S2 F S', 'A'),
+      ...seq('S2 S D F S2 S', 'B', 'フェイクに注意！'),
+      ...seq('D S2 S F D S2 D', 'C', 'ラスト！'),
+      { p: 'fin', sec: 'end', guide: 'オールナイト！' }
+    ]
+  };
+  const lessons = [
+    { p: 'D', title: 'ドロップ', hint: 'スリー・ツー・ワン → 次の頭でドロップ' },
+    { p: 'S', title: 'ジャ・ジャ・ジャン', hint: '同じリズムで答える（頭・裏・2拍目の裏）' },
+    { p: 'S2', title: 'ジャン・ジャ・ジャン', hint: '頭・2拍目・その裏' },
+    { p: 'F', title: 'フェイク（ハード用）', hint: '「マダダヨ〜」→ 押さない' }
+  ];
+
+  const PROG = { A: ['Fm9', 'C#maj7', 'G#maj7', 'D#9'], B: ['C#maj7', 'D#9', 'Fm9', 'Cm7'], C: ['Fm9', 'D#9', 'C#maj7', 'Cm7'], P: ['Fm9', 'C#maj7'], I: ['D#9'], count: ['Fm9'], end: ['Fm9'] };
+  function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
+  function music(info, chart) {
+    const sec = info.sec, spb = chart.spb;
+    if (sec === 'count') return [0, 1, 2, 3].map(b => ({ b, id: 'kick2', gain: 0.45 }));
+    if (sec === 'end') return RG.Band.ending('Fm9', 0.8).concat([{ b: 0, id: 'bassdrop', gain: 0.35 }]);
+    const ch = RG.Band.chord(info.chord);
+    // ビルドアップの小節：キックが抜けて、ストリングスがのびる
+    if ((info.p === 'D' || info.p === 'F') && info.pbar === 0) return [{ b: 0, id: 'kick2', gain: 0.5 }, { b: 0, id: `str:${ch.notes.join(',')}:${(spb * 4).toFixed(1)}`, gain: 0.35, rev: 0.4 }];
+    // フェイクのあとの小節は、ほぼ無音（「…」）
+    if (info.p === 'F' && info.pbar === 1) return [{ b: 0, id: 'hh2', gain: 0.1 }, { b: 2, id: 'hh2', gain: 0.1 }];
+    const ev = RG.Band.bar(info, chart, { style: 'edm', chord: info.chord, drums: 0.9, comp: 0.8, bass: 0.9, clearCues: true, pad: info.p === 'D' ? 0.25 : 0 });
+    return ev;
+  }
+  const stabOf = (chart, beat, up = 0) => { const bar = chart.barAt(beat), ch = RG.Band.chord((bar && bar.chord) || 'Fm9'); return `stab:${ch.notes.slice(0, 4).map(n => n.replace(/(-?\d)$/, d => +d + up)).join(',')}:0.25`; };
+  function hitSounds(tg, kind, chart) {
+    const s = tg.type === 'drop'
+      ? [{ id: 'bassdrop', gain: 1 }, { id: 'crash', gain: 0.6 }, { id: stabOf(chart, tg.beat), gain: 0.7 }, { id: 'voice:crowd:イェーイ！', gain: 0.55, bus: 'voice' }]
+      : [{ id: stabOf(chart, tg.beat, 1), gain: 0.75 }, { id: 'clap', gain: 0.35 }];
+    if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.3 });
+    return s;
+  }
+  function preload(chart) {
+    const ids = ['bassdrop', 'crash', 'clap', 'sparkle', 'scratch', 'voice:crowd:イェーイ！'];
+    Object.values(PROG).flat().forEach(c => { const ch = RG.Band.chord(c); [0, 1].forEach(up => ids.push(`stab:${ch.notes.slice(0, 4).map(n => n.replace(/(-?\d)$/, d => +d + up)).join(',')}:0.25`)); });
+    return ids;
+  }
+  const cueSounds = {
+    // ビルドアップ：上がっていくノイズ＋8分→16分のスネア＋DJのカウント
+    build: (cue, chart) => {
+      const s = [{ id: `rise:x:${(chart.spb * 4).toFixed(2)}`, gain: 1.0 }];
+      [0, 0.5, 1, 1.5, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75].forEach((d, i) => s.push({ id: 'snare2', d, gain: 0.3 + i * 0.035 }));
+      s.push({ id: 'voice:boss:スリー', d: 1, gain: 1.4, say: 'スリー', who: 'dj', len: 0.8 }, { id: 'voice:boss:ツー', d: 2, gain: 1.4, say: 'ツー', who: 'dj', len: 0.8 }, { id: 'voice:boss:ワン！', d: 3, gain: 1.25, say: 'ワン！', who: 'dj', len: 0.8 });
+      return s;
+    },
+    call: (cue, chart) => ({ id: stabOf(chart, cue.beat), gain: 1.0 }),
+    fake: { id: 'voice:boss:マダダヨ〜', gain: 1.4, say: 'マダダヨ〜♪', who: 'dj', len: 1.6 },
+    fin: [{ id: 'voice:crowd:アンコール！', gain: 1, bus: 'voice', say: 'アンコール！', who: 'crowd', d: 1 }, { id: 'cheer', gain: 0.8 }]
+  };
+
+  // ---------------- 描画 ----------------
+  function djCat(g, x, y, beat, scratch, hype) {
+    const ink = '#1a0b26';
+    g.save(); g.translate(x, y - U.hop(beat) * (hype ? 8 : 3));
+    D.rrect(g, -26, 0, 52, 44, 12, '#2b2b3a', ink, 2.5);
+    D.circ(g, 0, -20, 24, '#f0b060', ink, 2.5);
+    g.beginPath(); g.moveTo(-20, -30); g.lineTo(-14, -52); g.lineTo(-4, -40); g.moveTo(20, -30); g.lineTo(14, -52); g.lineTo(4, -40); g.fillStyle = '#f0b060'; g.fill(); g.stroke();
+    g.beginPath(); g.arc(0, -22, 27, Math.PI * 1.1, Math.PI * 1.9); g.lineWidth = 5; g.strokeStyle = '#ff3d8b'; g.stroke();
+    D.rrect(g, -32, -30, 10, 18, 4, '#ff3d8b', ink, 2); D.rrect(g, 22, -30, 10, 18, 4, '#ff3d8b', ink, 2);
+    D.shades(g, 0, -22, 9, 6, '#1fc7b6');
+    D.mouth(g, 0, -8, 5, hype ? 'open' : 'smile');
+    const ang = scratch ? Math.sin(beat * 40) * 0.3 : hype ? -2.6 : 0.3;
+    g.save(); g.translate(22, 6); g.rotate(ang); D.line(g, 0, 0, 0, 26, ink, 9); D.line(g, 0, 0, 0, 26, '#2b2b3a', 6); D.circ(g, 0, 28, 6, '#f0b060', ink, 2); g.restore();
+    g.restore();
+  }
+
+  function createScene(session) {
+    const chart = session.chart;
+    const st = { lastTap: -99, lastMiss: -99, lastDrop: -99, lastStab: -99, lastExtra: -99, n: 0 };
+    return {
+      onJudge(tg, kind, vbeat, r) {
+        const at = r && r.demo ? tg.beat : vbeat;
+        if (kind === 'miss') st.lastMiss = at;
+        else if (tg.type === 'drop') st.lastDrop = at; else { st.lastStab = at; st.n++; }
+        if (r && r.demo) st.lastTap = tg.beat;
+      },
+      onTap(vbeat, r) { st.lastTap = vbeat; if (r && r.kind === 'extra') st.lastExtra = vbeat; },
+      render(g, beat, view) {
+        const finFx = chart.fx.find(x => x.type === 'finale');
+        const fin = finFx && beat >= finFx.beat ? beat - finFx.beat : null;
+        const combo = session.judge.s.combo;
+        const inst = chart.instanceAt(beat);
+        const build = inst && (inst.p === 'D' || inst.p === 'F') && beat - inst.start < 4 ? (beat - inst.start) / 4 : null;
+        const dd = beat - st.lastDrop, hype = (dd >= 0 && dd < 4) || fin !== null;
+        // クラブ：LEDの壁
+        g.fillStyle = '#0d0618'; g.fillRect(view.x0, view.y0, view.x1 - view.x0, view.y1 - view.y0);
+        const pulse = 1 - (((beat % 1) + 1) % 1);
+        for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+          const on = (r * 3 + c + Math.floor(beat)) % 5 === 0;
+          g.fillStyle = on ? `rgba(${hype ? '255,61,139' : '90,60,160'},${0.15 + 0.25 * pulse})` : 'rgba(60,40,90,.15)';
+          g.fillRect(12 + c * 38, 40 + r * 30, 32, 24);
+        }
+        // ドロップ後のレーザー（ゆっくり動く線。強い点滅はしない）
+        if (hype) {
+          g.save(); g.globalAlpha = 0.35 * (fin !== null ? 1 : 1 - U.prog(dd, 3, 4));
+          for (let k = 0; k < 6; k++) { const a = Math.sin(beat * 0.7 + k) * 0.7; D.line(g, 180, 210, 180 + Math.sin(a + k * 0.5 - 1.2) * 400, 210 + Math.cos(a + k * 0.5 - 1.2) * 400, ['#1fc7b6', '#ff3d8b', '#ffc23a'][k % 3], 3); }
+          g.restore();
+        }
+        // ビルドアップのメーター（満タンの瞬間がドロップ）
+        if (build !== null) {
+          D.rrect(g, 70, 70, 220, 22, 11, '#1a0b26', '#ffffff', 2.5);
+          D.rrect(g, 73, 73, Math.max(1, 214 * build), 16, 8, build > 0.75 ? '#ff3d8b' : '#ffc23a');
+          D.text(g, inst.p === 'F' && build > 0.95 ? '…？' : 'BUILD UP', 180, 58, 14, '#ffffff', '#1a0b26');
+        }
+        if (dd >= 0 && dd < 1.2) { const s = U.ease.outBack(U.prog(dd, 0, 0.25)); g.save(); g.translate(180, 140); g.scale(s, s); g.rotate(-0.06); D.text(g, 'DROP!!', 0, 0, 44, '#ffc23a', '#1a0b26'); g.restore(); }
+        // DJブース
+        let scratching = false; for (const c of chart.cues) { if (c.beat > beat) break; if (c.type === 'call' && beat - c.beat < 0.3) scratching = true; }
+        djCat(g, 180, 250, beat, scratching, hype);
+        D.rrect(g, 90, 290, 180, 50, 10, '#2a2a3a', '#000', 3);
+        [130, 230].forEach((x, i) => { D.ell(g, x, 304, 30, 9, '#111', '#555', 2); g.save(); g.translate(x, 304); g.scale(1, 0.3); g.rotate(beat * 3 + i); D.line(g, 0, 0, 26, 0, '#ff3d8b', 4); g.restore(); });
+        // イコライザー（答えのジャンでぴょんと伸びる）
+        const ds = beat - st.lastStab;
+        for (let k = 0; k < 10; k++) {
+          const h = 8 + 18 * Math.abs(Math.sin(beat * Math.PI + k)) * (hype ? 1.6 : 0.8) + (ds >= 0 && ds < 0.4 ? 30 * (1 - ds / 0.4) * (0.5 + 0.5 * Math.sin(k * 2)) : 0);
+          D.rrect(g, 100 + k * 16, 336 - h, 10, h, 3, k % 2 ? '#1fc7b6' : '#ff3d8b');
+        }
+        // フロアの観客
+        for (let i = 0; i < 10; i++) {
+          const x = 14 + i * 37, jump = hype ? Math.abs(Math.sin((beat + i * 0.13) * Math.PI)) * 20 : U.hop(beat + (i % 2) * 0.5) * 4;
+          const y = 470 - jump;
+          D.circ(g, x, y, 14, '#1d1030'); D.ell(g, x, y + 46, 20, 34, '#1d1030');
+          if (hype) { D.line(g, x - 10, y + 22, x - 18, y - 14, '#1d1030', 6); D.line(g, x + 10, y + 22, x + 18, y - 14, '#1d1030', 6); }
+        }
+        if (beat - st.lastMiss < 1.2 && beat - st.lastMiss >= 0) D.text(g, 'シーン…', 180, 400, 18, '#888', '#000');
+        if (beat - st.lastExtra < 1.2 && beat - st.lastExtra >= 0) D.text(g, 'ガクッ', 180, 400, 18, '#fff', '#000');
+        if (hype) for (let k = 0; k < 14; k++) { const x = (k * 53 + beat * 80) % 360, y = 380 + ((k * 37 + beat * 140) % 160); D.rrect(g, x, y - 200, 5, 9, 2, ['#ffc23a', '#ff3d8b', '#1fc7b6'][k % 3]); }
+        if (fin !== null) { const s = U.ease.outBack(U.prog(fin, 0, 0.4)); g.save(); g.translate(180, 140); g.scale(s, s); g.rotate(-0.06); D.text(g, 'オールナイト！', 0, 0, 32, '#ffc23a', '#1a0b26'); g.restore(); }
+        if (combo >= 10 && !hype) D.text(g, 'フロア温まってきた！', 180, 380, 13, '#1fc7b6', null, 'center', 800);
+      }
+    };
+  }
+
+  function drawIcon(g, w, h, t) {
+    g.fillStyle = '#0d0618'; g.fillRect(0, 0, w, h);
+    g.save(); g.scale(w / 100, h / 100);
+    for (let k = 0; k < 8; k++) { const hh = 6 + 18 * Math.abs(Math.sin(t * 4 + k)); D.rrect(g, 10 + k * 10, 92 - hh, 7, hh, 2, k % 2 ? '#1fc7b6' : '#ff3d8b'); }
+    g.save(); g.translate(50, 52); g.scale(0.6, 0.6); djCat(g, 0, 0, t * 2, false, Math.sin(t * 2) > 0); g.restore();
+    g.restore();
+  }
+
+  RG.Games = RG.Games || {};
+  RG.Games.dj = {
+    id: 'dj', title: 'フロア爆上げDJ', color: '#ff3d8b', group: 'beat', level: 3,
+    howto: '「スリー・ツー・ワン」の次の頭でドロップ！ DJの「ジャ・ジャ・ジャン」には同じリズムで答える',
+    bpm: 128, offset: 0,
+    patterns, main, hard, lessons, finalePattern: 'fin',
+    cueSounds, missSound: 'scratch',
+    anchors: { dj: { x: 214, y: 214 }, crowd: { x: 180, y: 420 } },
+    quips: {
+      miss: [{ id: 'voice:boss:オット！', say: 'おっと！', who: 'dj' }, { id: 'voice:crowd:エ〜？', say: 'え〜？', who: 'crowd' }],
+      extra: [{ id: 'voice:boss:マダダヨ', say: 'まだだよ', who: 'dj' }],
+      combo: [{ id: 'voice:crowd:フゥー！', say: 'フゥー！', who: 'crowd' }, { id: 'voice:boss:アゲテケ！', say: 'アゲてけ！', who: 'dj' }]
+    },
+    chordFor, music, hitSounds, preload, createScene, drawIcon
+  };
+})();
+
+;
+/*
+ * ミニゲーム⑭「しめの一音ピアノ」（音ハメ）
+ *   ピアノ猫が音階を上っていく。最後の「ド（主音）」を弾くのがきみの役目。
+ *   音階のリズムが続いた「次のマス」で弾くと、和音がきれいに解決する（ソ・シ・レ・ファ → ド・ミ・ソ）。
+ *     4分音符で3つ（ソ・ラ・シ）       → 1拍あと
+ *     8分音符で7つ（ド〜シ）            → 半拍あと
+ *     3連符で3つ（ソ・ラ・シ）          → 3連符の次（2拍目の頭）
+ *     付点で4つ（ファ・ソ・ラ・シ）（ハード）→ 付点の次（3拍目の頭）
+ */
+(function () {
+  const { U, D } = RG;
+  const KEYS = {
+    C: { scale: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4'], tonic: 'C5', V: 'G7', I: 'C' },
+    F: { scale: ['F4', 'G4', 'A4', 'A#4', 'C5', 'D5', 'E5'], tonic: 'F5', V: 'C7', I: 'F' },
+    G: { scale: ['G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F#5'], tonic: 'G5', V: 'D7', I: 'G' },
+    D: { scale: ['D4', 'E4', 'F#4', 'G4', 'A4', 'B4', 'C#5'], tonic: 'D5', V: 'A7', I: 'D' }
+  };
+  const down = n => n.replace(/(-?\d)$/, d => +d - 1);
+  const RUNS = {
+    Q: { at: [0, 1, 2], deg: [4, 5, 6], ans: 3 },
+    E: { at: [0, 0.5, 1, 1.5, 2, 2.5, 3], deg: [0, 1, 2, 3, 4, 5, 6], ans: 3.5 },
+    T: { at: [0, 2 / 3, 4 / 3], deg: [4, 5, 6], ans: 2 },
+    D: { at: [0, 0.75, 1.5, 2.25], deg: [3, 4, 5, 6], ans: 3 }
+  };
+  const patterns = {};
+  Object.entries(RUNS).forEach(([r, R]) => Object.entries(KEYS).forEach(([k, K]) => {
+    patterns[`${r}_${k}`] = {
+      len: 4, key: k, run: r,
+      cues: R.at.map((b, i) => ({
+        b, type: 'note', data: { note: K.scale[R.deg[i]], key: k },
+        snd: [{ id: `piano:${K.scale[R.deg[i]]}:0.7`, gain: 1.15, pan: 0.15 }].concat(i === 0 ? RG.Band.chord(K.V).notes.map(n => ({ id: `piano:${down(n)}:1.6`, gain: 0.5, pan: -0.1 })) : [])
+      })),
+      inputs: [{ b: R.ans, type: 'tonic', data: { key: k, note: K.tonic } }]
+    };
+  }));
+  patterns.fin = { len: 4, end: true, cues: [{ b: 0, type: 'fin' }], fx: [{ b: 0, type: 'finale' }] };
+
+  const seq = (s, sec, first) => s.split(' ').map((p, i) => ({ p, sec, guide: i === 0 ? first : null }));
+  const main = [
+    { p: 'count', sec: 'count', guide: 'しめの一音ピアノ、開演です' },
+    { p: 'rest', sec: 'I', guide: 'ソ・ラ・シ… の次に「ド」！（1拍あと）' },
+    ...seq('Q_C Q_F Q_G Q_C Q_D Q_C', 'A'),
+    { p: 'rest', sec: 'I', guide: '速い8分の音階は、半拍あとに「ド」' },
+    ...seq('E_C Q_F E_G E_D Q_C E_F', 'B'),
+    { p: 'rest', sec: 'I', guide: '3連符は、3連符の次のマスで' },
+    ...seq('T_C E_F T_G Q_D T_F E_C T_G E_C', 'C'),
+    { p: 'fin', sec: 'end', guide: 'ブラボー！' }
+  ];
+  const hard = {
+    bpm: 108,
+    main: [
+      { p: 'count', sec: 'count', guide: 'ハード！ アンコール・リサイタル' },
+      { p: 'rest', sec: 'I', guide: '付点の音階（タッ・タ・タッ）も来るよ' },
+      ...seq('Q_C E_F T_G D_D E_C T_F', 'A'),
+      ...seq('D_G E_D T_C D_F Q_G E_C', 'B', '転調だらけ！'),
+      ...seq('T_D D_C E_G T_F D_D E_C T_G D_C', 'C', 'ラスト！'),
+      { p: 'fin', sec: 'end', guide: 'ブラボー！' }
+    ]
+  };
+  const lessons = [
+    { p: 'Q_C', title: '4分の音階', hint: 'ソ・ラ・シ → 1拍あとに「ド」' },
+    { p: 'E_C', title: '8分の音階', hint: 'ド〜シ（速い）→ 半拍あとに「ド」' },
+    { p: 'T_C', title: '3連符の音階', hint: 'ソ・ラ・シ（3連）→ 次のマスで「ド」' },
+    { p: 'D_C', title: '付点の音階（ハード用）', hint: 'タッ・タ・タッ・タ → 次の頭で「ド」' }
+  ];
+
+  function chordFor() { return null; }
+  function music(info, chart) {
+    const sec = info.sec;
+    if (sec === 'count') return [0, 1, 2, 3].map(b => ({ b, id: 'hh2', gain: 0.2 }));
+    if (sec === 'end') return RG.Band.ending('Cmaj7').concat(['C3', 'G3', 'C4', 'E4', 'G4', 'C5'].map((n, k) => ({ b: k * 0.08, id: `piano:${n}:2.5`, gain: 0.6, rev: 0.4 })));
+    const pat = chart.game.patterns[info.p];
+    const K = KEYS[(pat && pat.key) || 'C'];
+    // 小節の和音は「V7」（最後の一音で I に解決する）。休みの小節はおだやかに
+    return RG.Band.bar(info, chart, { style: 'ballad', chord: pat && pat.key ? K.V : 'Cmaj7', drums: 0.55, comp: 0, bass: 0.75, pad: 0.4, clearCues: true });
+  }
+  function hitSounds(tg, kind) {
+    const K = KEYS[(tg.data && tg.data.key) || 'C'];
+    const s = [{ id: `piano:${K.tonic}:1.8`, gain: 1.25, pan: 0.15 }]
+      .concat(RG.Band.chord(K.I).notes.map(n => ({ id: `piano:${down(n)}:1.8`, gain: 0.55, pan: -0.1 })))
+      .concat([{ id: `str:${RG.Band.chord(K.I).notes.join(',')}:1.4`, gain: 0.35 }]);
+    if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.25 });
+    return s;
+  }
+  function preload() {
+    const ids = ['kazoo', 'sparkle'];
+    Object.values(KEYS).forEach(K => { ids.push(`piano:${K.tonic}:1.8`, `str:${RG.Band.chord(K.I).notes.join(',')}:1.4`); RG.Band.chord(K.I).notes.forEach(n => ids.push(`piano:${down(n)}:1.8`)); });
+    return ids;
+  }
+
+  // ---------------- 描画 ----------------
+  // 鍵盤：C4〜C6（白鍵15）
+  const WHITE = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+  const KX0 = 12, KW = 336 / 15, KY = 392, KH = 96;
+  function keyRect(note) {
+    const m = /^([A-G])(#?)(\d)$/.exec(note); if (!m) return null;
+    const wi = WHITE.indexOf(m[1]) + (+m[3] - 4) * 7;
+    if (wi < 0 || wi > 14) return null;
+    if (!m[2]) return { x: KX0 + wi * KW, y: KY, w: KW, h: KH, black: false };
+    return { x: KX0 + (wi + 1) * KW - KW * 0.3, y: KY, w: KW * 0.6, h: KH * 0.6, black: true };
+  }
+  function pianoCat(g, x, y, beat, play, mood) {
+    const ink = '#1a0b26';
+    g.save(); g.translate(x, y + Math.sin(beat * Math.PI) * 2);
+    D.rrect(g, -22, 0, 44, 50, 12, '#1a1a24', ink, 2.5); // えんび服
+    g.beginPath(); g.moveTo(-6, 0); g.lineTo(0, 22); g.lineTo(6, 0); g.fillStyle = '#fff'; g.fill();
+    g.beginPath(); g.moveTo(-8, 4); g.lineTo(0, 8); g.lineTo(8, 4); g.lineTo(8, 12); g.lineTo(0, 8); g.lineTo(-8, 12); g.closePath(); g.fillStyle = '#c2185b'; g.fill(); // 蝶ネクタイ
+    D.circ(g, 0, -20, 22, '#e8e8f0', ink, 2.5);
+    g.beginPath(); g.moveTo(-18, -30); g.lineTo(-12, -50); g.lineTo(-2, -38); g.moveTo(18, -30); g.lineTo(12, -50); g.lineTo(2, -38); g.fillStyle = '#e8e8f0'; g.fill(); g.stroke();
+    D.eyes(g, 0, -22, 8, 3.5, mood === 'happy' ? 'happy' : mood === 'shock' ? 'wide' : 'closed');
+    D.mouth(g, 0, -10, 4, mood === 'shock' ? 'o' : 'smile');
+    [-1, 1].forEach(s => { g.save(); g.translate(s * 20, 10); g.rotate(-s * 0.6 + (play ? Math.sin(beat * 30 + s) * 0.25 : 0)); D.line(g, 0, 0, 0, 30, ink, 9); D.line(g, 0, 0, 0, 30, '#1a1a24', 6); D.circ(g, 0, 32, 6, '#e8e8f0', ink, 2); g.restore(); });
+    g.restore();
+  }
+
+  function createScene(session) {
+    const chart = session.chart;
+    const st = { lastTap: -99, lastMiss: -99, lastHit: -99, results: new Map() };
+    return {
+      onJudge(tg, kind, vbeat, r) {
+        const at = r && r.demo ? tg.beat : vbeat;
+        st.results.set(tg, { kind, at });
+        if (kind === 'miss') st.lastMiss = at; else st.lastHit = at;
+        if (r && r.demo) st.lastTap = tg.beat;
+      },
+      onTap(vbeat) { st.lastTap = vbeat; },
+      render(g, beat, view) {
+        const finFx = chart.fx.find(x => x.type === 'finale');
+        const fin = finFx && beat >= finFx.beat ? beat - finFx.beat : null;
+        const combo = session.judge.s.combo;
+        // ホール
+        const grd = g.createLinearGradient(0, view.y0, 0, view.y1); grd.addColorStop(0, '#1a0e24'); grd.addColorStop(1, '#3a1830');
+        g.fillStyle = grd; g.fillRect(view.x0, view.y0, view.x1 - view.x0, view.y1 - view.y0);
+        g.fillStyle = '#7a1a2a'; for (let k = -1; k < 10; k++) { g.beginPath(); g.moveTo(k * 40, view.y0); g.quadraticCurveTo(k * 40 + 20, 60, k * 40 + 40, view.y0); g.fill(); } // 幕
+        const dh = beat - st.lastHit;
+        g.save(); g.globalAlpha = 0.18 + (dh >= 0 && dh < 1 ? 0.25 * (1 - dh) : 0) + (fin !== null ? 0.2 : 0);
+        g.beginPath(); g.moveTo(170, 40); g.lineTo(80, 370); g.lineTo(280, 370); g.lineTo(190, 40); g.fillStyle = '#fff2c0'; g.fill(); g.restore(); // スポットライト
+        // グランドピアノ（横から）
+        g.fillStyle = '#0c0c12'; g.beginPath(); g.moveTo(60, 300); g.lineTo(60, 262); g.quadraticCurveTo(150, 200, 300, 236); g.lineTo(310, 300); g.closePath(); g.fill();
+        D.line(g, 120, 236, 230, 150, '#0c0c12', 4); // ふた
+        D.line(g, 80, 300, 80, 360, '#0c0c12', 7); D.line(g, 290, 300, 290, 360, '#0c0c12', 7);
+        let playing = false; for (const c of chart.cues) { if (c.beat > beat) break; if (c.type === 'note' && beat - c.beat < 0.5) playing = true; }
+        const dm = beat - st.lastMiss;
+        pianoCat(g, 100, 228, beat, playing, fin !== null || (dh >= 0 && dh < 1) ? 'happy' : dm >= 0 && dm < 1 ? 'shock' : 'normal');
+        // 音符が舞う
+        for (const c of chart.cues) { if (c.beat > beat) break; const d = beat - c.beat; if (c.type === 'note' && d < 1.2) { g.globalAlpha = 1 - d / 1.2; D.note(g, 150 + (c.beat * 37 % 100), 200 - d * 60, 0.9, '#ffe066'); g.globalAlpha = 1; } }
+        if (dh >= 0 && dh < 1.2) { g.globalAlpha = 1 - dh / 1.2; D.note(g, 250, 190 - dh * 70, 1.6, '#ffc23a'); D.note(g, 215, 210 - dh * 50, 1.2, '#ff3d8b'); g.globalAlpha = 1; }
+
+        // 鍵盤
+        D.rrect(g, KX0 - 6, KY - 14, 348, KH + 22, 6, '#2a1408', '#000', 3);
+        const lit = new Map();
+        for (const c of chart.cues) { if (c.beat > beat + 0.01) break; if (c.type === 'note' && beat - c.beat < 0.35) lit.set(c.data.note, '#ff9fd0'); }
+        const inst = chart.instanceAt(beat);
+        let pendingKey = null;
+        if (inst && inst.targets.length) { const tg = inst.targets[0], r = st.results.get(tg); if (!r) pendingKey = tg.data.note; else if (r.kind !== 'miss' && beat - r.at < 0.8) lit.set(tg.data.note, '#ffc23a'); }
+        const draw = black => {
+          for (let o = 4; o <= 6; o++) for (const w of WHITE) for (const sh of black ? ['#'] : ['']) {
+            if (o === 6 && w !== 'C') continue;
+            if (black && (w === 'E' || w === 'B' || o === 6)) continue;
+            const n = w + sh + o, r = keyRect(n); if (!r) continue;
+            const col = lit.get(n) || (black ? '#111' : '#f8f4ea');
+            D.rrect(g, r.x + 1, r.y, r.w - 2, r.h, 3, col, '#333', 1.5);
+            if (n === pendingKey) { g.save(); g.globalAlpha = 0.5 + 0.5 * Math.sin(beat * Math.PI * 4); D.rrect(g, r.x + 1, r.y, r.w - 2, r.h, 3, null, '#ffc23a', 3.5); g.restore(); D.star(g, r.x + r.w / 2, r.y + r.h - 16, 6, 2.5, 5, 0, '#ffc23a'); }
+          }
+        };
+        draw(false); draw(true);
+        // きみの指（タップで鍵盤を押す）
+        const dt = beat - st.lastTap;
+        const tk = pendingKey || (inst && inst.targets[0] && inst.targets[0].data.note) || 'C5';
+        const kr = keyRect(tk) || keyRect('C5');
+        const press = dt >= 0 && dt < 0.2 ? 1 - dt / 0.2 : 0;
+        g.save(); g.translate(kr.x + kr.w / 2, kr.y - 30 + press * 26);
+        D.rrect(g, -9, -40, 18, 46, 8, '#ffcfa8', '#1a0b26', 2.5); D.rrect(g, -14, -60, 28, 24, 8, '#f4f4f4', '#1a0b26', 2);
+        g.restore();
+        D.text(g, 'YOU', kr.x + kr.w / 2, KY - 106 + press * 26, 10, '#ffe066', '#1a0b26');
+        if (dm >= 0 && dm < 0.8) D.text(g, 'ぷぅ？', 250, 360, 16, '#fff', '#1a0b26');
+        // 客席
+        for (let i = 0; i < 10; i++) { const x = 16 + i * 37, up = (fin !== null || (dh >= 0 && dh < 0.6)) ? 6 * Math.abs(Math.sin(beat * Math.PI * 2 + i)) : 0; D.circ(g, x, 512 - up, 13, '#0c0612'); }
+        if (combo >= 10) D.text(g, 'マエストロ！', 300, 120, 15, '#ffc23a', '#1a0b26');
+        if (fin !== null) { const s = U.ease.outBack(U.prog(fin, 0, 0.4)); g.save(); g.translate(180, 120); g.scale(s, s); g.rotate(-0.05); D.text(g, 'ブラボー！', 0, 0, 36, '#ffc23a', '#1a0b26'); g.restore(); }
+      }
+    };
+  }
+
+  function drawIcon(g, w, h, t) {
+    g.fillStyle = '#1a0e24'; g.fillRect(0, 0, w, h);
+    g.save(); g.scale(w / 100, h / 100);
+    for (let k = 0; k < 8; k++) D.rrect(g, 4 + k * 11.5, 62, 11, 34, 2, (Math.floor(t * 4) % 8) === k ? '#ffc23a' : '#f8f4ea', '#333', 1);
+    [1, 2, 4, 5, 6].forEach(k => D.rrect(g, 4 + k * 11.5 - 3.5, 62, 7, 20, 1, '#111'));
+    D.note(g, 40, 40 - Math.abs(Math.sin(t * 3)) * 8, 1.5, '#ffc23a'); D.note(g, 64, 30, 1.1, '#ff3d8b');
+    g.restore();
+  }
+
+  RG.Games = RG.Games || {};
+  RG.Games.piano = {
+    id: 'piano', title: 'しめの一音ピアノ', color: '#ffc23a', group: 'beat', level: 2,
+    howto: '音階の最後の「ド」を弾く。4分→1拍あと、8分→半拍あと、3連符→次の3連のマス',
+    bpm: 96, offset: 0,
+    patterns, main, hard, lessons, finalePattern: 'fin',
+    cueSounds: { fin: [{ id: 'cheer', gain: 0.9 }, { id: 'voice:crowd:ブラボー！', gain: 1, bus: 'voice', say: 'ブラボー！', who: 'crowd', d: 0.5 }] },
+    missSound: 'kazoo',
+    anchors: { cat: { x: 110, y: 186 }, crowd: { x: 180, y: 480 } },
+    quips: {
+      miss: [{ id: 'voice:lady:アラ？', say: 'あら？', who: 'cat' }, { id: 'voice:lady:オシイ', say: 'おしい', who: 'cat' }],
+      combo: [{ id: 'voice:crowd:ブラボー！', say: 'ブラボー！', who: 'crowd' }, { id: 'voice:lady:ステキ！', say: 'ステキ！', who: 'cat' }]
+    },
+    chordFor, music, hitSounds, preload, createScene, drawIcon
+  };
+})();
+
+;
+/*
+ * ミニゲーム⑮「夜空の花火師」（音ハメ）
+ *   打ち上げの「ヒュ〜」は、音が上がりきった瞬間が開く合図。そこでタップすると「ドーン！」
+ *     ふつう玉「ヒュ〜」       → 2拍あと
+ *     早打ち「ヒュッ」         → 1拍あと（2発）
+ *     連発「ポ・ポ・ポン」     → 半拍ずつ3発、2拍あとから半拍ずつ
+ *     尺玉「ヒュ〜〜〜」       → 3拍あと（でっかい）
+ *     スターマイン（ハード）   → 半拍ずつ4発
+ */
+(function () {
+  const { U, D } = RG;
+  const L = (list) => ({ len: 4, cues: list.map(([b, span], i) => ({ b, type: 'launch', for: i, data: { span } })), inputs: list.map(([b, span], i) => ({ b: b + span, type: span >= 3 ? 'big' : 'fw', data: { lane: i } })) });
+  const patterns = {
+    N: L([[0, 2]]),
+    Q: L([[0, 1], [2, 1]]),
+    T: L([[0, 2], [0.5, 2], [1, 2]]),
+    W: L([[0, 3]]),
+    S: L([[0, 2], [0.5, 2], [1, 2], [1.5, 2]]),
+    fin: { len: 4, end: true, cues: [{ b: 0, type: 'fin' }], fx: [{ b: 0, type: 'finale' }] }
+  };
+  const seq = (s, sec, first) => s.split(' ').map((p, i) => ({ p, sec, guide: i === 0 ? first : null }));
+  const main = [
+    { p: 'count', sec: 'count', guide: '夜空の花火師、打ち上げ開始！' },
+    { p: 'rest', sec: 'I', guide: '「ヒュ〜」が上がりきったら「ドーン」' },
+    ...seq('N N N N W N', 'A'),
+    { p: 'rest', sec: 'I', guide: '短い「ヒュッ」は1拍で開く' },
+    ...seq('Q N Q W Q N', 'B'),
+    { p: 'rest', sec: 'I', guide: '「ポ・ポ・ポン」は3連発！' },
+    ...seq('T N Q T W T Q T', 'C'),
+    { p: 'fin', sec: 'end', guide: '大輪の花！' }
+  ];
+  const hard = {
+    bpm: 112,
+    main: [
+      { p: 'count', sec: 'count', guide: 'ハード！ 花火大会フィナーレ' },
+      { p: 'rest', sec: 'I', guide: '4連発のスターマインも来るよ' },
+      ...seq('N Q T W S Q', 'A'),
+      ...seq('T S Q W T S', 'B', 'スターマイン！'),
+      ...seq('S T Q S W T S S', 'C', 'ラスト！'),
+      { p: 'fin', sec: 'end', guide: '大輪の花！' }
+    ]
+  };
+  const lessons = [
+    { p: 'N', title: 'ふつう玉', hint: 'ヒュ〜（2拍）→ ドーン' },
+    { p: 'Q', title: '早打ち', hint: 'ヒュッ（1拍）→ ドン（2発）' },
+    { p: 'T', title: '3連発', hint: 'ポ・ポ・ポン → 2拍あとから半拍ずつ' },
+    { p: 'W', title: '尺玉', hint: 'ヒュ〜〜〜（3拍）→ ドドーン' },
+    { p: 'S', title: 'スターマイン（ハード用）', hint: '4連発' }
+  ];
+
+  const PROG = { A: ['Fmaj7', 'Em7', 'Dm9', 'Cmaj7'], B: ['A#maj7', 'A7', 'Dm9', 'G9'], C: ['Fmaj7', 'Em7', 'A7', 'Dm9'], P: ['Fmaj7', 'Cmaj7'], I: ['G9'], count: ['Cmaj7'], end: ['Cmaj7'] };
+  const MEL = { A: ['E5 - - G5 - - A5 -', 'B5 - - . A5 - G5 -', 'F5 - - A5 - - C6 -', 'B5 - - - - - . .'], C: ['A5 - - C6 - - E6 -', 'D6 - - C6 - B5 A5 -', 'C#6 - - E6 - - G6 -', 'F6 - - - - - . .'] };
+  function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
+  function music(info, chart) {
+    const sec = info.sec;
+    if (sec === 'count') return [0, 1, 2, 3].map(b => ({ b, id: 'hh2', gain: 0.2 }));
+    if (sec === 'end') return RG.Band.ending('Cmaj7').concat([{ b: 0, id: 'firework', gain: 0.8 }]);
+    return RG.Band.bar(info, chart, { style: 'pop', chord: info.chord, drums: 0.75, comp: 0.85, bass: 0.85, pad: 0.3, clearCues: true, mel: MEL[sec] ? MEL[sec][info.secBar % 4] : null, melInst: 'ep', melGain: 0.35, melPan: -0.2 });
+  }
+  function hitSounds(tg, kind, chart) {
+    const bar = chart.barAt(tg.beat), ch = RG.Band.chord((bar && bar.chord) || 'Cmaj7');
+    const s = [{ id: 'firework', gain: tg.type === 'big' ? 1.1 : 0.8 }, { id: `piano:${ch.notes[(tg.k + 2) % ch.notes.length].replace(/(-?\d)$/, d => +d + 1)}:1`, gain: 0.45 }];
+    if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.4 });
+    return s;
+  }
+  function preload() {
+    const ids = ['firework', 'sparkle', 'whiff', 'tom:C2'];
+    Object.values(PROG).flat().forEach(c => RG.Band.chord(c).notes.forEach(n => ids.push(`piano:${n.replace(/(-?\d)$/, d => +d + 1)}:1`)));
+    return ids;
+  }
+  const cueSounds = {
+    // 「ヒュ〜」の長さ＝開くまでの時間（テンポで変わるので、ここで秒に直す）
+    launch: (cue, chart) => [{ id: 'tom:C2', gain: 0.6 }, { id: `fwhistle:x:${(cue.data.span * chart.spb).toFixed(2)}`, gain: 1.7 }],
+    fin: [{ id: 'voice:crowd:タマヤ〜！', gain: 1.1, bus: 'voice', say: 'たまや〜！', who: 'crowd' }, { id: 'cheer', gain: 0.6 }]
+  };
+
+  // ---------------- 描画 ----------------
+  const LANES = [180, 110, 250, 70, 290];
+  const COLORS = [['#ff3d8b', '#ffd0e4'], ['#ffc23a', '#fff2b0'], ['#1fc7b6', '#c0fff6'], ['#a07aff', '#e6dcff'], ['#ff7a1a', '#ffe0c0']];
+  function burst(g, x, y, e, r0, col, big) {
+    const n = big ? 36 : 24, R = r0 * U.ease.outCubic(Math.min(1, e / 0.5)), fade = 1 - U.prog(e, 0.6, 1.6);
+    if (fade <= 0) return;
+    g.save(); g.globalAlpha = fade;
+    for (let k = 0; k < n; k++) {
+      const a = k / n * D.TAU, droop = e * e * 10;
+      const px = x + Math.cos(a) * R, py = y + Math.sin(a) * R + droop;
+      D.line(g, x + Math.cos(a) * R * 0.6, y + Math.sin(a) * R * 0.6 + droop * 0.6, px, py, col[0], big ? 3 : 2.5);
+      D.circ(g, px, py, big ? 3 : 2.2, col[1]);
+    }
+    if (e < 0.25) D.circ(g, x, y, 14 * (1 - e / 0.25), '#ffffff');
+    g.restore();
+  }
+
+  function createScene(session) {
+    const chart = session.chart;
+    const st = { results: new Map(), lastHit: -99, lastMiss: -99 };
+    let cache = null, n = -1;
+    const launches = () => { if (n !== chart.cues.length) { cache = chart.cues.filter(c => c.type === 'launch'); n = chart.cues.length; } return cache; };
+    return {
+      onJudge(tg, kind, vbeat, r) {
+        const at = r && r.demo ? tg.beat : vbeat;
+        st.results.set(tg, { kind, at });
+        if (kind === 'miss') st.lastMiss = at; else st.lastHit = at;
+      },
+      onTap() {},
+      render(g, beat, view) {
+        const finFx = chart.fx.find(x => x.type === 'finale');
+        const fin = finFx && beat >= finFx.beat ? beat - finFx.beat : null;
+        const combo = session.judge.s.combo;
+        // 夜空・街・川
+        const grd = g.createLinearGradient(0, view.y0, 0, 400); grd.addColorStop(0, '#05051a'); grd.addColorStop(1, '#2a1a4a');
+        g.fillStyle = grd; g.fillRect(view.x0, view.y0, view.x1 - view.x0, view.y1 - view.y0);
+        for (let k = 0; k < 30; k++) D.circ(g, (k * 97) % 360, ((k * 61) % 300) + view.y0 + 10, 1 + (k % 2), 'rgba(255,255,255,.5)');
+        g.fillStyle = '#0a0a18';
+        [[0, 360, 40, 40], [40, 340, 30, 60], [70, 370, 50, 30], [120, 330, 26, 70], [146, 355, 60, 45], [206, 320, 22, 80], [228, 350, 50, 50], [278, 335, 34, 65], [312, 362, 48, 38]].forEach(([x, y, w, h]) => { g.fillRect(x, y, w, h); for (let r = 0; r < h / 12 - 1; r++) for (let c = 0; c < w / 10 - 1; c++) if ((x + r * 3 + c) % 4 === 0) { g.fillStyle = 'rgba(255,220,140,.5)'; g.fillRect(x + 4 + c * 10, y + 6 + r * 12, 4, 5); g.fillStyle = '#0a0a18'; } });
+        g.fillStyle = '#0c1430'; g.fillRect(view.x0, 400, view.x1 - view.x0, 70); // 川
+        // 打ち上げ・開花
+        const flashes = [];
+        for (const c of launches()) {
+          if (c.beat > beat + 0.01) break;
+          const tg = c.target, lane = LANES[tg.data.lane % LANES.length] + ((c.beat * 37) % 3 - 1) * 14;
+          const big = tg.type === 'big';
+          const topY = big ? 120 : 150 + (tg.k % 3) * 20;
+          const r = st.results.get(tg);
+          if (r && r.kind !== 'miss') { const e = beat - r.at; if (e < 1.6) { burst(g, lane, topY, e, big ? 110 : 70, COLORS[(tg.k + Math.floor(c.beat)) % COLORS.length], big); flashes.push([lane, topY, e, big]); } continue; }
+          if (r && r.kind === 'miss') { const e = beat - r.at; if (e < 0.8) { g.globalAlpha = 1 - e / 0.8; D.circ(g, lane, topY + e * 60, 3, '#888'); D.text(g, 'シュン…', lane, topY - 16, 12, '#aaa'); g.globalAlpha = 1; } continue; }
+          const u = U.clamp((beat - c.beat) / (tg.beat - c.beat), 0, 1.08);
+          const y = U.lerp(400, topY, U.ease.outCubic(Math.min(1, u)));
+          for (let k = 1; k <= 10; k++) { g.globalAlpha = 0.8 / k; D.circ(g, lane + Math.sin(beat * 20 + k) * 2, y + k * 8, 4.5 - k * 0.3, k < 3 ? '#fff6d0' : '#ffb060'); }
+          g.globalAlpha = 1; D.circ(g, lane, y, 6, '#fffbe8', '#ffc23a', 2);
+          if (u > 0.85 && u <= 1) { g.globalAlpha = (u - 0.85) / 0.15; D.circ(g, lane, y, 12, null, '#ffffff', 2); g.globalAlpha = 1; } // 開く直前に光る
+        }
+        // 川への映り込み
+        g.save(); g.globalAlpha = 0.25; flashes.forEach(([x, y, e, big]) => { if (e < 1.2) D.ell(g, x, 430, (big ? 60 : 36) * Math.min(1, e / 0.4), 6, '#ffd0e4'); }); g.restore();
+        for (let k = 0; k < 10; k++) D.line(g, 10 + k * 36 + (beat * 4) % 36, 440 + (k % 3) * 8, 26 + k * 36 + (beat * 4) % 36, 440 + (k % 3) * 8, 'rgba(120,150,255,.35)', 1.5);
+        // 土手と見物客（ゆかた）
+        g.fillStyle = '#141c10'; g.fillRect(view.x0, 470, view.x1 - view.x0, view.y1 - 470);
+        const dh = beat - st.lastHit;
+        for (let i = 0; i < 9; i++) {
+          const x = 22 + i * 40, up = dh >= 0 && dh < 0.6 ? 6 * (1 - dh / 0.6) : 0;
+          D.circ(g, x, 488 - up, 11, '#1d1a2a'); D.ell(g, x, 520 - up, 16, 22, ['#3d5ad9', '#c2185b', '#1fc7b6'][i % 3]);
+        }
+        // 花火師（きみ）：打ち上げ筒のそば
+        g.save(); g.translate(330, 470);
+        D.rrect(g, -12, -40, 24, 40, 6, '#1a1a1a', '#000', 2); D.circ(g, 0, -52, 12, '#ffcfa8', '#000', 2); D.rrect(g, -14, -62, 28, 7, 3, '#fff'); // はちまき
+        g.restore();
+        D.text(g, 'YOU', 330, 500, 10, '#ffe066', '#1a0b26');
+        if (combo >= 10) D.text(g, '名人芸！', 60, 380, 16, '#ffc23a', '#1a0b26');
+        if (fin !== null) {
+          [[90, 150], [180, 110], [270, 160]].forEach(([x, y], k) => burst(g, x, y, Math.max(0, fin - k * 0.25), 90, COLORS[k], true));
+          const s = U.ease.outBack(U.prog(fin, 0, 0.4)); g.save(); g.translate(180, 300); g.scale(s, s); D.text(g, '大輪の花！', 0, 0, 34, '#ffc23a', '#1a0b26'); g.restore();
+        }
+      }
+    };
+  }
+
+  function drawIcon(g, w, h, t) {
+    g.fillStyle = '#0a0a24'; g.fillRect(0, 0, w, h);
+    g.save(); g.scale(w / 100, h / 100);
+    burst(g, 50, 40, (t * 0.8) % 1.5, 32, COLORS[Math.floor(t * 0.53) % COLORS.length], true);
+    g.fillStyle = '#0a0a18'; g.fillRect(0, 80, 100, 20);
+    g.restore();
+  }
+
+  RG.Games = RG.Games || {};
+  RG.Games.hanabi = {
+    id: 'hanabi', title: '夜空の花火師', color: '#a07aff', group: 'beat', level: 2,
+    howto: '「ヒュ〜」が上がりきった瞬間に「ドーン」。長いヒュ〜は2拍、短いヒュッは1拍、ポ・ポ・ポンは3連発',
+    bpm: 100, offset: 0,
+    patterns, main, hard, lessons, finalePattern: 'fin',
+    cueSounds, missSound: 'whiff',
+    anchors: { crowd: { x: 150, y: 440 } },
+    quips: {
+      miss: [{ id: 'voice:crowd:アァ〜', say: 'あぁ〜', who: 'crowd' }],
+      combo: [{ id: 'voice:crowd:タマヤ〜！', say: 'たまや〜！', who: 'crowd' }, { id: 'voice:crowd:カギヤ〜！', say: 'かぎや〜！', who: 'crowd' }]
+    },
+    chordFor, music, hitSounds, preload, createScene, drawIcon
+  };
+})();
+
+;
+/*
  * メニューのBGM（タイトル・選択画面・設定で流れる、やる気の出るファンク）
  *   122BPM・16小節のループ（Aメロ8小節 → サビ8小節）。編曲は RG.Band を使う。
  *   ゲームを始めると0.3秒でフェードアウト。画面がバックグラウンドへ行くと止まる。
@@ -5667,7 +6293,7 @@ RG.Calib = (function () {
 /* 画面遷移・入力の受付・保存（タイトル → 選択 → 練習／本編 → 結果） */
 RG.App = (function () {
   const $ = id => document.getElementById(id);
-  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'robot', 'shateki', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
+  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'dj', 'piano', 'hanabi', 'robot', 'shateki', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
   const DESIGN_W = 360, DESIGN_H = 540;
 
   const App = {
@@ -5732,7 +6358,7 @@ RG.App = (function () {
     const groups = [
       { title: 'リズムあそび', sub: 'まずはここから', key: 'basic' },
       { title: 'ダンス', sub: '先生の声で踊る・跳ぶ', key: 'dance' },
-      { title: '音ハメ', sub: '曲のキメ・歌のすきまにピタッと', key: 'beat' },
+      { title: '音ハメ', sub: 'ドロップ・最後の一音・花火をピタッと', key: 'beat' },
       { title: 'アクション', sub: 'ロボ組み立て・射的', key: 'action' },
       { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', key: 'sport' },
       { title: 'お笑い道場', sub: '3連符とフェイント', key: 'fun' }
