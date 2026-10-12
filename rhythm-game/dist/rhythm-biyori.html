@@ -219,7 +219,7 @@ details.dev summary { font-weight: 800; cursor: pointer; }
     <div class="title-wrap">
       <canvas id="title-canvas" class="title-canvas" aria-hidden="true"></canvas>
       <h1 class="logo">リズム<span>びより</span></h1>
-      <p class="tagline">FUNKY RHYTHM GAMES ×5</p>
+      <p class="tagline">FUNKY RHYTHM GAMES ×12</p>
       <p class="tagline-jp">聴いて、数えて、ノって、タップ。</p>
       <button id="btn-start" class="btn big primary">タップしてはじめる</button>
       <p class="note">音が出ます。音量にご注意ください。<br>イヤホン推奨（Bluetoothは遅れることがあります）</p>
@@ -475,7 +475,7 @@ RG.U = (function () {
 /* 端末内保存（localStorage）。使えない環境でもゲームは動くようにする */
 RG.Storage = (function () {
   const KEY = 'rhythm-biyori-save-v1';
-  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie'];
+  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie', 'robot', 'shateki'];
 
   function defaults() {
     const records = {};
@@ -902,6 +902,10 @@ RG.Synth = (function () {
     zap(sr) { const a = buf(sr, 0.25); let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr, f = 2400 * Math.exp(-t * 18) + 200; ph += TAU * f / sr; a[i] = 0.3 * (Math.sin(ph) > 0 ? 1 : -1) * Math.exp(-t * 10); } let y = 0; const c = coef(5000, sr); for (let i = 0; i < a.length; i++) { y += c * (a[i] - y); a[i] = y; } return fadeEdges(a, sr); },
     rope(sr) { const a = buf(sr, 0.09); noise(a, sr, 0.6, 50, 3500, 300); tone(a, sr, 180, 0.3, 40); return fadeEdges(a, sr); },
     whoosh(sr) { const a = buf(sr, 0.35); let y = 0; for (let i = 0; i < a.length; i++) { const t = i / sr, k = Math.sin(Math.PI * t / 0.35); y += coef(600 + 2500 * k, sr) * (rnd() - y); a[i] = 0.4 * y * k; } return fadeEdges(a, sr); },
+    clank(sr) { const a = buf(sr, 0.4); [520, 1270, 2210, 3470].forEach((f, i) => tone(a, sr, f, 0.22 / (i + 1) * 1.6, 9 + i * 5)); noise(a, sr, 0.45, 50, 9000, 1500); sweep(a, sr, 180, 80, 30, 0.3, 20); return fadeEdges(a, sr, 1, 30); },
+    drill(sr) { const a = buf(sr, 0.18); let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr; ph += TAU * (900 + 900 * t / 0.18) / sr; a[i] = 0.25 * (Math.sin(ph) > 0 ? 1 : -1) * (0.6 + 0.4 * Math.sin(TAU * 60 * t)) * Math.min(1, t / 0.01) * (1 - t / 0.18); } let y = 0; const c = coef(3000, sr); for (let i = 0; i < a.length; i++) { y += c * (a[i] - y); a[i] = y; } tone(a, sr, 2600, 0.15, 30, 0.13); return fadeEdges(a, sr); },
+    cork(sr) { const a = buf(sr, 0.2); noise(a, sr, 0.6, 60, 4000, 300, 0.002); sweep(a, sr, 900, 300, 40, 0.35, 25); return fadeEdges(a, sr); },
+    pop(sr) { const a = buf(sr, 0.15); noise(a, sr, 0.8, 45, 7000, 600); tone(a, sr, 400, 0.2, 40); return fadeEdges(a, sr); },
     stab(sr, ns, d) { // オーケストラ・ヒット風（キメ用）
       const notes = ns.split(',').map(freq), dur = d || 0.35, a = buf(sr, dur + 0.25);
       notes.forEach(f => [0.996, 1.004].forEach(dt => {
@@ -1443,11 +1447,19 @@ RG.Band = (function () {
       case 'folk':
         R('x.......x.......', 'kick2', 0.3); R('..o...o...o...o.', 'shaker', 0.5, 0.3);
         break;
+      case 'electro': // 4つ打ちのエレクトロ
+        R('x...x...x...x...', 'kick2', 0.55); R('....x.......x...', 'clap', 0.4, 0, 0.15);
+        R('oxoxoxoxoxoxoxox', 'hh2', 0.14, 0.3); [0.5, 1.5, 2.5, 3.5].forEach(b => at(b, 'hh2:o:0.15', 0.14, -0.2));
+        break;
+      case 'matsuri': // 祭りの太鼓（ドン・カッ）と鉦
+        at(0, 'tom:C2', 0.7, 0, 0.2); at(1.5, 'tom:G2', 0.35); at(2, 'tom:C2', 0.6, 0, 0.2); at(3.5, 'tom:G2', 0.35);
+        at(1, 'rim', 0.45, 0.3); at(3, 'rim', 0.45, 0.3); R('x.x.x.x.x.x.x.x.', 'tamb', 0.1, -0.3);
+        break;
       default: // pop
         R('x.......x.x.....', 'kick2', 0.5); R('....x.......x...', 'snare2', 0.4, 0, 0.15); R('x.x.x.x.x.x.x.x.', 'hh2', 0.16, 0.25);
     }
     let out = ev;
-    if (clear && clear.length) out = out.filter(e => !(clear.some(c => Math.abs(c - e.b) < 0.13) && /kick|snare|clap|crash|hh2:o/.test(e.id)));
+    if (clear && clear.length) out = out.filter(e => !(clear.some(c => Math.abs(c - e.b) < 0.13) && /kick|snare|clap|crash|hh2:o|tom|rim|tamb/.test(e.id)));
     // つなぎのフィル（最後の1拍をタムの連打に）
     if (info.fill && style !== 'folk') {
       out = out.filter(e => e.b < 3);
@@ -1468,9 +1480,11 @@ RG.Band = (function () {
     ballad: [[0, 0, 1.5], [2, 7, 1.0], [3.5, 0, 0.3]],
     polka: [[0, 0, 0.35], [2, 7, 0.35]],
     folk: [[0, 0, 1.0], [2, 7, 0.8]],
-    pop: [[0, 0, 0.4], [1.5, 0, 0.2], [2, 7, 0.4], [3.5, 0, 0.2]]
+    pop: [[0, 0, 0.4], [1.5, 0, 0.2], [2, 7, 0.4], [3.5, 0, 0.2]],
+    electro: [[0, 0, 0.15], [0.5, 12, 0.12], [1, 0, 0.15], [1.5, 7, 0.12], [2, 0, 0.15], [2.5, 12, 0.12], [3, 'b7', 0.15], [3.5, 7, 0.12]],
+    matsuri: [[0, 0, 0.6], [2, 0, 0.4], [3, 7, 0.4]]
   };
-  const BASS_INST = { funk: 'sbass', disco: 'synb', hiphop: 'synb', lofi: 'bass', shuffle: 'bass', ballad: 'bass', polka: 'bass', folk: 'bass', pop: 'sbass' };
+  const BASS_INST = { funk: 'sbass', disco: 'synb', hiphop: 'synb', lofi: 'bass', shuffle: 'bass', ballad: 'bass', polka: 'bass', folk: 'bass', pop: 'sbass', electro: 'synb', matsuri: 'bass' };
   function bass(style, ch, g) {
     const inst = BASS_INST[style] || 'bass';
     return (BASS[style] || BASS.pop).map(([b, s, d]) => {
@@ -1508,6 +1522,12 @@ RG.Band = (function () {
         break;
       case 'folk':
         chordAt(0, 'gtr', 1.6, 0.34, -0.35, 0.15); chordAt(2, 'gtr', 1.2, 0.24, -0.35, 0.15); chordAt(3, 'gtr', 0.6, 0.14, -0.35, 0.15);
+        break;
+      case 'electro':
+        [0.5, 1.75, 2.5, 3.75].forEach(b => chordAt(b, 'lead', 0.12, 0.07, 0.3, 0.2, top3));
+        break;
+      case 'matsuri': // 三味線ふうの撥弦
+        [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].forEach((b, k) => ev.push({ b, id: `koto:${ch.notes[[0, 2, 1, 2][k % 4] % ch.notes.length]}:0.4`, gain: (k % 2 ? 0.12 : 0.18) * g, pan: -0.3, rev: 0.15 }));
         break;
       default:
         chordAt(0, 'gtr', 1.2, 0.26, -0.4); chordAt(1.5, 'gtr', 0.5, 0.16, -0.4); chordAt(2, 'gtr', 1.0, 0.22, -0.4); chordAt(3.5, 'gtr', 0.4, 0.14, -0.4);
@@ -4602,6 +4622,530 @@ RG.D = (function () {
 
 ;
 /*
+ * ミニゲーム⑪「ロボット組み立てライン」
+ *   班長ロボが部品の名前を呼ぶ。きみはクレーンで、ベルトコンベアのロボに部品を「ガシャン」と取り付ける。
+ *     「アタマ！」 → 2拍あと（3拍目）
+ *     「ウデ！」   → 3拍目と4拍目（左うで・右うで）
+ *     「ネジ！」   → 3拍目から半拍ずつ3回（キュ・キュ・キュ）
+ *     「アシ！」   → 3拍目の裏（ズン…チャッ）
+ *   4つ取り付けると1台完成。ロボが歩いて出ていく。
+ */
+(function () {
+  const { U, D } = RG;
+  const P = (call, ins, type) => ({ len: 4, cues: [{ b: 0, type: call }], inputs: ins.map(b => ({ b, type })) });
+  const patterns = {
+    H: P('head', [2], 'head'),
+    A: P('arm', [2, 3], 'arm'),
+    N: P('bolt', [2, 2.5, 3], 'bolt'),
+    L: P('leg', [2.5], 'leg'),
+    fin: { len: 4, end: true, cues: [{ b: 0, type: 'fin' }], fx: [{ b: 0, type: 'finale' }] }
+  };
+  const seq = (s, sec, first) => s.split(' ').map((p, i) => ({ p, sec, guide: i === 0 ? first : null }));
+  const main = [
+    { p: 'count', sec: 'count', guide: 'ロボット組み立てライン、稼働！' },
+    { p: 'rest', sec: 'I', guide: '「アタマ！」の2拍あとにガシャン／「アシ！」はその裏' },
+    ...seq('H L H L H L H L', 'A'),
+    { p: 'rest', sec: 'I', guide: '「ウデ！」は2回、「ネジ！」は半拍ずつ3回' },
+    ...seq('H A N L H A N L', 'B'),
+    ...seq('A N H L N A L H', 'C', '部品の順番がバラバラに！'),
+    { p: 'fin', sec: 'end', guide: '全ロボ、完成！' }
+  ];
+  const hard = {
+    bpm: 120,
+    main: [
+      { p: 'count', sec: 'count', guide: 'ハード！ 納期ギリギリ' },
+      { p: 'rest', sec: 'I', guide: 'アタマ=3拍目／ウデ=2回／ネジ=3回／アシ=裏' },
+      ...seq('H A N L A N L H', 'A'),
+      ...seq('N L A N H A N L', 'B', '大量生産！'),
+      ...seq('A N L N A N H N', 'C', 'ラスト！'),
+      { p: 'fin', sec: 'end', guide: '全ロボ、完成！' }
+    ]
+  };
+  const lessons = [
+    { p: 'H', title: 'アタマ', hint: '「アタマ！」→ 2拍あとにガシャン' },
+    { p: 'L', title: 'アシ', hint: '「アシ！」→ 3拍目の裏（ズン…チャッ）' },
+    { p: 'A', title: 'ウデ', hint: '「ウデ！」→ 3拍目と4拍目' },
+    { p: 'N', title: 'ネジ', hint: '「ネジ！」→ 半拍ずつ3回' }
+  ];
+
+  const PROG = { A: ['Am9', 'Fmaj7', 'Cmaj7', 'G'], B: ['Dm9', 'Am9', 'Fmaj7', 'E7#9'], C: ['Am9', 'Fmaj7', 'Dm9', 'E7#9'], P: ['Am9', 'Fmaj7'], I: ['E7#9'], count: ['Am9'], end: ['Am9'] };
+  const HOOK = { B: ['A5 . . C6 . . E6 .', 'D6 . C6 . A5 . . .', 'A5 . . C6 . . G6 .', 'E6 . D6 . . . . .'], C: ['E6 . E6 . D6 . C6 .', 'A5 . . . G5 . A5 .', 'F5 . A5 . D6 . F6 .', 'E6 . . . G#5 . B5 .'] };
+  function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
+  function music(info, chart) {
+    const sec = info.sec;
+    if (sec === 'count') return [0, 1, 2, 3].map(b => ({ b, id: 'kick2', gain: 0.4 }));
+    if (sec === 'end') return RG.Band.ending('Am9').concat([{ b: 0, id: 'zap', gain: 0.6 }]);
+    return RG.Band.bar(info, chart, { style: 'electro', chord: info.chord, drums: 0.8, comp: 0.9, bass: 0.85, pad: sec === 'B' ? 0.25 : 0.1, clearCues: true, mel: HOOK[sec] ? HOOK[sec][info.secBar % 4] : null, melInst: 'lead', melGain: 0.28, melPan: -0.25 });
+  }
+  function hitSounds(tg, kind) {
+    const s = tg.type === 'bolt' ? [{ id: 'drill', gain: 0.9 }] : [{ id: 'clank', gain: 0.9 }, { id: 'kick2', gain: 0.4 }];
+    if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.3 });
+    return s;
+  }
+  function preload() { return ['clank', 'drill', 'kick2', 'sparkle', 'boing', 'zap']; }
+
+  // ---------------- 描画 ----------------
+  const ROBO = { x: 180, y: 336 };
+  function robotParts(g, x, y, parts, beat, mood) {
+    const ink = '#1a0b26';
+    g.save(); g.translate(x, y);
+    if (parts.leg) { [-1, 1].forEach(s => { D.rrect(g, s * 16 - 8, 30, 16, 34, 4, '#9aa4b8', ink, 2.5); D.rrect(g, s * 16 - 12, 60, 24, 10, 4, '#5a6478', ink, 2); }); }
+    // 胴体（最初からある）
+    D.rrect(g, -34, -30, 68, 64, 10, '#c8d0e0', ink, 3);
+    D.circ(g, -12, -8, 7, '#ff3d6e', ink, 2); D.circ(g, 12, -8, 7, '#1fc7b6', ink, 2);
+    for (let k = 0; k < parts.bolt; k++) { D.star(g, -18 + k * 18, 18, 5, 4, 6, 0, '#ffc23a', ink, 1.5); }
+    if (parts.armL) { g.save(); g.translate(-38, -18); g.rotate(0.3 + Math.sin(beat * Math.PI) * 0.15); D.rrect(g, -9, 0, 18, 40, 8, '#9aa4b8', ink, 2.5); D.circ(g, 0, 44, 9, '#5a6478', ink, 2); g.restore(); }
+    if (parts.armR) { g.save(); g.translate(38, -18); g.rotate(-0.3 - Math.sin(beat * Math.PI) * 0.15); D.rrect(g, -9, 0, 18, 40, 8, '#9aa4b8', ink, 2.5); D.circ(g, 0, 44, 9, '#5a6478', ink, 2); g.restore(); }
+    if (parts.head) {
+      D.rrect(g, -26, -76, 52, 42, 10, '#e0e6f0', ink, 3);
+      D.line(g, 0, -76, 0, -92, ink, 2.5); D.circ(g, 0, -94, 5, Math.sin(beat * Math.PI * 2) > 0 ? '#ff3d6e' : '#ffc23a', ink, 1.5);
+      const ec = mood === 'error' ? '#ff3d3d' : '#4dfcff';
+      if (mood === 'happy') { D.eyes(g, 0, -56, 11, 5, 'happy'); } else { D.rrect(g, -18, -62, 12, 10, 3, ec, ink, 1.5); D.rrect(g, 6, -62, 12, 10, 3, ec, ink, 1.5); }
+      D.rrect(g, -12, -46, 24, 5, 2, ink);
+    }
+    g.restore();
+  }
+  function foreman(g, x, y, beat, talk) {
+    const ink = '#1a0b26';
+    g.save(); g.translate(x, y - U.hop(beat) * 2);
+    D.rrect(g, -20, -10, 40, 50, 8, '#ffc23a', ink, 2.5);
+    D.rrect(g, -22, -44, 44, 34, 8, '#ffd36b', ink, 2.5);
+    D.rrect(g, -24, -52, 48, 10, 4, '#ff7a1a', ink, 2); // ヘルメット
+    D.rrect(g, -14, -36, 28, 10, 3, '#1a0b26'); D.rrect(g, -10, -34, 6, 6, 1, '#4dfcff'); D.rrect(g, 4, -34, 6, 6, 1, '#4dfcff');
+    D.rrect(g, -10, -22, 20, 4 + talk * 6, 2, ink);
+    // メガホン
+    g.save(); g.translate(22, -20); g.rotate(-0.3); g.beginPath(); g.moveTo(0, -5); g.lineTo(24, -14); g.lineTo(24, 14); g.lineTo(0, 5); g.closePath(); g.fillStyle = '#ff3d6e'; g.fill(); g.lineWidth = 2; g.strokeStyle = ink; g.stroke(); g.restore();
+    g.restore();
+  }
+
+  function createScene(session) {
+    const chart = session.chart;
+    const st = { lastTap: -99, lastMiss: -99, lastHit: -99, results: new Map() };
+    const PART = { H: 'head', A: 'arm', N: 'bolt', L: 'leg' };
+    // 部品のパターンだけ数えて、4つで1台
+    function robotState(beat) {
+      const parts = chart.instances.filter(i => PART[i.p] && !i.demo);
+      const demoParts = chart.instances.filter(i => PART[i.p] && i.demo);
+      const list = parts.length ? parts : demoParts;
+      let idx = -1;
+      for (let i = 0; i < list.length; i++) if (list[i].start <= beat) idx = i;
+      if (idx < 0) return { group: 0, parts: {}, enter: 1 };
+      const group = Math.floor(idx / 4), first = list[group * 4];
+      const pr = { head: false, armL: false, armR: false, bolt: 0, leg: false };
+      for (let i = group * 4; i <= idx; i++) {
+        list[i].targets.forEach((tg, k) => {
+          const r = st.results.get(tg);
+          if (!r || r.kind === 'miss' || r.at > beat) return;
+          if (tg.type === 'head') pr.head = true;
+          if (tg.type === 'leg') pr.leg = true;
+          if (tg.type === 'arm') { if (k === 0) pr.armL = true; else pr.armR = true; }
+          if (tg.type === 'bolt') pr.bolt = Math.min(3, pr.bolt + 1);
+        });
+      }
+      return { group, parts: pr, enter: U.prog(beat, first.start, first.start + 0.8), exitAt: list[group * 4 + 3] ? list[group * 4 + 3].end : null };
+    }
+    return {
+      onJudge(tg, kind, vbeat, r) {
+        const at = r && r.demo ? tg.beat : vbeat;
+        st.results.set(tg, { kind, at });
+        if (kind === 'miss') st.lastMiss = at; else st.lastHit = at;
+        if (r && r.demo) st.lastTap = tg.beat;
+      },
+      onTap(vbeat) { st.lastTap = vbeat; },
+      render(g, beat, view) {
+        const finFx = chart.fx.find(x => x.type === 'finale');
+        const fin = finFx && beat >= finFx.beat ? beat - finFx.beat : null;
+        const combo = session.judge.s.combo;
+        // 工場
+        g.fillStyle = '#16323a'; g.fillRect(view.x0, view.y0, view.x1 - view.x0, view.y1 - view.y0);
+        g.fillStyle = '#1d4250'; for (let k = -2; k < 10; k++) g.fillRect(k * 60, view.y0, 30, 400 - view.y0);
+        D.line(g, view.x0, 120, view.x1, 120, '#2b5a68', 10); D.line(g, view.x0, 140, view.x1, 140, '#2b5a68', 6); // 配管
+        for (let k = 0; k < 3; k++) { D.circ(g, 300 + k * 0, 200 + k * 50, 16, '#e0e6f0', '#000', 2); D.line(g, 300, 200 + k * 50, 300 + Math.cos(beat * 2 + k) * 10, 200 + k * 50 - Math.abs(Math.sin(beat * 2 + k)) * 10, '#ff3d6e', 2); }
+        // 黄黒の注意帯とベルトコンベア
+        for (let k = -2; k < 20; k++) { g.fillStyle = k % 2 ? '#ffc23a' : '#1a0b26'; g.beginPath(); g.moveTo(k * 24, 396); g.lineTo(k * 24 + 12, 396); g.lineTo(k * 24 + 24, 408); g.lineTo(k * 24 + 12, 408); g.fill(); }
+        D.rrect(g, view.x0 - 10, 426, view.x1 - view.x0 + 20, 26, 8, '#3a3a48', '#000', 3);
+        const roll = (beat * 30) % 30;
+        for (let k = -2; k < 16; k++) D.circ(g, k * 30 + roll, 439, 7, '#5a5a6a', '#000', 1.5);
+        g.fillStyle = '#0f2228'; g.fillRect(view.x0, 452, view.x1 - view.x0, view.y1 - 452);
+
+        // 組み立て中のロボ（4つで完成 → 右へ歩いて出ていく）
+        const rs = robotState(beat);
+        let rx = U.lerp(-80, ROBO.x, U.ease.outCubic(rs.enter));
+        const done = rs.exitAt !== null && beat > rs.exitAt - 0.9;
+        if (done) rx += U.ease.inCubic(U.prog(beat, rs.exitAt - 0.9, rs.exitAt)) * 280;
+        const dm = beat - st.lastMiss, dh = beat - st.lastHit;
+        const mood = fin !== null || done ? 'happy' : dm >= 0 && dm < 1 ? 'error' : 'normal';
+        const shake = dm >= 0 && dm < 0.5 ? Math.sin(dm * 60) * 4 : 0;
+        g.save(); g.translate(rx + shake, ROBO.y - (fin !== null ? Math.abs(Math.sin(fin * Math.PI * 2)) * 16 : 0)); g.scale(1.35, 1.35);
+        robotParts(g, 0, 0, fin !== null ? { head: true, armL: true, armR: true, bolt: 3, leg: true } : rs.parts, beat, mood);
+        g.restore();
+        if (done && beat > rs.exitAt - 0.9) D.text(g, 'カンセイ！', rx, ROBO.y - 150, 18, '#ffc23a', '#1a0b26');
+        if (mood === 'error') { D.text(g, 'ERROR', rx, ROBO.y - 150, 16, '#ff3d3d', '#1a0b26'); D.line(g, rx - 30, ROBO.y + 40, rx - 50, ROBO.y + 60, '#aaa', 3); }
+
+        // クレーン（次の部品をつかんで待ち、タップでガシャン）
+        D.rrect(g, view.x0, 54, view.x1 - view.x0, 12, 3, '#5a6478', '#000', 2);
+        let next = null; for (const tg of chart.inputs) { if (tg.beat >= beat - 0.05 && tg.beat < beat + 3) { next = tg; break; } }
+        const dt = beat - st.lastTap;
+        const slam = dt >= 0 && dt < 0.1 ? dt / 0.1 : dt >= 0.1 && dt < 0.4 ? 1 - (dt - 0.1) / 0.3 : 0;
+        const armY = U.lerp(150, ROBO.y - 150, U.ease.inCubic(slam));
+        D.rrect(g, 166, 60, 28, 18, 4, '#ffc23a', '#000', 2);
+        D.line(g, 180, 78, 180, armY, '#9aa4b8', 8);
+        D.line(g, 166, armY, 194, armY, '#9aa4b8', 6); D.line(g, 166, armY, 162, armY + 18, '#9aa4b8', 5); D.line(g, 194, armY, 198, armY + 18, '#9aa4b8', 5);
+        if (next && slam < 0.5) { // つかんでいる部品
+          const t = next.type, yy = armY + 26;
+          if (t === 'head') D.rrect(g, 160, yy - 14, 40, 30, 8, '#e0e6f0', '#000', 2);
+          else if (t === 'arm') D.rrect(g, 172, yy - 16, 16, 34, 7, '#9aa4b8', '#000', 2);
+          else if (t === 'leg') D.rrect(g, 172, yy - 14, 16, 30, 4, '#9aa4b8', '#000', 2);
+          else D.star(g, 180, yy, 8, 6, 6, beat * 3, '#ffc23a', '#000', 1.5);
+        }
+        if (slam > 0.8) { D.text(g, next && next.type === 'bolt' ? 'キュイン' : 'ガシャン', 230, ROBO.y - 60, 16, '#ffffff', '#1a0b26'); }
+        // 班長ロボ
+        let talk = 0; for (const c of chart.cues) { if (c.beat > beat) break; if (beat - c.beat < 0.4) talk = 1 - (beat - c.beat) / 0.4; }
+        foreman(g, 46, 330, beat, talk);
+        if (combo >= 10) D.text(g, 'ノルマ達成ペース！', 180, 500, 13, '#4dfcff', null, 'center', 800);
+
+        if (fin !== null) {
+          const s = U.ease.outBack(U.prog(fin, 0, 0.4));
+          g.save(); g.translate(180, 200); g.scale(s, s); g.rotate(-0.06);
+          D.text(g, '全ロボ、完成！', 0, 0, 32, '#ffc23a', '#1a0b26');
+          g.restore();
+        }
+      }
+    };
+  }
+
+  function drawIcon(g, w, h, t) {
+    g.fillStyle = '#16323a'; g.fillRect(0, 0, w, h);
+    g.save(); g.scale(w / 100, h / 100);
+    g.fillStyle = '#3a3a48'; g.fillRect(0, 84, 100, 10);
+    g.save(); g.translate(50, 58); g.scale(0.42, 0.42); robotParts(g, 0, 0, { head: true, armL: true, armR: true, bolt: 3, leg: true }, t * 2, Math.sin(t * 3) > 0 ? 'happy' : 'normal'); g.restore();
+    g.restore();
+  }
+
+  RG.Games = RG.Games || {};
+  RG.Games.robot = {
+    id: 'robot', title: 'ロボット組み立てライン', color: '#4dfcff', group: 'action', level: 3,
+    howto: '班長の声で部品を取り付け。「アタマ！」→2拍あと、「ウデ！」→2回、「ネジ！」→半拍ずつ3回、「アシ！」→裏',
+    bpm: 108, offset: 0,
+    patterns, main, hard, lessons, finalePattern: 'fin',
+    cueSounds: {
+      head: { id: 'voice:robo:アタマ！', gain: 1.4, say: 'アタマ！', who: 'boss', len: 0.9 },
+      arm: { id: 'voice:robo:ウデ！', gain: 1.4, say: 'ウデ！', who: 'boss', len: 0.9 },
+      bolt: { id: 'voice:robo:ネジ！', gain: 1.4, say: 'ネジ！', who: 'boss', len: 0.9 },
+      leg: { id: 'voice:robo:アシ！', gain: 1.4, say: 'アシ！', who: 'boss', len: 0.9 },
+      fin: [{ id: 'voice:robo:カンセイ！', gain: 1.2, bus: 'voice', say: 'カンセイ！', who: 'boss' }, { id: 'cheer', gain: 0.6 }]
+    },
+    missSound: 'boing',
+    anchors: { boss: { x: 60, y: 266 }, robo: { x: 180, y: 250 } },
+    quips: {
+      miss: [{ id: 'voice:robo:エラー！', say: 'エラー！', who: 'robo' }, { id: 'voice:robo:ガガガ', say: 'ガガガ…', who: 'robo' }],
+      extra: [{ id: 'voice:robo:ブヒンガナイ', say: '部品がない', who: 'boss' }],
+      combo: [{ id: 'voice:robo:カンペキ！', say: 'カンペキ！', who: 'boss' }, { id: 'voice:robo:イイネ！', say: 'イイネ！', who: 'robo' }]
+    },
+    chordFor, music, hitSounds, preload, createScene, drawIcon
+  };
+})();
+
+;
+/*
+ * ミニゲーム⑫「夏祭り射的」
+ *   コルク銃で、まん中の照準に来た的を撃つ。
+ *     アヒル「クワッ」     → 左から泳いできて、2拍あとに照準へ
+ *     カン「カンッ」       → 棚の上に飛び出して、1拍あと
+ *     風船「プ・プ・プ」   → 半拍ずつ3つ浮かんできて、2拍あとから半拍ずつ3回
+ *     おじさん「ウツナヨ〜」→ 撃たない！（撃つと余分な入力）
+ */
+(function () {
+  const { U, D } = RG;
+  const patterns = {
+    D: { len: 4, cues: [{ b: 0, type: 'duck', for: 0 }], inputs: [{ b: 2, type: 'duck' }] },
+    C: { len: 4, cues: [{ b: 0, type: 'can', for: 0 }, { b: 2, type: 'can', for: 1 }], inputs: [{ b: 1, type: 'can' }, { b: 3, type: 'can' }] },
+    B: { len: 4, cues: [0, 0.5, 1].map((b, i) => ({ b, type: 'balloon', for: i })), inputs: [2, 2.5, 3].map(b => ({ b, type: 'balloon' })) },
+    X: { len: 4, cues: [{ b: 0, type: 'oji' }], inputs: [], activeAlways: true, active: [0.4, 3.8] },
+    fin: { len: 4, end: true, cues: [{ b: 0, type: 'fin' }], fx: [{ b: 0, type: 'finale' }] }
+  };
+  const seq = (s, sec, first) => s.split(' ').map((p, i) => ({ p, sec, guide: i === 0 ? first : null }));
+  const main = [
+    { p: 'count', sec: 'count', guide: '夏祭り射的、いらっしゃい！' },
+    { p: 'rest', sec: 'I', guide: 'アヒル「クワッ」の2拍あと、照準に来たら撃つ' },
+    ...seq('D D D D D D', 'A'),
+    { p: 'rest', sec: 'I', guide: 'カン「カンッ」は1拍あと、風船は3つ' },
+    ...seq('C D B C D B', 'B'),
+    { p: 'rest', sec: 'I', guide: 'おじさんが出たら撃っちゃダメ！' },
+    ...seq('B C X D B X C B', 'C'),
+    { p: 'fin', sec: 'end', guide: '大当たり〜！' }
+  ];
+  const hard = {
+    bpm: 124,
+    main: [
+      { p: 'count', sec: 'count', guide: 'ハード！ 閉店まぎわ' },
+      { p: 'rest', sec: 'I', guide: 'アヒル=2拍あと／カン=1拍あと／風船=3つ／おじさん=撃たない' },
+      ...seq('D C B X C B', 'A'),
+      ...seq('B X C B D X', 'B', 'おじさんに注意！'),
+      ...seq('C B X C B X B C D', 'C', 'ラスト！'),
+      { p: 'fin', sec: 'end', guide: '大当たり〜！' }
+    ]
+  };
+  const lessons = [
+    { p: 'D', title: 'アヒル', hint: '「クワッ」→ 2拍あとに撃つ' },
+    { p: 'C', title: 'カン', hint: '「カンッ」→ 1拍あと（2回）' },
+    { p: 'B', title: '風船', hint: 'プ・プ・プ → 2拍あとから半拍ずつ3回' },
+    { p: 'X', title: 'おじさん', hint: '「ウツナヨ〜」→ 撃たない' }
+  ];
+
+  const PROG = { A: ['Dm', 'Dm', 'C', 'Am'], B: ['A#', 'C', 'Dm', 'Am'], C: ['Dm', 'C', 'A#', 'A7'], P: ['Dm', 'Am'], I: ['A7'], count: ['Dm'], end: ['Dm'] };
+  const FUE = { A: ['D5 - F5 - G5 - A5 -', 'C6 - A5 - G5 - - -', 'G5 - A5 - C6 - D6 -', 'A5 - - - - - . .'], B: ['F5 - G5 - A5 - - -', 'G5 - E5 - C5 - - -', 'D5 - F5 - A5 - D6 -', 'C6 - A5 - - - . .'], C: ['D6 - C6 - A5 - G5 -', 'A5 - - - G5 - E5 -', 'F5 - G5 - A5 - C6 -', 'A5 - - - E5 - - -'] };
+  function chordFor(sec, i) { const p = PROG[sec] || PROG.A; return p[i % p.length]; }
+  function music(info, chart) {
+    const sec = info.sec;
+    if (sec === 'count') return [0, 1, 2, 3].map(b => ({ b, id: b === 3 ? 'tom:C2' : 'rim', gain: 0.5 }));
+    if (sec === 'end') return RG.Band.ending('Dm').concat([{ b: 0, id: 'tom:C2', gain: 0.8 }, { b: 0, id: 'flute:D6:1.2', gain: 0.5, rev: 0.4 }]);
+    if (info.p === 'X') return [{ b: 0, id: 'tom:C2', gain: 0.5 }, { b: 2, id: 'rim', gain: 0.3 }];
+    return RG.Band.bar(info, chart, { style: 'matsuri', chord: info.chord, drums: 0.85, comp: 0.8, bass: 0.8, clearCues: true, mel: FUE[sec] ? FUE[sec][info.secBar % 4] : null, melInst: 'flute', melGain: 0.42, melPan: 0.2 });
+  }
+  function hitSounds(tg, kind) {
+    const s = [{ id: 'cork', gain: 0.8 }, { id: tg.type === 'balloon' ? 'pop' : 'clank', gain: tg.type === 'balloon' ? 0.8 : 0.5 }];
+    if (kind === 'perfect') s.push({ id: 'sparkle', gain: 0.35 });
+    return s;
+  }
+  function preload() { return ['cork', 'pop', 'clank', 'sparkle', 'whiff', 'tom:C2', 'rim']; }
+
+  // ---------------- 描画 ----------------
+  const AIM = { x: 180, y: 268 };
+  function duckToy(g, x, y, s, rot) {
+    const ink = '#1a0b26';
+    g.save(); g.translate(x, y); g.rotate(rot); g.scale(s, s);
+    D.ell(g, 0, 6, 22, 14, '#ffd23a', ink, 2.5); D.circ(g, 12, -10, 11, '#ffd23a', ink, 2.5);
+    g.beginPath(); g.moveTo(20, -10); g.lineTo(32, -7); g.lineTo(20, -4); g.closePath(); g.fillStyle = '#ff7a1a'; g.fill(); g.stroke();
+    D.circ(g, 14, -13, 2.5, ink);
+    g.restore();
+  }
+  function can(g, x, y, s, rot) {
+    const ink = '#1a0b26';
+    g.save(); g.translate(x, y); g.rotate(rot); g.scale(s, s);
+    D.rrect(g, -12, -18, 24, 36, 4, '#d8d8e8', ink, 2.5); D.rrect(g, -12, -6, 24, 12, 0, '#ff3d6e');
+    D.text(g, '★', 0, 0, 10, '#fff');
+    g.restore();
+  }
+  function balloon(g, x, y, c) {
+    const ink = '#1a0b26';
+    D.line(g, x, y + 16, x + Math.sin(y * 0.1) * 4, y + 40, '#ddd', 1.5);
+    D.ell(g, x, y, 13, 16, c, ink, 2); D.ell(g, x - 4, y - 6, 3, 5, 'rgba(255,255,255,.6)');
+  }
+  function oji(g, x, y, k, mood) {
+    const ink = '#1a0b26';
+    g.save(); g.translate(x, y);
+    D.rrect(g, -30, 10, 60, 60, 14, '#3d7bd9', ink, 3); // はっぴ
+    D.line(g, -10, 10, 10, 70, '#fff', 3);
+    D.circ(g, 0, -14, 26, '#ffcfa8', ink, 3);
+    D.rrect(g, -28, -36, 56, 10, 5, '#fff', ink, 2); // はちまき
+    D.eyes(g, 0, -16, 10, 3.5, mood === 'hurt' ? 'x' : mood === 'happy' ? 'happy' : 'normal');
+    D.mouth(g, 0, -2, 8, mood === 'hurt' ? 'o' : 'smile');
+    if (mood === 'hurt') D.circ(g, 14, -30, 6, '#ff7a8a');
+    g.restore();
+  }
+
+  function createScene(session) {
+    const chart = session.chart;
+    const st = { lastTap: -99, lastMiss: -99, lastHit: -99, lastExtra: -99, results: new Map() };
+    const cols = ['#ff3d8b', '#1fc7b6', '#ffc23a'];
+    return {
+      onJudge(tg, kind, vbeat, r) {
+        const at = r && r.demo ? tg.beat : vbeat;
+        st.results.set(tg, { kind, at });
+        if (kind === 'miss') st.lastMiss = at; else st.lastHit = at;
+        if (r && r.demo) st.lastTap = tg.beat;
+      },
+      onTap(vbeat, r) { st.lastTap = vbeat; if (r && r.kind === 'extra') st.lastExtra = vbeat; },
+      render(g, beat, view) {
+        const finFx = chart.fx.find(x => x.type === 'finale');
+        const fin = finFx && beat >= finFx.beat ? beat - finFx.beat : null;
+        const combo = session.judge.s.combo;
+        // 夜祭りの屋台
+        g.fillStyle = '#1a1030'; g.fillRect(view.x0, view.y0, view.x1 - view.x0, view.y1 - view.y0);
+        for (let k = 0; k < 7; k++) { const x = 20 + k * 54; D.line(g, x, view.y0, x, 14, '#333', 1); D.ell(g, x, 26, 10, 13, '#ff4a3a', '#7a1a10', 1.5); D.text(g, '祭', x, 26, 9, '#fff'); } // ちょうちん
+        D.rrect(g, 10, 40, 340, 360, 6, '#5a3418', '#2a1408', 4);
+        for (let k = 0; k < 10; k++) { g.fillStyle = k % 2 ? '#ffffff' : '#e8322a'; g.fillRect(10 + k * 34, 40, 34, 34); }
+        D.text(g, '射 的', 180, 96, 26, '#ffc23a', '#2a1408');
+        // 景品の棚
+        D.rrect(g, 30, 150, 300, 10, 3, '#8a5a32', '#2a1408', 2); D.rrect(g, 30, 214, 300, 10, 3, '#8a5a32', '#2a1408', 2);
+        [[60, 132, '#ff9fb8'], [110, 136, '#8fd3ff'], [250, 134, '#c8e88a'], [300, 132, '#ffd36b']].forEach(([x, y, c]) => { D.circ(g, x, y, 14, c, '#2a1408', 2); D.circ(g, x - 9, y - 12, 5, c, '#2a1408', 1.5); D.circ(g, x + 9, y - 12, 5, c, '#2a1408', 1.5); });
+        // アヒルの水路
+        D.rrect(g, 30, 284, 300, 24, 8, '#2a5aa8', '#102a58', 2);
+        for (let k = 0; k < 8; k++) D.line(g, 40 + k * 38 + (beat * 10) % 38, 296, 56 + k * 38 + (beat * 10) % 38, 296, '#7ab0ff', 2);
+
+        // 的
+        for (const c of chart.cues) {
+          if (c.beat > beat + 0.01) break;
+          if (c.type === 'oji') {
+            const d = beat - c.beat;
+            if (d < 3.8) {
+              const up = U.ease.outBack(U.prog(d, 0, 0.3)) * (1 - U.prog(d, 3.4, 3.8));
+              const hurt = beat - st.lastExtra < 1.2 && st.lastExtra >= c.beat;
+              oji(g, AIM.x, 300 - 70 * up, d, hurt ? 'hurt' : 'happy');
+              if (hurt) D.text(g, 'イテッ', AIM.x + 50, 210, 18, '#fff', '#1a0b26');
+            }
+            continue;
+          }
+          if (!c.target) continue;
+          const tg = c.target, r = st.results.get(tg);
+          const span = tg.beat - c.beat;
+          if (r && r.kind !== 'miss') { // 撃たれた：倒れて消える
+            const e = beat - r.at; if (e > 0.6) continue;
+            if (tg.type === 'balloon') { if (e < 0.2) D.star(g, AIM.x + (tg.k - 1) * 40, AIM.y - 20, 18 * (1 - e / 0.2) + 4, 6, 8, 0, cols[tg.k % 3]); continue; }
+            const x = tg.type === 'duck' ? AIM.x : AIM.x, y = tg.type === 'can' ? 196 : 284;
+            if (tg.type === 'duck') duckToy(g, x, y + e * 40, 1.2, e * 5); else can(g, x, y - Math.sin(Math.PI * e / 0.6) * 40, 1.2, e * 8);
+            continue;
+          }
+          const u = (beat - c.beat) / span;
+          if (tg.type === 'duck') { if (u > 1.6) continue; duckToy(g, U.lerp(-20, AIM.x, u), 282 - Math.abs(Math.sin(beat * Math.PI * 2)) * 3, 1.2, 0); }
+          else if (tg.type === 'can') { if (u > 1.5) continue; const up = U.ease.outBack(U.prog(u, 0, 0.35)) * (1 - U.prog(u, 1.2, 1.5)); can(g, AIM.x, 214 - 24 * up, up, 0); }
+          else if (tg.type === 'balloon') { if (u > 1.4) continue; balloon(g, AIM.x + (tg.k - 1) * 40, U.lerp(420, AIM.y - 20, U.ease.outCubic(Math.min(1, u))) - (u > 1 ? (u - 1) * 120 : 0), cols[tg.k % 3]); }
+        }
+        // 照準
+        g.save(); g.globalAlpha = 0.85;
+        D.circ(g, AIM.x, AIM.y, 26, null, '#ff3d3d', 3); D.line(g, AIM.x - 36, AIM.y, AIM.x - 14, AIM.y, '#ff3d3d', 3); D.line(g, AIM.x + 14, AIM.y, AIM.x + 36, AIM.y, '#ff3d3d', 3);
+        D.line(g, AIM.x, AIM.y - 36, AIM.x, AIM.y - 14, '#ff3d3d', 3); D.line(g, AIM.x, AIM.y + 14, AIM.x, AIM.y + 36, '#ff3d3d', 3);
+        g.restore();
+
+        // コルク銃（手前）とコルク
+        const dt = beat - st.lastTap;
+        const kick = dt >= 0 && dt < 0.25 ? 1 - dt / 0.25 : 0;
+        if (dt >= 0 && dt < 0.15) { const u = dt / 0.15; D.circ(g, U.lerp(180, AIM.x, u), U.lerp(440, AIM.y, u), 6 - 3 * u, '#c98a4b', '#5a3418', 1.5); }
+        g.save(); g.translate(180, 470 + kick * 10);
+        D.rrect(g, -10, -70, 20, 80, 6, '#8a5a32', '#2a1408', 3); D.rrect(g, -6, -84, 12, 20, 3, '#555', '#000', 2);
+        D.circ(g, -22, 4, 14, '#ffcfa8', '#1a0b26', 2.5); D.circ(g, 22, -14, 14, '#ffcfa8', '#1a0b26', 2.5);
+        g.restore();
+        D.rrect(g, 120, 506, 120, 30, 10, '#e8322a', '#1a0b26', 2.5); D.text(g, 'YOU', 180, 521, 12, '#fff');
+        // 屋台のおじさん（ミスすると笑う）
+        const dm = beat - st.lastMiss;
+        if (dm >= 0 && dm < 1.2) { g.save(); g.translate(318, 372); g.scale(0.6, 0.6); oji(g, 0, 0, 0, 'happy'); g.restore(); }
+        if (combo >= 10) D.text(g, '名人！', 300, 470, 18, '#ffc23a', '#1a0b26');
+
+        if (fin !== null) {
+          for (let k = 0; k < 6; k++) { const a = k / 6 * D.TAU + fin; D.star(g, 180 + Math.cos(a) * 90 * U.prog(fin, 0, 0.5), 200 + Math.sin(a) * 60 * U.prog(fin, 0, 0.5), 8, 3, 5, fin, cols[k % 3]); }
+          const s = U.ease.outBack(U.prog(fin, 0, 0.4));
+          g.save(); g.translate(180, 200); g.scale(s, s); g.rotate(-0.06);
+          D.text(g, '大当たり〜！', 0, 0, 34, '#ffc23a', '#2a1408');
+          g.restore();
+        }
+      }
+    };
+  }
+
+  function drawIcon(g, w, h, t) {
+    g.fillStyle = '#1a1030'; g.fillRect(0, 0, w, h);
+    g.save(); g.scale(w / 100, h / 100);
+    for (let k = 0; k < 5; k++) { g.fillStyle = k % 2 ? '#fff' : '#e8322a'; g.fillRect(k * 20, 0, 20, 18); }
+    D.rrect(g, 6, 66, 88, 10, 3, '#2a5aa8');
+    duckToy(g, 20 + ((t * 25) % 60), 64, 0.7, 0);
+    D.circ(g, 50, 46, 14, null, '#ff3d3d', 2.5); D.line(g, 50, 26, 50, 38, '#ff3d3d', 2); D.line(g, 50, 54, 50, 66, '#ff3d3d', 2);
+    g.restore();
+  }
+
+  RG.Games = RG.Games || {};
+  RG.Games.shateki = {
+    id: 'shateki', title: '夏祭り射的', color: '#e8322a', group: 'action', level: 3,
+    howto: '照準に来た的を撃つ。アヒル「クワッ」→2拍あと、カン→1拍あと、風船→3つ、おじさん→撃たない',
+    bpm: 112, offset: 0,
+    patterns, main, hard, lessons, finalePattern: 'fin',
+    cueSounds: {
+      duck: { id: 'voice:duck:クワッ', gain: 1.4 },
+      can: { id: 'ka', gain: 1.8 },
+      balloon: { id: 'pok', gain: 2.0 },
+      oji: { id: 'voice:uncle:ウツナヨ〜', gain: 1.4, say: 'ウツナヨ〜', who: 'oji', len: 1.4 },
+      fin: [{ id: 'voice:uncle:オオアタリ〜！', gain: 1.1, bus: 'voice', say: '大当たり〜！', who: 'oji' }, { id: 'cheer', gain: 0.7 }]
+    },
+    missSound: 'whiff',
+    anchors: { oji: { x: 230, y: 190 }, crowd: { x: 180, y: 430 } },
+    quips: {
+      miss: [{ id: 'voice:uncle:オシイ！', say: 'おしい！', who: 'oji' }, { id: 'voice:uncle:ハズレ〜', say: 'はずれ〜', who: 'oji' }],
+      extra: [{ id: 'voice:uncle:イテッ！ウツナッテ！', say: 'いてっ！撃つなって！', who: 'oji' }],
+      combo: [{ id: 'voice:uncle:アタリ〜！', say: 'アタリ〜！', who: 'oji' }, { id: 'voice:crowd:スゴーイ！', say: 'すごーい！', who: 'crowd' }]
+    },
+    chordFor, music, hitSounds, preload, createScene, drawIcon
+  };
+})();
+
+;
+/*
+ * メニューのBGM（タイトル・選択画面・設定で流れる、やる気の出るファンク）
+ *   122BPM・16小節のループ（Aメロ8小節 → サビ8小節）。編曲は RG.Band を使う。
+ *   ゲームを始めると0.3秒でフェードアウト。画面がバックグラウンドへ行くと止まる。
+ */
+RG.MenuMusic = (function () {
+  const BPM = 122, SPB = 60 / BPM;
+  const VERSE = ['Dmaj7', 'Bm7', 'Em9', 'A9', 'Dmaj7', 'Bm7', 'Em9', 'A9'];
+  const HOOK = ['Gmaj7', 'A9', 'F#m7', 'Bm7', 'Gmaj7', 'A9', 'Bm7', 'A9'];
+  // サビのメロディ（口ずさめる短いフレーズ）
+  const HOOK_MEL = [
+    'F#5 . A5 . B5 . A5 F#5', '. . E5 . F#5 - . .', 'A5 . B5 . C#6 . B5 A5', '. . F#5 . B5 - . .',
+    'F#5 . A5 . B5 . D6 .', 'C#6 . A5 . E5 - . .', 'F#5 . E5 . D5 . B4 .', 'C#5 - E5 - A5 - . .'
+  ];
+  const VERSE_RIFF = ['. . . . . . . .', '. . . . F#5 . A5 .', '. . . . . . . .', '. . E5 . F#5 . . .'];
+  const fakeChart = { spb: SPB, game: { patterns: {} } };
+  const M = { on: false, sb: null, timer: 0, bar: 0, next: 0, greeted: false };
+
+  function barEvents(k) {
+    const pos = k % 16, hook = pos >= 8, i = pos % 8;
+    const info = { sec: hook ? 'H' : 'V', secBar: i, fill: i === 7, p: null, pbar: 0 };
+    const ev = RG.Band.bar(info, fakeChart, {
+      style: 'funk', chord: hook ? HOOK[i] : VERSE[i], drums: 0.95, comp: 0.85, bass: 0.95, pad: hook ? 0.25 : 0,
+      mel: hook ? HOOK_MEL[i] : VERSE_RIFF[i % 4], melInst: hook ? 'lead' : 'organ', melGain: hook ? 0.34 : 0.3, melPan: 0.15
+    });
+    // Aメロはブラスの「パッ！」、サビの頭は観客の「イェーイ！」
+    if (!hook && (i === 0 || i === 4)) { const ch = RG.Band.chord(VERSE[i]); ev.push({ b: 0, id: `brass:${ch.notes.slice(0, 3).join(',')}:0.22`, gain: 0.45, pan: 0.2, rev: 0.2 }, { b: 1.5, id: `brass:${ch.notes.slice(0, 3).join(',')}:0.15`, gain: 0.35, pan: 0.2, rev: 0.2 }); }
+    if (pos === 8) ev.push({ b: 0, id: 'voice:crowd:イェーイ！', gain: 0.6, bus: 'voice', rev: 0.2 });
+    if (pos === 7) ev.push({ b: 2, id: 'rise:x:1', gain: 0.35 });
+    ev.push(...[0.5, 1.5, 2.5, 3.5].map(b => ({ b, id: 'clap', gain: 0.12, pan: -0.3 }))); // 裏の手拍子で前に進む感じ
+    return ev;
+  }
+
+  function schedule() {
+    if (!M.on) return;
+    const A = RG.Audio, now = A.ctx.currentTime;
+    while (M.next < now + 0.6) {
+      const t0 = M.next;
+      barEvents(M.bar).forEach(e => {
+        const when = t0 + e.b * SPB - (e.id.startsWith('voice:') ? RG.Voice.onset(e.id) : 0);
+        if (when >= now - 0.02) A.play(e.id, when, M.sb[e.bus || 'bgm'], e.gain, M.sb, e.pan || 0, e.rev || 0);
+      });
+      M.bar++;
+      M.next += 4 * SPB;
+    }
+  }
+
+  function start() {
+    const A = RG.Audio;
+    if (M.on || !A.ctx || A.ctx.state !== 'running') return;
+    M.on = true;
+    M.sb = A.createSessionBus();
+    M.sb.bgm.gain.value = 2.2; // ゲーム中の曲と同じくらいの大きさに（16小節でピーク約0.65）
+    // 最初の2小節の音を先に作っておく（再生中に合成で引っかからないように）
+    [0, 1].forEach(k => barEvents(k).forEach(e => A.buffer(e.id)));
+    M.bar = 0;
+    M.next = A.ctx.currentTime + 0.15;
+    if (!M.greeted) { M.greeted = true; A.play('voice:boss:レッツグルーヴ！', A.ctx.currentTime + 0.05, M.sb.voice, 0.8, M.sb, 0, 0.2); }
+    schedule();
+    M.timer = setInterval(schedule, 30);
+  }
+
+  function stop(fade = 0.3) {
+    if (!M.on) return;
+    M.on = false;
+    clearInterval(M.timer);
+    const sb = M.sb, A = RG.Audio;
+    M.sb = null;
+    const t = A.ctx.currentTime;
+    ['bgm', 'voice', 'sfx', 'cue'].forEach(k => { try { sb[k].gain.setTargetAtTime(0, t, fade / 3); } catch (e) {} });
+    setTimeout(() => A.destroySessionBus(sb), fade * 1000 + 100);
+  }
+
+  return { start, stop, get playing() { return M.on; }, BPM, _bar: barEvents };
+})();
+
+;
+/*
  * 1回のプレイ（本編・練習共通）
  *  - 音：曲の開始時刻 startAt（ctx 時刻）を基準に、先読みスケジューラで予約再生
  *  - 判定：入力の timeStamp → heard 時刻 → 曲の再生位置 → タイミング補正を引いて judge へ
@@ -5123,7 +5667,7 @@ RG.Calib = (function () {
 /* 画面遷移・入力の受付・保存（タイトル → 選択 → 練習／本編 → 結果） */
 RG.App = (function () {
   const $ = id => document.getElementById(id);
-  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
+  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'robot', 'shateki', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
   const DESIGN_W = 360, DESIGN_H = 540;
 
   const App = {
@@ -5140,7 +5684,10 @@ RG.App = (function () {
     if (name === 'title') App.titleLoop(); else cancelAnimationFrame(App.titleRaf);
     if (name === 'select') App.buildSelect();
     if (name === 'settings') App.syncSettings();
+    // メニュー画面ではBGMを流す（プレイ・調整・結果では止める）
+    if (MENU_SCREENS.includes(name)) RG.MenuMusic.start(); else RG.MenuMusic.stop();
   };
+  const MENU_SCREENS = ['title', 'select', 'settings'];
 
   App.toast = function (msg, ms = 3200) {
     const t = $('toast');
@@ -5186,6 +5733,7 @@ RG.App = (function () {
       { title: 'リズムあそび', sub: 'まずはここから', key: 'basic' },
       { title: 'ダンス', sub: '先生の声で踊る・跳ぶ', key: 'dance' },
       { title: '音ハメ', sub: '曲のキメ・歌のすきまにピタッと', key: 'beat' },
+      { title: 'アクション', sub: 'ロボ組み立て・射的', key: 'action' },
       { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', key: 'sport' },
       { title: 'お笑い道場', sub: '3連符とフェイント', key: 'fun' }
     ].map(gr => Object.assign(gr, { ids: GAME_ORDER.filter(id => grp(id) === gr.key) }));
@@ -5568,7 +6116,10 @@ RG.App = (function () {
     bindSettings();
     bindInput();
     window.addEventListener('resize', () => { if (App.screen === 'play') App.resizeCanvas(); });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) App.interrupt(); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { App.interrupt(); RG.MenuMusic.stop(0.05); }
+      else if (MENU_SCREENS.includes(App.screen)) RG.Audio.resume().then(() => RG.MenuMusic.start());
+    });
     window.addEventListener('pagehide', () => App.interrupt());
     RG.Audio.onState(state => { if (state === 'interrupted' || state === 'suspended') App.interrupt(); });
     if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {

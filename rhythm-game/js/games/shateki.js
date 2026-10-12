@@ -202,8 +202,8 @@
     patterns, main, hard, lessons, finalePattern: 'fin',
     cueSounds: {
       duck: { id: 'voice:duck:クワッ', gain: 1.4 },
-      can: { id: 'ka', gain: 1.1 },
-      balloon: { id: 'pok', gain: 1.3 },
+      can: { id: 'ka', gain: 1.8 },
+      balloon: { id: 'pok', gain: 2.0 },
       oji: { id: 'voice:uncle:ウツナヨ〜', gain: 1.4, say: 'ウツナヨ〜', who: 'oji', len: 1.4 },
       fin: [{ id: 'voice:uncle:オオアタリ〜！', gain: 1.1, bus: 'voice', say: '大当たり〜！', who: 'oji' }, { id: 'cheer', gain: 0.7 }]
     },

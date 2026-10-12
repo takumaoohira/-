@@ -79,7 +79,7 @@ RG.Band = (function () {
         R('x.......x.x.....', 'kick2', 0.5); R('....x.......x...', 'snare2', 0.4, 0, 0.15); R('x.x.x.x.x.x.x.x.', 'hh2', 0.16, 0.25);
     }
     let out = ev;
-    if (clear && clear.length) out = out.filter(e => !(clear.some(c => Math.abs(c - e.b) < 0.13) && /kick|snare|clap|crash|hh2:o/.test(e.id)));
+    if (clear && clear.length) out = out.filter(e => !(clear.some(c => Math.abs(c - e.b) < 0.13) && /kick|snare|clap|crash|hh2:o|tom|rim|tamb/.test(e.id)));
     // つなぎのフィル（最後の1拍をタムの連打に）
     if (info.fill && style !== 'folk') {
       out = out.filter(e => e.b < 3);
