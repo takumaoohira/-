@@ -1,6 +1,6 @@
 /*
  * 音量バランスの確認（OfflineAudioContext で本編を書き出して測る）
- *   NODE_PATH=$(npm root -g) node tests/audio-mix.cjs
+ *   NODE_PATH=$(npm root -g) node tests/audio-mix.cjs [ゲームID...]（例：pingpong_endless）
  * - 全体のピーク（1.0 を超えると音割れ）
  * - 合図の聞き取りやすさ：各合図の直後60msで「合図だけ」と「BGMだけ」の音量差（dB）
  */
@@ -11,7 +11,7 @@ const path = require('path');
   const p = await b.newPage();
   p.on('pageerror', e => console.log('ERR', e.message));
   await p.goto('file://' + path.resolve(__dirname, '../index.html'));
-  const res = await p.evaluate(async () => {
+  const res = await p.evaluate(async (ONLY) => {
     const out = {};
     // エンドレスはレベル6の頭まで（テンポ 96→126）を書き出す
     const endlessChart = id => {
@@ -24,6 +24,7 @@ const path = require('path');
     };
     const keys = Object.keys(RG.Games).concat(Object.keys(RG.Games).filter(id => RG.Games[id].endless).map(id => id + '_endless'));
     for (const id of keys) {
+      if (ONLY.length && !ONLY.includes(id)) continue;
       const game = RG.Games[id.replace('_endless', '')];
       let chart;
       if (id.endsWith('_endless')) chart = endlessChart(game.id);
@@ -66,7 +67,7 @@ const path = require('path');
       out[id] = { seconds: (len / sr).toFixed(1), peak: peak.toFixed(3), peakBeat: chart.beatAt(peakAt).toFixed(2), cueOverBgmDb: summary, events: evs.length, uniqueSounds: new Set(evs.map(e => e.id)).size };
     }
     return out;
-  });
+  }, process.argv.slice(2));
   console.log(JSON.stringify(res, null, 2));
   await b.close();
 })();

@@ -3082,7 +3082,7 @@ RG.D = (function () {
     const heat = chart.endlessHeat || 0; // エンドレスのレベルに応じて音を厚くする
     const ev = RG.Band.bar(info, chart, {
       style: 'funk', chord: info.chord, drums: 0.8 + Math.min(0.12, heat * 0.02), comp: 0.6, bass: 0.85, pad: sec === 'B' || heat >= 4 ? 0.2 : 0,
-      clearCues: info.p === 'chance',
+      clearCues: info.p === 'chance' || !!chart.endless, // エンドレスは速くなるので、合図の拍は常に打楽器を抜く
       mel: RIFFS[sec] ? RIFFS[sec][i % 4] : null, melInst: 'organ', melGain: 0.35, melPan: 0.3
     });
     if ((info.secBar % 4 === 0 || (heat >= 3 && info.secBar % 2 === 0)) && sec !== 'I' && sec !== 'P') { const ch = RG.Band.chord(info.chord); ev.push({ b: 0, id: `brass:${ch.notes.map(n => tr(n.replace(/-?\d$/, ''), 4, 0)).join(',')}:0.25`, gain: 0.3, pan: 0.2, rev: 0.2 }); }
