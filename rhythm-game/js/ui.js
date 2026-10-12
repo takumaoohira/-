@@ -1,7 +1,7 @@
 /* 画面遷移・入力の受付・保存（タイトル → 選択 → 練習／本編 → 結果） */
 RG.App = (function () {
   const $ = id => document.getElementById(id);
-  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
+  const GAME_ORDER = ['mochi', 'penguin', 'echo', 'disco', 'rope', 'kime', 'karaoke', 'robot', 'shateki', 'pingpong', 'golf', 'pie'].filter(id => RG.Games && RG.Games[id]);
   const DESIGN_W = 360, DESIGN_H = 540;
 
   const App = {
@@ -18,7 +18,10 @@ RG.App = (function () {
     if (name === 'title') App.titleLoop(); else cancelAnimationFrame(App.titleRaf);
     if (name === 'select') App.buildSelect();
     if (name === 'settings') App.syncSettings();
+    // メニュー画面ではBGMを流す（プレイ・調整・結果では止める）
+    if (MENU_SCREENS.includes(name)) RG.MenuMusic.start(); else RG.MenuMusic.stop();
   };
+  const MENU_SCREENS = ['title', 'select', 'settings'];
 
   App.toast = function (msg, ms = 3200) {
     const t = $('toast');
@@ -64,6 +67,7 @@ RG.App = (function () {
       { title: 'リズムあそび', sub: 'まずはここから', key: 'basic' },
       { title: 'ダンス', sub: '先生の声で踊る・跳ぶ', key: 'dance' },
       { title: '音ハメ', sub: '曲のキメ・歌のすきまにピタッと', key: 'beat' },
+      { title: 'アクション', sub: 'ロボ組み立て・射的', key: 'action' },
       { title: 'スポーツ・リズム', sub: '速い・裏拍だらけ・むずかしめ', key: 'sport' },
       { title: 'お笑い道場', sub: '3連符とフェイント', key: 'fun' }
     ].map(gr => Object.assign(gr, { ids: GAME_ORDER.filter(id => grp(id) === gr.key) }));
@@ -446,7 +450,10 @@ RG.App = (function () {
     bindSettings();
     bindInput();
     window.addEventListener('resize', () => { if (App.screen === 'play') App.resizeCanvas(); });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) App.interrupt(); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { App.interrupt(); RG.MenuMusic.stop(0.05); }
+      else if (MENU_SCREENS.includes(App.screen)) RG.Audio.resume().then(() => RG.MenuMusic.start());
+    });
     window.addEventListener('pagehide', () => App.interrupt());
     RG.Audio.onState(state => { if (state === 'interrupted' || state === 'suspended') App.interrupt(); });
     if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {

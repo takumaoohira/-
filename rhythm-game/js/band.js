@@ -67,6 +67,14 @@ RG.Band = (function () {
       case 'folk':
         R('x.......x.......', 'kick2', 0.3); R('..o...o...o...o.', 'shaker', 0.5, 0.3);
         break;
+      case 'electro': // 4つ打ちのエレクトロ
+        R('x...x...x...x...', 'kick2', 0.55); R('....x.......x...', 'clap', 0.4, 0, 0.15);
+        R('oxoxoxoxoxoxoxox', 'hh2', 0.14, 0.3); [0.5, 1.5, 2.5, 3.5].forEach(b => at(b, 'hh2:o:0.15', 0.14, -0.2));
+        break;
+      case 'matsuri': // 祭りの太鼓（ドン・カッ）と鉦
+        at(0, 'tom:C2', 0.7, 0, 0.2); at(1.5, 'tom:G2', 0.35); at(2, 'tom:C2', 0.6, 0, 0.2); at(3.5, 'tom:G2', 0.35);
+        at(1, 'rim', 0.45, 0.3); at(3, 'rim', 0.45, 0.3); R('x.x.x.x.x.x.x.x.', 'tamb', 0.1, -0.3);
+        break;
       default: // pop
         R('x.......x.x.....', 'kick2', 0.5); R('....x.......x...', 'snare2', 0.4, 0, 0.15); R('x.x.x.x.x.x.x.x.', 'hh2', 0.16, 0.25);
     }
@@ -92,9 +100,11 @@ RG.Band = (function () {
     ballad: [[0, 0, 1.5], [2, 7, 1.0], [3.5, 0, 0.3]],
     polka: [[0, 0, 0.35], [2, 7, 0.35]],
     folk: [[0, 0, 1.0], [2, 7, 0.8]],
-    pop: [[0, 0, 0.4], [1.5, 0, 0.2], [2, 7, 0.4], [3.5, 0, 0.2]]
+    pop: [[0, 0, 0.4], [1.5, 0, 0.2], [2, 7, 0.4], [3.5, 0, 0.2]],
+    electro: [[0, 0, 0.15], [0.5, 12, 0.12], [1, 0, 0.15], [1.5, 7, 0.12], [2, 0, 0.15], [2.5, 12, 0.12], [3, 'b7', 0.15], [3.5, 7, 0.12]],
+    matsuri: [[0, 0, 0.6], [2, 0, 0.4], [3, 7, 0.4]]
   };
-  const BASS_INST = { funk: 'sbass', disco: 'synb', hiphop: 'synb', lofi: 'bass', shuffle: 'bass', ballad: 'bass', polka: 'bass', folk: 'bass', pop: 'sbass' };
+  const BASS_INST = { funk: 'sbass', disco: 'synb', hiphop: 'synb', lofi: 'bass', shuffle: 'bass', ballad: 'bass', polka: 'bass', folk: 'bass', pop: 'sbass', electro: 'synb', matsuri: 'bass' };
   function bass(style, ch, g) {
     const inst = BASS_INST[style] || 'bass';
     return (BASS[style] || BASS.pop).map(([b, s, d]) => {
@@ -132,6 +142,12 @@ RG.Band = (function () {
         break;
       case 'folk':
         chordAt(0, 'gtr', 1.6, 0.34, -0.35, 0.15); chordAt(2, 'gtr', 1.2, 0.24, -0.35, 0.15); chordAt(3, 'gtr', 0.6, 0.14, -0.35, 0.15);
+        break;
+      case 'electro':
+        [0.5, 1.75, 2.5, 3.75].forEach(b => chordAt(b, 'lead', 0.12, 0.07, 0.3, 0.2, top3));
+        break;
+      case 'matsuri': // 三味線ふうの撥弦
+        [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].forEach((b, k) => ev.push({ b, id: `koto:${ch.notes[[0, 2, 1, 2][k % 4] % ch.notes.length]}:0.4`, gain: (k % 2 ? 0.12 : 0.18) * g, pan: -0.3, rev: 0.15 }));
         break;
       default:
         chordAt(0, 'gtr', 1.2, 0.26, -0.4); chordAt(1.5, 'gtr', 0.5, 0.16, -0.4); chordAt(2, 'gtr', 1.0, 0.22, -0.4); chordAt(3.5, 'gtr', 0.4, 0.14, -0.4);

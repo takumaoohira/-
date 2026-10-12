@@ -363,6 +363,10 @@ RG.Synth = (function () {
     zap(sr) { const a = buf(sr, 0.25); let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr, f = 2400 * Math.exp(-t * 18) + 200; ph += TAU * f / sr; a[i] = 0.3 * (Math.sin(ph) > 0 ? 1 : -1) * Math.exp(-t * 10); } let y = 0; const c = coef(5000, sr); for (let i = 0; i < a.length; i++) { y += c * (a[i] - y); a[i] = y; } return fadeEdges(a, sr); },
     rope(sr) { const a = buf(sr, 0.09); noise(a, sr, 0.6, 50, 3500, 300); tone(a, sr, 180, 0.3, 40); return fadeEdges(a, sr); },
     whoosh(sr) { const a = buf(sr, 0.35); let y = 0; for (let i = 0; i < a.length; i++) { const t = i / sr, k = Math.sin(Math.PI * t / 0.35); y += coef(600 + 2500 * k, sr) * (rnd() - y); a[i] = 0.4 * y * k; } return fadeEdges(a, sr); },
+    clank(sr) { const a = buf(sr, 0.4); [520, 1270, 2210, 3470].forEach((f, i) => tone(a, sr, f, 0.22 / (i + 1) * 1.6, 9 + i * 5)); noise(a, sr, 0.45, 50, 9000, 1500); sweep(a, sr, 180, 80, 30, 0.3, 20); return fadeEdges(a, sr, 1, 30); },
+    drill(sr) { const a = buf(sr, 0.18); let ph = 0; for (let i = 0; i < a.length; i++) { const t = i / sr; ph += TAU * (900 + 900 * t / 0.18) / sr; a[i] = 0.25 * (Math.sin(ph) > 0 ? 1 : -1) * (0.6 + 0.4 * Math.sin(TAU * 60 * t)) * Math.min(1, t / 0.01) * (1 - t / 0.18); } let y = 0; const c = coef(3000, sr); for (let i = 0; i < a.length; i++) { y += c * (a[i] - y); a[i] = y; } tone(a, sr, 2600, 0.15, 30, 0.13); return fadeEdges(a, sr); },
+    cork(sr) { const a = buf(sr, 0.2); noise(a, sr, 0.6, 60, 4000, 300, 0.002); sweep(a, sr, 900, 300, 40, 0.35, 25); return fadeEdges(a, sr); },
+    pop(sr) { const a = buf(sr, 0.15); noise(a, sr, 0.8, 45, 7000, 600); tone(a, sr, 400, 0.2, 40); return fadeEdges(a, sr); },
     stab(sr, ns, d) { // オーケストラ・ヒット風（キメ用）
       const notes = ns.split(',').map(freq), dur = d || 0.35, a = buf(sr, dur + 0.25);
       notes.forEach(f => [0.996, 1.004].forEach(dt => {

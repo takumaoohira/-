@@ -57,7 +57,17 @@ const SHOTS = [
   ['pie', 'dodge', 1, 'perfect', 0.1],
   ['pie', 'creamed', 2, 'miss', 0.4],
   ['pie', 'triple', 'cue:triple', null, 2.3],
-  ['karaoke', 'finale', -1, 'fin', 1.2]
+  ['karaoke', 'finale', -1, 'fin', 1.2],
+  ['robot', 'call', 'cue:head', null, 0.5],
+  ['robot', 'slam', 0, 'perfect', 0.05],
+  ['robot', 'built', 3, 'perfect', 1.2],
+  ['robot', 'error', 2, 'miss', 0.3],
+  ['robot', 'finale', -1, 'fin', 1.0],
+  ['shateki', 'duck', 0, null, -0.6],
+  ['shateki', 'hit', 1, 'perfect', 0.15],
+  ['shateki', 'balloons', 'cue:balloon', null, 1.6],
+  ['shateki', 'oji', 'cue:oji', null, 0.8],
+  ['shateki', 'finale', -1, 'fin', 1.0]
 ];
 
 (async () => {

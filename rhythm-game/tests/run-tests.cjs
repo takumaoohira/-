@@ -101,7 +101,7 @@ function check(name, ok, detail) {
 
 (async () => {
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-  const games = ONLY.length ? ONLY : ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie'];
+  const games = ONLY.length ? ONLY : ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie', 'robot', 'shateki'];
   // 5つずつ並列に実行（同時に動かしすぎると、テスト環境のCPUが足りずに音の予約が遅れるため）
   const pool = async (list, fn) => { for (let i = 0; i < list.length; i += 5) await Promise.all(list.slice(i, i + 5).map(fn)); };
 

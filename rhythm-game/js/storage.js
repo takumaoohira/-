@@ -1,7 +1,7 @@
 /* 端末内保存（localStorage）。使えない環境でもゲームは動くようにする */
 RG.Storage = (function () {
   const KEY = 'rhythm-biyori-save-v1';
-  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie'];
+  const GAMES = ['mochi', 'penguin', 'echo', 'pingpong', 'golf', 'disco', 'rope', 'kime', 'karaoke', 'pie', 'robot', 'shateki'];
 
   function defaults() {
     const records = {};
