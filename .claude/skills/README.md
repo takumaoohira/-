@@ -65,3 +65,17 @@ Git でコミットすればチーム（他のセッション・他の端末）�
 - deep-research（Web 調査レポート）
 - google-workspace（Google ドキュメント・スプレッドシート・スライド）
 - session-start-hook（クラウドセッション起動時のフック作成）
+
+## 参考：Dynamic workflows（動的ワークフロー）
+
+Dynamic workflows は **Claude Code に最初から入っている機能** で、スキルとして追加するものではありません
+（関連スキル `/workflow-authoring` も Claude Code に同梱。v2.1.248 以降）。
+Claude が「たくさんのサブエージェントを動かす台本（JavaScript）」を書き、裏で並行実行します。
+
+- 使い方：依頼文に `ultracode` を入れる、または「ワークフローで〜して」と頼む
+  - 例：`ultracode: rakuspa-campaign と rakuspa-menu の表記ゆれ・料金の食い違いを全部洗い出して`
+- 試す：`/deep-research <調べたいこと>`（同梱のワークフロー。複数の情報源を突き合わせてレポート）
+- 進み具合：`/workflows`
+- 保存：`/workflows` で実行結果を選び `s` → **`.claude/workflows/`** を選ぶとこのリポジトリで共有され、次回から `/<名前>` で呼べる
+- 注意：トークン（利用枠）を多く使うので、大きな作業の前は小さい範囲で試す。オフにするには `/config` の Dynamic workflows
+- 公式ドキュメント：https://code.claude.com/docs/en/workflows
