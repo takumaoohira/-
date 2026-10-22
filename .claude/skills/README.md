@@ -45,7 +45,7 @@ Git でコミットすればチーム（他のセッション・他の端末）�
 
 | スキル名 | 内容 |
 |---|---|
-| （まだありません） | |
+| `claude-automation-recommender` | Anthropic公式「claude-code-setup」プラグインのスキル。プロジェクトを解析し、おすすめの Claude Code 自動化（フック・スキル・MCP サーバー・サブエージェント・プラグイン）を提案する（読み取り専用）。出典：[anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-code-setup)（Apache-2.0） |
 
 スキルを追加したら、この表も更新してください。
 
