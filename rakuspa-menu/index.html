@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ドリンク＆おつまみセット｜RAKU SPA 1010 神田</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --paper: #f3ede2;
+    --paper-2: #ebe3d4;
+    --ink: #1e1d1a;
+    --ink-soft: #6d665b;
+    --line: #cdbfa8;
+    --green: #2f4a3a;
+    --terra: #b4532f;
+    --gold: #a8854a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #d9d2c5; }
+  body {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    color: var(--ink);
+    font-variant-numeric: lining-nums;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .sheet {
+    width: 210mm; height: 297mm; margin: 0 auto;
+    background: var(--paper);
+    position: relative; overflow: hidden;
+    padding: 13mm 13mm 9mm;
+    display: flex; flex-direction: column;
+  }
+  /* 細い内枠 */
+  .sheet::before {
+    content: ""; position: absolute; inset: 5mm;
+    border: .6px solid var(--line); pointer-events: none;
+  }
+  .serif { font-family: "Shippori Mincho B1", serif; }
+  .latin { font-family: "Cormorant Garamond", serif; }
+
+  /* ===== ヘッダー ===== */
+  .top { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 6mm; }
+  .eyebrow {
+    font-family: "Cormorant Garamond", serif; font-weight: 600;
+    font-size: 12px; letter-spacing: .32em; color: var(--gold);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .eyebrow::after { content: none; width: 34px; height: .6px; background: var(--gold); }
+  h1 {
+    font-family: "Shippori Mincho B1", serif; font-weight: 800;
+    font-size: 44px; line-height: 1.15; letter-spacing: .02em; margin-top: 8px;
+  }
+  h1 .plus { font-family: "Cormorant Garamond", serif; font-weight: 500; color: var(--terra); margin: 0 .12em; }
+  .sub { font-size: 13px; color: var(--ink-soft); margin-top: 8px; letter-spacing: .06em; }
+
+  .price-box { text-align: right; position: relative; padding-right: 2mm; }
+  .price-label { font-size: 11px; letter-spacing: .3em; color: var(--ink-soft); }
+  .price-main { display: flex; align-items: flex-start; justify-content: flex-end; line-height: .9; margin-top: 4px; }
+  .price-main .yen { font-family: "Cormorant Garamond", serif; font-size: 30px; font-weight: 600; margin-top: 10px; margin-right: 3px; color: var(--terra); }
+  .price-main .num { font-family: "Cormorant Garamond", serif; font-weight: 700; font-size: 86px; letter-spacing: -.01em; }
+  .tax { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+  .stamp {
+    position: absolute; right: calc(100% + 1mm); top: 3mm;
+    width: 23mm; height: 23mm; border-radius: 50%;
+    background: var(--terra); color: #fff8ee;
+    display: grid; place-items: center; text-align: center;
+    transform: rotate(-10deg);
+    box-shadow: 0 0 0 2.5px var(--paper), 0 0 0 3.3px var(--terra);
+  }
+  .stamp div { line-height: 1.05; }
+  .stamp small { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; }
+  .stamp b, .stamp i { display: block; }
+  .stamp b { font-family: "Cormorant Garamond", serif; font-size: 31px; font-weight: 700; }
+  .stamp i { font-style: normal; font-size: 11px; font-weight: 700; }
+
+  hr.rule { border: 0; border-top: .6px solid var(--line); margin: 5.5mm 0 4.5mm; }
+
+  /* ===== STEP 見出し ===== */
+  .step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4mm; }
+  .step-no {
+    font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 500;
+    font-size: 15px; color: var(--terra); letter-spacing: .08em; white-space: nowrap;
+  }
+  .step-no b { font-style: normal; font-weight: 700; font-size: 30px; margin-left: 2px; }
+  .step-head h2 { font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 21px; letter-spacing: .06em; }
+  .step-head .aside { margin-left: auto; font-size: 10.5px; color: var(--ink-soft); }
+
+  /* ===== ドリンク ===== */
+  .drinks { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 5mm; }
+  .drink {
+    display: grid; grid-template-columns: 30mm 1fr; gap: 5mm; align-items: center;
+    background: var(--paper-2); border-radius: 3mm; padding: 4mm 5mm;
+  }
+  .drink .ph { height: 36mm; border-radius: 15mm 15mm 2mm 2mm; overflow: hidden; background: #fff; }
+  .drink .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .drink .ph.beer { background: #fff; }
+  .drink .ph.beer img { object-fit: contain; padding: 2mm 0; }
+  .kind { font-family: "Cormorant Garamond", serif; font-weight: 600; font-size: 11px; letter-spacing: .28em; color: var(--gold); }
+  .drink h3 { font-family: "Shippori Mincho B1", serif; font-weight: 800; font-size: 20px; line-height: 1.3; margin: 3px 0 2px; }
+  .drink .brand { font-size: 10.5px; color: var(--ink-soft); }
+  .drink .single { font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+  .drink .single span { font-family: "Cormorant Garamond", serif; font-size: 17px; font-weight: 600; color: var(--ink); margin-left: 4px; }
+  .or {
+    font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 20px; color: var(--terra);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .or::before, .or::after { content: ""; width: .6px; height: 12mm; background: var(--line); }
+
+  /* ===== おつまみ ===== */
+  .snacks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5mm 4.5mm; }
+  .snack .ph { aspect-ratio: 4 / 3; border-radius: 20mm 20mm 2mm 2mm; overflow: hidden; }
+  .snack .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .snack .row { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; margin-top: 2mm; }
+  .snack h4 { font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 14.5px; letter-spacing: .02em; white-space: nowrap; line-height: 1.3; }
+  .tag {
+    flex: none; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 99px; white-space: nowrap;
+  }
+  .tag.free { color: var(--green); border: .8px solid var(--green); }
+  .tag.opt { color: #fff8ee; background: var(--terra); }
+  .tag.opt b { font-family: "Cormorant Garamond", serif; font-size: 13px; font-weight: 700; }
+  .also {
+    border: .8px dashed var(--line); border-radius: 20mm 20mm 2mm 2mm;
+    aspect-ratio: 4 / 3;
+    display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 3px;
+  }
+  .also { padding-top: 6mm; }
+  .also .kind { margin-bottom: 4px; letter-spacing: .2em; }
+  .also p { font-family: "Shippori Mincho B1", serif; font-weight: 700; font-size: 14px; }
+  .also p + p { border-top: .6px solid var(--line); padding-top: 4px; margin-top: 1px; min-width: 60%; }
+
+  /* ===== お得例 ===== */
+  .deal {
+    margin-top: 7mm;
+    background: var(--green); color: #f3ede2; border-radius: 3mm;
+    padding: 4.5mm 6mm;
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6mm;
+  }
+  .deal .lbl { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 13px; color: #d9bf8c; letter-spacing: .08em; }
+  .deal .lbl b { display: block; font-family: "Shippori Mincho B1", serif; font-style: normal; font-size: 17px; color: #fff; letter-spacing: .08em; margin-top: 1px; white-space: nowrap; }
+  .deal .ex { font-size: 11.5px; line-height: 1.6; border-left: .6px solid rgba(243,237,226,.35); padding-left: 6mm; }
+  .deal .ex .calc { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
+  .deal .ex s { font-family: "Cormorant Garamond", serif; font-size: 20px; opacity: .65; }
+  .deal .ex .arrow { opacity: .6; }
+  .deal .ex strong { font-family: "Cormorant Garamond", serif; font-size: 27px; font-weight: 700; }
+  .deal .ex small { font-size: 10px; opacity: .75; white-space: nowrap; }
+  .deal .save {
+    background: var(--paper); color: var(--terra); border-radius: 2mm;
+    padding: 2mm 5mm; text-align: center; line-height: 1; white-space: nowrap;
+  }
+  .deal .save b { font-family: "Cormorant Garamond", serif; font-size: 40px; font-weight: 700; }
+  .deal .save span { font-size: 13px; font-weight: 700; margin-left: 2px; }
+
+  /* ===== 注記 ===== */
+  .notes {  font-size: 9.5px; color: var(--ink-soft); line-height: 1.75; }
+  .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: end; padding-top: 3mm; }
+  .foot .mark { font-family: "Cormorant Garamond", serif; font-size: 11px; letter-spacing: .3em; color: var(--gold); text-align: right; white-space: nowrap; }
+
+  @media screen and (max-width: 820px) {
+    html, body { background: var(--paper); }
+    .sheet { zoom: calc(100vw / 794px); }
+  }
+  @media print { html, body { background: none; } }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ヘッダー -->
+  <div class="top">
+    <div>
+      <div class="eyebrow">RAKU SPA 1010 KANDA — DRINK &amp; SNACK SET</div>
+      <h1>1杯<span class="plus">+</span>おつまみ2品</h1>
+      <p class="sub">お好きなドリンク1杯と、おつまみ2品を自由に選べるセット</p>
+    </div>
+    <div class="price-box">
+      <div class="stamp"><div><small>最大</small><b>599</b><i>円お得</i></div></div>
+      <div class="price-label">セット価格</div>
+      <div class="price-main"><span class="yen">¥</span><span class="num">1,500</span></div>
+      <div class="tax">（税込）</div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- STEP 1 -->
+  <div class="step-head">
+    <div class="step-no">Step<b>01</b></div>
+    <h2>ドリンクを1杯えらぶ</h2>
+  </div>
+  <div class="drinks">
+    <div class="drink">
+      <div class="ph beer"><img src="img/beer.jpg" alt="生ビール"></div>
+      <div>
+        <div class="kind">DRAFT BEER</div>
+        <h3>パイントグラス</h3>
+        <div class="brand">アサヒスーパードライ</div>
+        <div class="single">単品<span>¥855</span></div>
+      </div>
+    </div>
+    <div class="or">or</div>
+    <div class="drink">
+      <div class="ph"><img src="img/highball.jpg" alt="ハイボール"></div>
+      <div>
+        <div class="kind">HIGHBALL</div>
+        <h3>1010JUG<br>ハイボール</h3>
+        <div class="single">単品<span>¥1,023</span></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- STEP 2 -->
+  <div class="step-head">
+    <div class="step-no">Step<b>02</b></div>
+    <h2>おつまみを2品えらぶ</h2>
+    <div class="aside">一部メニューはオプション料金がかかります</div>
+  </div>
+  <div class="snacks">
+    <div class="snack"><div class="ph"><img src="img/edamame.jpg" alt=""></div>
+      <div class="row"><h4>枝豆</h4><span class="tag free">追加料金なし</span></div></div>
+    <div class="snack"><div class="ph"><img src="img/jaga.jpg" alt=""></div>
+      <div class="row"><h4>ミニじゃがバター</h4><span class="tag free">追加料金なし</span></div></div>
+    <div class="snack"><div class="also">
+        <div class="kind">ALSO AVAILABLE</div>
+        <p>ガーリック枝豆</p>
+        <p>生ハム</p>
+      </div></div>
+    <div class="snack"><div class="ph"><img src="img/potato.jpg" alt=""></div>
+      <div class="row"><h4>ポテトフライ</h4><span class="tag opt">+<b>¥50</b></span></div></div>
+
+    <div class="snack"><div class="ph"><img src="img/karaage.jpg" alt=""></div>
+      <div class="row"><h4>唐揚げ</h4><span class="tag opt">+<b>¥100</b></span></div></div>
+    <div class="snack"><div class="ph"><img src="img/calamari.jpg" alt=""></div>
+      <div class="row"><h4>カラマリフリット</h4><span class="tag opt">+<b>¥100</b></span></div></div>
+    <div class="snack"><div class="ph"><img src="img/cheese.jpg" alt=""></div>
+      <div class="row"><h4>カリカリチーズフライ</h4><span class="tag opt">+<b>¥100</b></span></div></div>
+    <div class="snack"><div class="ph"><img src="img/salmon.jpg" alt=""></div>
+      <div class="row"><h4>サーモンマリネ</h4><span class="tag opt">+<b>¥100</b></span></div></div>
+  </div>
+
+  <!-- お得例 -->
+  <div class="deal">
+    <div class="lbl">for example<b>こんなにお得！</b></div>
+    <div class="ex">
+      1010JUGハイボール ＋ 唐揚げ ＋ サーモンマリネ の場合
+      <div class="calc">
+        <small>単品合計</small><s>¥2,299</s><span class="arrow">→</span>
+        <small>セット（オプション込み）</small><strong>¥1,700</strong>
+      </div>
+    </div>
+    <div class="save"><b>599</b><span>円お得</span></div>
+  </div>
+
+  <!-- 注記 -->
+  <div class="foot">
+    <div class="notes">
+      ※価格はすべて税込です。<br>
+      ※「＋¥50」「＋¥100」のおつまみはセット価格にオプション料金が加算されます。<br>
+      ※最大599円お得は、1010JUGハイボールと「＋¥100」のおつまみ2品を選んだ場合の単品合計との差額です。
+    </div>
+    <div class="mark">RAKU SPA<br>1010 KANDA</div>
+  </div>
+
+</div>
+</body>
+</html>
