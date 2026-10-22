@@ -51,6 +51,7 @@ Git でコミットすればチーム（他のセッション・他の端末）�
 | `skill-creator` | Anthropic公式スキル。新しいスキルの作成・既存スキルの改善・評価（テスト実行、description の最適化）を行う。このフォルダにスキルを追加するときに使う。出典：[anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/skill-creator)（Apache-2.0） |
 | **Superpowers**（15スキル） | Jesse Vincent 作の人気スキル集（[obra/superpowers](https://github.com/obra/superpowers)、MIT、v6.4系）。主に開発作業向け。<br>`brainstorming`（アイデア出し・要件整理）／`writing-plans`（計画書作成）／`executing-plans`（計画の実行）／`subagent-driven-development`／`dispatching-parallel-agents`／`test-driven-development`／`systematic-debugging`／`verification-before-completion`（完了前の確認）／`requesting-code-review`／`receiving-code-review`／`using-git-worktrees`／`finishing-a-development-branch`／`writing-skills`（スキル作成）／`using-superpowers`（使い方の入口）／`diagnosing-superpowers`（不具合診断）<br>※ `brainstorming` のブラウザ画面機能は外部ロゴ画像を読み込む。止めるには環境変数 `SUPERPOWERS_DISABLE_TELEMETRY=1` |
 | `playwright-cli` | Microsoft 公式の Playwright スキル（[microsoft/playwright-cli](https://github.com/microsoft/playwright-cli)、Apache-2.0）。ブラウザを操作してWebページを開く・クリック・入力・スクリーンショット・PDF保存・動作テストを行う。作ったHTMLページの表示確認（スマホ表示含む）にも使える。※ `playwright-cli` コマンドが必要（`npm install -g @playwright/cli@latest`） |
+| `agent-development` | Anthropic公式「plugin-dev」プラグインのスキル（[anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev)、Apache-2.0）。サブエージェント（専門の助手役）の作り方：設定項目、呼び出される条件の書き方、指示文の設計、例、検証スクリプト（`scripts/validate-agent.sh`）。※ 説明はプラグイン向けだが、このリポジトリでは作ったエージェントを `.claude/agents/<名前>.md` に置く |
 
 スキルを追加したら、この表も更新してください。
 
