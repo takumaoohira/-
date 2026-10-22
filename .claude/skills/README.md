@@ -9,6 +9,7 @@ Git でコミットすればチーム（他のセッション・他の端末）�
 ```
 .claude/skills/
 ├── README.md              ← このファイル（管理ルール）
+├── _licenses/             ← 外部から取り込んだスキルのライセンス
 ├── _template/
 │   └── SKILL.md.template  ← 新規スキル作成用のひな形（読み込まれません）
 └── <スキル名>/            ← 1スキル = 1フォルダ
@@ -48,6 +49,7 @@ Git でコミットすればチーム（他のセッション・他の端末）�
 | `claude-automation-recommender` | Anthropic公式「claude-code-setup」プラグインのスキル。プロジェクトを解析し、おすすめの Claude Code 自動化（フック・スキル・MCP サーバー・サブエージェント・プラグイン）を提案する（読み取り専用）。出典：[anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-code-setup)（Apache-2.0） |
 | `frontend-design` | Anthropic公式「frontend-design」プラグインのスキル。Webページ・UIを作るとき、ありきたりにならない配色・書体・レイアウトでデザインするための指針。キャンペーンページやメニュー表などのHTML作成時に使う。出典：[anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design)（Apache-2.0） |
 | `skill-creator` | Anthropic公式スキル。新しいスキルの作成・既存スキルの改善・評価（テスト実行、description の最適化）を行う。このフォルダにスキルを追加するときに使う。出典：[anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/skill-creator)（Apache-2.0） |
+| **Superpowers**（15スキル） | Jesse Vincent 作の人気スキル集（[obra/superpowers](https://github.com/obra/superpowers)、MIT、v6.4系）。主に開発作業向け。<br>`brainstorming`（アイデア出し・要件整理）／`writing-plans`（計画書作成）／`executing-plans`（計画の実行）／`subagent-driven-development`／`dispatching-parallel-agents`／`test-driven-development`／`systematic-debugging`／`verification-before-completion`（完了前の確認）／`requesting-code-review`／`receiving-code-review`／`using-git-worktrees`／`finishing-a-development-branch`／`writing-skills`（スキル作成）／`using-superpowers`（使い方の入口）／`diagnosing-superpowers`（不具合診断）<br>※ `brainstorming` のブラウザ画面機能は外部ロゴ画像を読み込む。止めるには環境変数 `SUPERPOWERS_DISABLE_TELEMETRY=1` |
 
 スキルを追加したら、この表も更新してください。
 
