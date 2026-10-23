@@ -1,0 +1,846 @@
+<title>小田原城CC ラウンドシミュレーター</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: full-bleed 3D first-person view; HUD panels pinned to corners, swing controls bottom-center. Single dark-glass HUD look over the scene. */
+:root{
+  --glass:rgba(12,22,18,.72); --glass-2:rgba(12,22,18,.88); --line:rgba(255,255,255,.14);
+  --ink:#f1f6f3; --muted:#a9c0b6; --accent:#ffb347; --good:#6fe0a8; --bad:#ff7a6b; --pen:#ff5a4f;
+  --f-ui:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:#0b1410;color:var(--ink);font-family:var(--f-ui)}
+#app{position:fixed;inset:0}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.panel{position:absolute;background:var(--glass);border:1px solid var(--line);border-radius:10px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+#holeCard{top:calc(10px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));padding:10px 14px;min-width:170px}
+#holeCard .hn{display:flex;align-items:baseline;gap:8px}
+#holeCard .hn b{font-family:var(--f-num);font-size:30px;line-height:1;color:var(--accent)}
+#holeCard .hn span{font-size:11px;letter-spacing:.14em;color:var(--muted)}
+#hMeta{font-size:13px;font-weight:700;margin-top:4px}
+#hStroke{font-size:12px;color:var(--muted);margin-top:2px}
+#windBox{top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));padding:8px 12px;display:flex;align-items:center;gap:10px}
+#windArrow{width:34px;height:34px;transition:transform .2s}
+#windTxt{font-size:12px;line-height:1.35}
+#windTxt b{font-family:var(--f-num);font-size:16px}
+#mini{top:calc(66px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));width:150px;height:220px;padding:0;overflow:hidden}
+#infoBox{left:calc(10px + env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:10px 14px;display:grid;grid-template-columns:auto auto;gap:2px 14px;font-size:12px;align-items:baseline}
+#infoBox dt{color:var(--muted)}
+#infoBox dd{margin:0;font-weight:700}
+#infoBox dd .num{font-size:17px}
+#infoBox .big .num{font-size:24px;color:var(--accent)}
+#ctrl{left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:10px 12px;display:grid;gap:8px;width:min(440px,calc(100% - 20px))}
+.row{display:flex;align-items:center;gap:8px}
+.btn{font:inherit;font-weight:700;font-size:13px;color:var(--ink);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:8px;padding:7px 11px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.btn:hover{background:rgba(255,255,255,.16)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent);color:#1b1306;border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+#club{flex:1;text-align:center;line-height:1.2}
+#clubName{font-weight:900;font-size:16px}
+#clubCarry{font-size:11px;color:var(--muted)}
+#meter{position:relative;flex:1;height:16px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden}
+#meterFill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,#6fe0a8,#ffd166 70%,#ff7a6b)}
+#meter i{position:absolute;top:0;bottom:0;width:2px;background:#fff;opacity:.8}
+#meterTxt{font-size:11px;color:var(--muted);min-width:118px;text-align:right}
+#shot{flex:none;background:var(--accent);color:#1b1306;border-color:var(--accent);font-size:15px;padding:10px 18px}
+#shot.on{background:#fff}
+#toolbar{top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);padding:6px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 420px)}
+#toolbar select{font:inherit;font-weight:700;font-size:13px;color:var(--ink);background:#15241f;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+#toast{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);font-weight:900;font-size:clamp(22px,4vw,40px);text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .25s;white-space:pre-line}
+#toast.show{opacity:1}
+#toast small{display:block;font-size:.45em;font-weight:700;color:var(--muted)}
+#tips{left:calc(10px + env(safe-area-inset-left,0px));top:calc(112px + env(safe-area-inset-top,0px));width:min(300px,calc(100% - 190px));padding:10px 12px;font-size:12.5px;line-height:1.6}
+#tips h3{margin:0 0 4px;font-size:12px;letter-spacing:.1em;color:var(--accent)}
+#tips ol{margin:0;padding-left:1.3em;display:grid;gap:3px}
+#tips .dg{color:var(--bad);margin-top:4px}
+.modal{position:absolute;inset:0;background:rgba(5,10,8,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:5}
+.modal .box{background:var(--glass-2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;max-width:640px;width:100%;max-height:100%;overflow:auto}
+.modal h2{margin:0 0 10px;font-size:20px}
+.modal p,.modal li{font-size:13.5px;line-height:1.7;color:#dbe7e1}
+.modal ul{padding-left:1.2em;margin:6px 0}
+kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:1px 5px;background:rgba(255,255,255,.08)}
+.sc{overflow-x:auto}
+.sc table{border-collapse:collapse;font-size:12px;min-width:520px;width:100%}
+.sc th,.sc td{border:1px solid var(--line);padding:4px 5px;text-align:center;font-family:var(--f-num)}
+.sc th{color:var(--muted);font-weight:500}
+.sc .u{color:var(--good)} .sc .o{color:var(--bad)}
+.set{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center;font-size:13.5px}
+.set .opts{display:flex;flex-wrap:wrap;gap:6px}
+#loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#0b1410;z-index:8;font-weight:700}
+#loading .bar{width:200px;height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
+#loading .bar i{display:block;height:100%;width:40%;background:var(--accent);animation:ld 1s infinite ease-in-out}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+@media (prefers-reduced-motion:reduce){#loading .bar i{animation:none;width:100%}}
+#putGuide{position:absolute;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:6px 12px;font-size:12.5px;white-space:nowrap}
+@media (max-width:760px){
+  #toolbar{top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));transform:none;max-width:none;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding:5px;scrollbar-width:none}
+  #toolbar .btn,#toolbar select{flex:none;font-size:12px;padding:6px 9px}
+  #holeCard{top:calc(58px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));padding:7px 10px;min-width:0}
+  #holeCard .hn b{font-size:22px}
+  #hMeta{font-size:12px}
+  #windBox{top:calc(58px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));padding:6px 9px;gap:6px}
+  #windArrow{width:26px;height:26px}
+  #mini{width:84px;height:124px;top:calc(116px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px))}
+  #tips{display:none}
+  #infoBox{left:calc(8px + env(safe-area-inset-left,0px));bottom:calc(172px + env(safe-area-inset-bottom,0px));font-size:11px;padding:6px 10px;grid-template-columns:auto auto auto auto;gap:0 8px}
+  #infoBox .big .num{font-size:18px}
+  #infoBox dd .num{font-size:14px}
+  #ctrl{bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:8px}
+  #putGuide{bottom:auto;top:calc(142px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));transform:none;white-space:normal;max-width:calc(100% - 110px);font-size:11.5px}
+}
+</style>
+
+<div id="app">
+  <canvas id="gl" aria-label="一人称ゴルフコースビュー"></canvas>
+
+  <div class="panel" id="holeCard">
+    <div class="hn"><span>HOLE</span><b id="hNo">1</b><span id="hPar">PAR 4</span></div>
+    <div id="hMeta">380Y · HDCP 3</div>
+    <div id="hStroke">1打目 · トータル E</div>
+  </div>
+
+  <div class="panel" id="toolbar">
+    <select id="holeSel" aria-label="ホール選択"></select>
+    <button class="btn" id="bAims" aria-pressed="true" title="攻略の狙い目①②③を表示">狙い目</button>
+    <button class="btn" id="bGuide" aria-pressed="true" title="落下予想地点を表示">ガイド</button>
+    <button class="btn" id="bCam" aria-pressed="false" title="ボールを追いかけるカメラ (C)">ボールカメラ</button>
+    <button class="btn" id="bCard">スコア</button>
+    <button class="btn" id="bSet">設定</button>
+    <button class="btn" id="bHelp">操作</button>
+  </div>
+
+  <div class="panel" id="windBox">
+    <svg id="windArrow" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,.25)"/><path d="M20 5 L28 22 L22 20 L22 34 L18 34 L18 20 L12 22 Z" fill="#7fd3ff"/></svg>
+    <div id="windTxt">風<br><b>0.0</b> m/s</div>
+  </div>
+  <canvas class="panel" id="mini" width="300" height="440" aria-label="ホールマップ"></canvas>
+
+  <div class="panel" id="tips"></div>
+
+  <dl class="panel" id="infoBox">
+    <dt>ピンまで</dt><dd class="big"><span class="num" id="iPin">0</span> Y</dd>
+    <dt>高低差</dt><dd id="iElev">—</dd>
+    <dt>実質距離</dt><dd><span class="num" id="iPlay">0</span> Y</dd>
+    <dt>狙い地点</dt><dd><span class="num" id="iAim">0</span> Y</dd>
+    <dt>ライ</dt><dd id="iLie">ティー</dd>
+  </dl>
+
+  <div class="panel" id="putGuide" hidden></div>
+
+  <div class="panel" id="ctrl">
+    <div class="row">
+      <button class="btn" id="bL" aria-label="左に向く">◀</button>
+      <button class="btn" id="bClubDn" aria-label="短いクラブ">−</button>
+      <div id="club"><div id="clubName">ドライバー</div><div id="clubCarry">キャリー 220Y</div></div>
+      <button class="btn" id="bClubUp" aria-label="長いクラブ">＋</button>
+      <button class="btn" id="bR" aria-label="右に向く">▶</button>
+    </div>
+    <div class="row">
+      <div id="meter"><div id="meterFill"></div><i style="left:calc(100%/1.1)"></i></div>
+      <div id="meterTxt" class="num">長押しでスイング</div>
+      <button class="btn" id="shot">ショット</button>
+    </div>
+    <div class="row" id="extraRow">
+      <button class="btn" id="bFast" hidden>早送り ▶▶</button>
+      <button class="btn" id="bOK" hidden>OKパット</button>
+      <button class="btn" id="bGive" hidden>ギブアップ</button>
+      <button class="btn" id="bNext" hidden>次のホールへ ▶</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div class="modal" id="mHelp">
+    <div class="box">
+      <h2>小田原城CC ラウンドシミュレーター</h2>
+      <p>ティーに立った目線でコースを見渡し、狙い目を確かめながら18ホールを回れます。コースは公開されているホール情報（距離・パー・ドッグレッグ・OB・池・高低差）から再現した想定地形です。実際の形状とは異なります。</p>
+      <ul>
+        <li><kbd>ドラッグ</kbd> 見回す ／ <kbd>クリック</kbd> その地点を狙う</li>
+        <li><kbd>←</kbd><kbd>→</kbd> 向きの微調整 ／ <kbd>↑</kbd><kbd>↓</kbd> クラブ変更</li>
+        <li><kbd>Space</kbd> または「ショット」を長押し → 離した位置がパワー（100%でフルショット、110%はオーバースイング）</li>
+        <li><kbd>F</kbd> 早送り ／ <kbd>C</kbd> ボールカメラ ／ <kbd>M</kbd> マップ</li>
+        <li>オレンジの①②③は攻略ガイドの狙い目。白いリングは選んだクラブの落下予想地点です。</li>
+        <li>OBは1打罰で打ち直し、池・1ペナエリアは1打罰でドロップ。グリーン上1Y以内は「OKパット」が使えます。</li>
+      </ul>
+      <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="bStart" style="background:var(--accent);color:#1b1306;border-color:var(--accent)">プレー開始</button></div>
+    </div>
+  </div>
+
+  <div class="modal" id="mCard" hidden><div class="box"><h2>スコアカード</h2><div class="sc" id="scBody"></div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="bCardClose">閉じる</button></div></div></div>
+
+  <div class="modal" id="mSet" hidden><div class="box"><h2>設定</h2>
+    <div class="set">
+      <span>ドライバー飛距離</span><div class="opts"><select id="sDrv" class="btn"></select></div>
+      <span>腕前（ブレ幅）</span><div class="opts" id="sSkill"></div>
+      <span>風</span><div class="opts" id="sWind"></div>
+      <span>描画品質</span><div class="opts" id="sQual"></div>
+    </div>
+    <p style="font-size:12px;color:var(--muted)">飛距離はキャリー。他のクラブはドライバーに比例して変わります。描画品質の変更はホールを読み込み直すと反映されます。</p>
+    <div class="row" style="justify-content:flex-end;margin-top:6px"><button class="btn" id="bSetClose">閉じる</button></div>
+  </div></div>
+
+  <div id="loading"><div id="ldTxt">コースを生成中…</div><div class="bar"><i></i></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script>
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id);
+
+/* ================= コースデータ（攻略ガイドと同じ模式座標: 200x340, ティー下→グリーン上） ================= */
+const HOLES=[
+{n:1,p:4,y:380,hc:3,az:270,pts:[[100,318],[112,205],[86,110],[70,48]],ob:"L",cliffs:[[42,150,22,70]],elev:[[0,0],[.55,6],[1,13]],raised:1.2,
+ aims:[[116,200],[70,48]],club:"1W",tips:["FW右サイド：左の角は詰めない。右寄りならグリーンが見える","グリーン手前から：打ち上げなので＋1番手"],danger:"左サイド全域（OB・崖下）"},
+{n:2,p:3,y:192,hc:9,az:90,pts:[[100,318],[100,60]],ob:"L",pen:"R",elev:[[0,0],[1,-12]],raised:.6,
+ aims:[[92,62]],tips:["グリーン左寄りセンター：打ち下ろし分1番手落とす。外すなら右手前"],danger:"左（OB）"},
+{n:3,p:4,y:294,hc:15,az:0,pts:[[100,318],[98,175],[100,60]],ob:"L",pen:"R",ponds:[[136,150,16,30]],elev:[[0,0],[.6,1],[1,3]],raised:2.4,
+ aims:[[90,188],[100,60]],club:"UT",tips:["FW左〜センター：ドライバー不要。UT/5Iで池に届かない位置へ","砲台グリーン：キャリーで乗せる番手"],danger:"右の池・左OB"},
+{n:4,p:4,y:370,hc:7,az:270,pts:[[100,318],[95,190],[100,55]],elev:[[0,0],[.5,10],[1,22]],raised:.8,
+ aims:[[88,185],[100,55]],club:"1W",tips:["FWやや左：打ち上げで距離が出ない。強振より芯","グリーン：残り距離＋10〜15Yの番手"],danger:"番手不足のショート"},
+{n:5,p:4,y:313,hc:13,az:180,pts:[[100,318],[104,180],[100,58]],ob:"L",pen:"R",ponds:[[74,175,10,26]],elev:[[0,0],[1,1]],raised:.6,
+ aims:[[114,182],[100,58]],club:"UT",tips:["FW右寄り：刻んで左の池とOBを消す","ショートアイアンでピンを狙えるチャンスホール"],danger:"左（OB・池）"},
+{n:6,p:5,y:626,hc:1,az:100,pts:[[100,322],[72,246],[122,168],[82,98],[102,40]],ob:"LR",narrow:15,elev:[[0,0],[.3,-10],[.6,-21],[1,-30]],raised:.8,
+ aims:[[74,244],[120,170],[86,104]],club:"3W",tips:["1打目 左サイド：FWに置けるクラブで","2打目 曲がり角の右：次でグリーン方向が見える位置へ","3打目 グリーン手前：4オン1パットでも良し"],danger:"左右（OB）。ダボは打たない"},
+{n:7,p:5,y:453,hc:5,az:0,pts:[[100,320],[94,205],[128,125],[148,52]],ob:"R",pen:"L",cliffs:[[164,90,14,22]],elev:[[0,0],[1,-5]],raised:.8,
+ aims:[[88,210],[122,132],[140,52]],club:"1W",tips:["FW左〜センター：右OBを消す","100Y前後に刻む：2オン狙いは不要","グリーン左寄り：右手前の崖を避ける"],danger:"右（OB・崖）"},
+{n:8,p:4,y:276,hc:11,az:180,pts:[[100,318],[96,180],[100,58]],ob:"R",pen:"L",elev:[[0,0],[1,0]],raised:.6,
+ aims:[[88,186],[100,58]],club:"UT",tips:["FW左〜センター：UT/アイアンで刻む","ウェッジで縦距離を合わせてパー"],danger:"右（OB）"},
+{n:9,p:3,y:198,hc:17,az:90,pts:[[100,318],[100,60]],ob:"L",pen:"R",elev:[[0,0],[1,-5]],raised:.6,
+ aims:[[92,64]],tips:["グリーン左寄りセンター：届かなくても手前でOK"],danger:"左（OB）"},
+{n:10,p:4,y:377,hc:4,az:90,pts:[[100,318],[100,185],[100,55]],ob:"LR",elev:[[0,0],[.1,-6],[.48,-82],[1,-100]],raised:.6,
+ aims:[[100,190],[100,55]],club:"3W",tips:["FWセンター：落差で大きく飛ぶ。海風を確認し方向性重視","芝目は山→海が順目。下りのパットは速い"],danger:"左右に曲げると大きく流される"},
+{n:11,p:4,y:369,hc:6,az:0,pts:[[100,318],[100,190],[100,58]],ob:"LR",narrow:13,elev:[[0,0],[1,-5]],raised:.6,
+ aims:[[100,195],[100,78]],club:"3W",tips:["FWセンター：刻んででもFWキープ最優先","グリーン手前の花道へ。ボギーで十分"],danger:"左右（OB）"},
+{n:12,p:4,y:346,hc:18,az:180,pts:[[100,318],[100,180],[100,58]],elev:[[0,0],[1,0]],raised:.5,
+ aims:[[100,175],[100,58]],club:"1W",tips:["ドライバーでしっかり振れるホール","ショートアイアンでバーディーも狙える"],danger:"特になし（取りこぼし注意）"},
+{n:13,p:5,y:484,hc:10,az:0,pts:[[100,320],[106,205],[96,128],[100,40]],ponds:[[100,66,26,9]],elev:[[0,0],[1,0]],raised:.8,nobunker:1,
+ aims:[[106,210],[96,128],[100,40]],club:"1W",tips:["FW：ドライバーでFWキープ","池手前100Y：池に届かない番手で刻む","池越えはキャリー＋風で1番手大きく"],danger:"グリーン手前の池"},
+{n:14,p:3,y:168,hc:8,az:90,pts:[[100,318],[100,62]],ob:"LR",obBack:1,valley:[100,190,70,46],elev:[[0,0],[1,-20]],raised:.6,
+ aims:[[100,74]],tips:["グリーン手前〜センター：奥OB。打ち下ろし分しっかり番手を落とす"],danger:"奥・左右（OB）、谷"},
+{n:15,p:4,y:315,hc:14,az:180,pts:[[100,318],[100,182],[100,58]],elev:[[0,0],[1,0]],raised:.6,
+ aims:[[100,186],[100,58]],club:"UT",tips:["FW：刻みも可。ショートアイアンを持てる位置へ","グリーン中央でパーを取りにいく"],danger:"現地で要確認（公開情報なし）"},
+{n:16,p:4,y:326,hc:12,az:270,pts:[[100,318],[100,182],[100,58]],elev:[[0,0],[1,3]],raised:.6,
+ aims:[[100,190],[100,58]],club:"1W",tips:["100Y以内を残せればパーチャンス","ウェッジで縦距離を合わせる"],danger:"現地で要確認（公開情報なし）"},
+{n:17,p:3,y:158,hc:16,az:0,pts:[[100,318],[100,62]],ponds:[[100,168,46,34]],ridge:1,elev:[[0,0],[1,0]],raised:.8,nobunker:1,
+ aims:[[100,62]],tips:["グリーンセンター：池越えのキャリーを確保。端を狙うと馬の背でこぼれる"],danger:"手前の池"},
+{n:18,p:5,y:435,hc:2,az:270,pts:[[100,320],[100,215],[100,128],[100,48]],elev:[[0,0],[.5,6],[1,18]],raised:2.6,
+ aims:[[100,220],[100,132],[100,48]],club:"1W",tips:["FW：ドラコン以外は飛ばしすぎ不要","3打目を得意距離に残す","砲台グリーン：ショート厳禁、キャリーで乗せる"],danger:"グリーン手前のショート"},
+];
+
+/* ================= クラブ・物理 ================= */
+const G=10.73, KD=0.0034, DT=1/240, SPIN_T=3.5;          // ヤード・秒
+const CLUBS=[
+ {id:"1W",nm:"ドライバー",c:220,la:13,kl:.0036,sp:.9},{id:"3W",nm:"3番ウッド",c:200,la:14,kl:.0039,sp:.85},
+ {id:"5W",nm:"5番ウッド",c:185,la:16,kl:.0043,sp:.8},{id:"UT",nm:"ユーティリティ",c:172,la:17.5,kl:.0046,sp:.75},
+ {id:"5I",nm:"5番アイアン",c:160,la:18.5,kl:.0050,sp:.7},{id:"6I",nm:"6番アイアン",c:150,la:20,kl:.0053,sp:.65},
+ {id:"7I",nm:"7番アイアン",c:140,la:22,kl:.0056,sp:.6},{id:"8I",nm:"8番アイアン",c:130,la:25,kl:.0059,sp:.55},
+ {id:"9I",nm:"9番アイアン",c:120,la:28,kl:.0062,sp:.5},{id:"PW",nm:"ピッチングウェッジ",c:108,la:32,kl:.0065,sp:.42},
+ {id:"AW",nm:"アプローチウェッジ",c:92,la:36,kl:.0067,sp:.36},{id:"SW",nm:"サンドウェッジ",c:76,la:40,kl:.0069,sp:.32},
+ {id:"PT",nm:"パター",c:30,putt:1}
+];
+// 地面の性質: e=反発, ft=接線保持, mu=転がり抵抗, k=ショット距離係数, dsp=ブレ係数
+const SURF=[
+ {nm:"林・深いラフ",e:.12,ft:.35,mu:.9,k:.62,dsp:2},
+ {nm:"ラフ",e:.18,ft:.45,mu:.5,k:.88,dsp:1.35},
+ {nm:"フェアウェイ",e:.32,ft:.72,mu:.2,k:1,dsp:1},
+ {nm:"カラー",e:.28,ft:.6,mu:.12,k:1,dsp:1},
+ {nm:"グリーン",e:.22,ft:.6,mu:.065,k:1,dsp:1},
+ {nm:"バンカー",e:.02,ft:.1,mu:2.2,k:.75,dsp:1.5},
+ {nm:"池",e:0,ft:0,mu:9,k:0,dsp:1},
+ {nm:"ティー",e:.32,ft:.72,mu:.2,k:1,dsp:1},
+ {nm:"崖",e:.4,ft:.7,mu:.35,k:.5,dsp:2},
+ {nm:"谷",e:.12,ft:.35,mu:.9,k:.5,dsp:2},
+ {nm:"カート道",e:.55,ft:.92,mu:.1,k:.9,dsp:1.2},
+];
+const S_DEEP=0,S_ROUGH=1,S_FW=2,S_FR=3,S_GR=4,S_BK=5,S_WA=6,S_TEE=7,S_CL=8,S_VA=9,S_PATH=10;
+const SKILL=[{nm:"上級",a:1.4,s:.06,d:.03,pa:.5,pd:.04},{nm:"中級",a:2.8,s:.12,d:.05,pa:.9,pd:.06},{nm:"初級",a:4.8,s:.2,d:.08,pa:1.5,pd:.1}];
+const WINDS=[{nm:"なし",lo:0,hi:0},{nm:"弱",lo:0,hi:2},{nm:"普通",lo:1,hi:4.5},{nm:"強",lo:4,hi:8}];
+
+/* ================= 設定 ================= */
+const isTouch=matchMedia("(pointer:coarse)").matches;
+const cfg={drv:220,skill:1,wind:2,q:isTouch?0:1,aims:true,guide:true,cam:false};
+try{Object.assign(cfg,JSON.parse(localStorage.getItem("odw-sim")||"{}"))}catch(e){}
+const saveCfg=()=>{try{localStorage.setItem("odw-sim",JSON.stringify(cfg))}catch(e){}};
+
+/* ================= ノイズ ================= */
+let SEED=1337;
+function hash(i,j){let h=Math.imul(i,374761393)^Math.imul(j,668265263)^SEED;h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296}
+function vn(x,y){const i=Math.floor(x),j=Math.floor(y),fx=x-i,fy=y-j,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy),a=hash(i,j),b=hash(i+1,j),c=hash(i,j+1),d=hash(i+1,j+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+function fbm(x,y,o){let s=0,a=.5,f=1,n=0;for(let k=0;k<o;k++){s+=a*(vn(x*f+k*17.3,y*f-k*9.1)*2-1);n+=a;a*=.5;f*=2.03}return s/n}
+let rs=1;const rnd=()=>{rs=(rs*16807)%2147483647;return(rs-1)/2147483646};
+const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const ss=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
+const lerp=(a,b,t)=>a+(b-a)*t;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+
+/* ================= ホール幾何 ================= */
+let HD=null; // 現在ホールの幾何
+const SEA_LEVEL=-250;
+function buildHole(h){
+  const P=h.pts;let L=0;for(let i=1;i<P.length;i++)L+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);
+  const k=h.y/L,T=P[0];
+  const W=([sx,sy])=>[(sx-T[0])*k,-(T[1]-sy)*k];
+  const C=P.map(W);const segs=[];let s0=0;
+  for(let i=1;i<C.length;i++){const ax=C[i-1][0],az=C[i-1][1],bx=C[i][0],bz=C[i][1],len=Math.hypot(bx-ax,bz-az),fx=(bx-ax)/len,fz=(bz-az)/len;
+    segs.push({ax,az,fx,fz,rx:-fz,rz:fx,len,s0});s0+=len}
+  const last=segs[segs.length-1];
+  const rel=(90-h.az)*Math.PI/180; // 海の方向（ホール前方からの時計回り角）
+  const f0=segs[0];
+  const sea=[Math.cos(rel)*f0.fx+Math.sin(rel)*f0.rx, Math.cos(rel)*f0.fz+Math.sin(rel)*f0.rz];
+  const sunRel=(220-h.az)*Math.PI/180;
+  const sun=[Math.cos(sunRel)*f0.fx+Math.sin(sunRel)*f0.rx, Math.cos(sunRel)*f0.fz+Math.sin(sunRel)*f0.rz];
+  const Gc=C[C.length-1];
+  const hd={h,k,C,segs,len:s0,sea,sun,G:{x:Gc[0],z:Gc[1],fx:last.fx,fz:last.fz,rx:last.rx,rz:last.rz,ra:15,rl:12},
+    obD:h.narrow?h.narrow+19:40,penD:38,fwH:h.narrow||18,
+    ponds:(h.ponds||[]).map(([x,y,rx,ry])=>{const c=W([x,y]);return{x:c[0],z:c[1],rx:rx*k,rz:ry*k,lv:0}}),
+    cliffs:(h.cliffs||[]).map(([x,y,rx,ry])=>{const c=W([x,y]);return{x:c[0],z:c[1],rx:rx*k,rz:ry*k}}),
+    valley:h.valley?(()=>{const [x,y,rx,ry]=h.valley,c=W([x,y]);return{x:c[0],z:c[1],rx:rx*k*.68,rz:ry*k*.62}})():null,
+    aims:h.aims.map(a=>{const c=W(a);return{x:c[0],z:c[1]}}),bunkers:[]};
+  hd.fwStart=h.p===3?s0-38:Math.min(150,s0*.32);
+  // 平均オフセット（周辺地形の基準）
+  let kk=0;for(let i=0;i<=20;i++){const t=i/20;const p=ptAt(hd,t*s0);kk+=prof(hd,t*s0)-genSlope(hd,p[0],p[1])}hd.K=kk/21;
+  // バンカー（グリーン周り・想定）
+  SEED=h.n*7919;rs=h.n*48271+11;
+  if(!h.nobunker){
+    const bl=[[-4,-(hd.G.rl+6),7,4]];if(!(h.pen||"").includes("R")&&!h.ponds)bl.push([-17,9,4,6]);else bl.push([6,hd.G.rl+6,6,3.5]);
+    for(const [u,v,ra,rl] of bl)hd.bunkers.push({x:hd.G.x+hd.G.fx*u+hd.G.rx*v,z:hd.G.z+hd.G.fz*u+hd.G.rz*v,ra,rl});
+  }
+  // カップ位置
+  hd.cup={x:hd.G.x+hd.G.fx*(rnd()*10-5)+hd.G.rx*(rnd()*8-4),z:0};hd.cup.z=hd.G.z+hd.G.fz*(rnd()*10-5)+hd.G.rz*(rnd()*8-4);
+  hd.gH=prof(hd,s0)+h.raised;
+  // 池の水位
+  for(const p of hd.ponds){let mn=1e9;for(let i=0;i<24;i++){const a=i/24*Math.PI*2;mn=Math.min(mn,Hbase(hd,p.x+Math.cos(a)*p.rx,p.z+Math.sin(a)*p.rz))}p.lv=mn-.9}
+  // 範囲
+  let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;for(const c of C){x0=Math.min(x0,c[0]);x1=Math.max(x1,c[0]);z0=Math.min(z0,c[1]);z1=Math.max(z1,c[1])}
+  const M=200;hd.box={x0:x0-M,x1:x1+M,z0:z0-M,z1:z1+M+40};
+  return hd;
+}
+function ptAt(hd,s){for(const S of hd.segs){if(s<=S.s0+S.len)return[S.ax+S.fx*(s-S.s0),S.az+S.fz*(s-S.s0)]}const S=hd.segs[hd.segs.length-1];return[S.ax+S.fx*S.len,S.az+S.fz*S.len]}
+function prof(hd,s){const e=hd.h.elev,t=clamp(s/hd.len,0,1);for(let i=1;i<e.length;i++){if(t<=e[i][0]){const u=(t-e[i-1][0])/(e[i][0]-e[i-1][0]);const w=u*u*(3-2*u);return lerp(e[i-1][1],e[i][1],w)}}return e[e.length-1][1]}
+function genSlope(hd,x,z){return -0.15*(x*hd.sea[0]+z*hd.sea[1])}
+const NR={s:0,d:0,dist:0,i:0};
+function near(hd,x,z){let best=1e18;for(let i=0;i<hd.segs.length;i++){const S=hd.segs[i];const t=(x-S.ax)*S.fx+(z-S.az)*S.fz;const tc=t<0?0:t>S.len?S.len:t;
+  const dx=x-S.ax-S.fx*tc,dz=z-S.az-S.fz*tc,dd=dx*dx+dz*dz;
+  if(dd<best-1e-6){best=dd;NR.i=i;NR.s=S.s0+((i===0&&t<0)||(i===hd.segs.length-1&&t>S.len)?t:tc);NR.d=(x-S.ax)*S.rx+(z-S.az)*S.rz}}
+  NR.dist=Math.sqrt(best);return NR}
+function gLocal(hd,x,z){const g=hd.G,dx=x-g.x,dz=z-g.z;return[dx*g.fx+dz*g.fz,dx*g.rx+dz*g.rz]}
+function greenR(hd,x,z){const [u,v]=gLocal(hd,x,z);return Math.hypot(u/hd.G.ra,v/hd.G.rl)}
+function greenSurf(hd,x,z){const [u,v]=gLocal(hd,x,z);let y=hd.gH+u*.014-(x*hd.sea[0]+z*hd.sea[1]-(hd.G.x*hd.sea[0]+hd.G.z*hd.sea[1]))*.01+.18*fbm(x*.07,z*.07,2);
+  if(hd.h.ridge)y+=.7*Math.max(0,1-(v/hd.G.rl)**2);return y}
+function ell(o,x,z){return Math.hypot((x-o.x)/o.rx,(z-o.z)/o.rz)}
+function Hbase(hd,x,z){
+  const n=near(hd,x,z),s=clamp(n.s,0,hd.len),dist=n.dist;
+  const corr=prof(hd,s)+1.1*fbm(x*.012,z*.012,3)+.25*fbm(x*.05,z*.05,2)+0.03*n.d*-(hd.sea[0]*hd.segs[n.i].rx+hd.sea[1]*hd.segs[n.i].rz);
+  const sd=x*hd.sea[0]+z*hd.sea[1];
+  const amp=10+Math.min(70,Math.abs(sd)*.035);
+  let far=genSlope(hd,x,z)+hd.K+amp*fbm(x*.0032,z*.0032,5)+5*fbm(x*.02,z*.02,2)+Math.max(0,-sd-450)*.16;
+  let y=lerp(corr,far,ss(32,150,dist));
+  // ティー
+  const tl=Math.max(Math.abs(x)-5,Math.abs(z)-6);if(tl<5)y=lerp(prof(hd,0)+.7,y,ss(0,5,tl));
+  // グリーン
+  const gr=greenR(hd,x,z);if(gr<2.6)y=lerp(greenSurf(hd,x,z),y,ss(1.12,2.6,gr));
+  return Math.max(y,SEA_LEVEL-40);
+}
+function H(x,z){const hd=HD;let y=Hbase(hd,x,z);
+  for(const b of hd.bunkers){const r=Math.hypot(...bLocal(hd,b,x,z));if(r<1)y-=.75*(1-r*r)}
+  for(const p of hd.ponds){const r=ell(p,x,z);if(r<1.5){const t=p.lv-.35-1.8*Math.max(0,1-r*r);y=r<1?Math.min(y,t):Math.min(y,lerp(p.lv-.35,y,ss(1,1.5,r)))}}
+  if(hd.valley){const r=ell(hd.valley,x,z);if(r<1.6)y-=30*(1-ss(.45,1.6,r))}
+  for(const c of hd.cliffs){const r=ell(c,x,z);if(r<1.3)y-=11*(1-ss(.6,1.3,r))}
+  return y}
+function bLocal(hd,b,x,z){const g=hd.G,dx=x-b.x,dz=z-b.z;return[(dx*g.fx+dz*g.fz)/b.ra,(dx*g.rx+dz*g.rz)/b.rl]}
+function surf(x,z){const hd=HD;
+  for(const p of hd.ponds)if(ell(p,x,z)<1)return S_WA;
+  const gr=greenR(hd,x,z);if(gr<1)return S_GR;if(gr<1.14)return S_FR;
+  for(const b of hd.bunkers)if(Math.hypot(...bLocal(hd,b,x,z))<1)return S_BK;
+  if(Math.abs(x)<5&&Math.abs(z)<6)return S_TEE;
+  if(hd.valley&&ell(hd.valley,x,z)<.85)return S_VA;
+  for(const c of hd.cliffs)if(ell(c,x,z)<.9)return S_CL;
+  const n=near(hd,x,z),ad=Math.abs(n.d);
+  const wob=2.5*fbm(n.s*.025,n.d>0?3:7,2);
+  const fwOK=n.s>hd.fwStart&&n.s<hd.len+8;
+  if(fwOK&&ad<hd.fwH+wob&&n.dist<hd.fwH+6)return S_FW;
+  if(gr<2.2&&ad<hd.fwH+wob)return S_FW;
+  const pathSide=(hd.h.ob||"").includes("R")?-1:1;
+  const pd=n.d*pathSide;if(n.s>-6&&n.s<hd.len-6&&pd>29&&pd<31.6&&!(hd.h.ob||"").includes(pathSide>0?"R":"L"))return S_PATH;
+  if(n.dist<34+3*wob||gr<2.6||(Math.abs(x)<16&&z>-30&&z<12))return S_ROUGH;
+  return S_DEEP}
+function lateralPt(hd,s,d){const p=ptAt(hd,clamp(s,0,hd.len));const S=hd.segs[segIdx(hd,s)];return[p[0]+S.rx*d,p[1]+S.rz*d]}
+function segIdx(hd,s){for(let i=0;i<hd.segs.length;i++)if(s<=hd.segs[i].s0+hd.segs[i].len)return i;return hd.segs.length-1}
+// 罰則判定: null | {t:"OB"} | {t:"PEN",x,z} | {t:"RE"}(打ち直し)
+function penalty(x,z){const hd=HD,b=hd.box;
+  if(x<b.x0+15||x>b.x1-15||z<b.z0+15||z>b.z1-15)return{t:"OB"};
+  const n=near(hd,x,z),ob=hd.h.ob||"",pen=hd.h.pen||"";
+  if(n.s>-25&&n.s<hd.len+45){
+    if((ob.includes("L")&&n.d<-hd.obD)||(ob.includes("R")&&n.d>hd.obD))return{t:"OB"};
+    if(pen.includes("L")&&n.d<-hd.penD){const p=lateralPt(hd,n.s,-hd.penD+4);return{t:"PEN",x:p[0],z:p[1]}}
+    if(pen.includes("R")&&n.d>hd.penD){const p=lateralPt(hd,n.s,hd.penD-4);return{t:"PEN",x:p[0],z:p[1]}}
+  }
+  if(hd.h.obBack&&n.s>hd.len+20)return{t:"OB"};
+  const sf=surf(x,z);
+  if(sf===S_VA||sf===S_CL)return{t:"RE"};
+  if(sf===S_WA){const p=hd.ponds.find(p=>ell(p,x,z)<1);return{t:"WATER",p}}
+  return null}
+
+/* ================= THREE セットアップ ================= */
+const canvas=$("gl");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(55,1,.05,14000);camera.rotation.order="YXZ";
+const lin=hex=>new THREE.Color(hex).convertSRGBToLinear();
+const HORIZON=0xcfdde6,ZENITH=0x4a7fc4;
+scene.fog=new THREE.Fog(lin(HORIZON),700,9000);
+const hemi=new THREE.HemisphereLight(lin(0xd6e8ff),lin(0x4c5a3a),.62);scene.add(hemi);
+const sunL=new THREE.DirectionalLight(lin(0xfff1d8),2.1);sunL.castShadow=true;
+sunL.shadow.camera.left=-170;sunL.shadow.camera.right=170;sunL.shadow.camera.top=170;sunL.shadow.camera.bottom=-170;sunL.shadow.camera.near=1;sunL.shadow.camera.far=1400;
+sunL.shadow.bias=-.0004;sunL.shadow.normalBias=.35;scene.add(sunL,sunL.target);
+function resize(){const w=innerWidth,h=innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,cfg.q?2:1.5));renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?68:55;camera.updateProjectionMatrix()}
+addEventListener("resize",resize);resize();
+
+// 空
+const skyU={uZen:{value:lin(ZENITH)},uHor:{value:lin(HORIZON)},uSun:{value:new THREE.Vector3(0,1,0)}};
+const sky=new THREE.Mesh(new THREE.SphereGeometry(12000,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:skyU,
+  vertexShader:"varying vec3 vD;void main(){vD=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_Position.z=gl_Position.w*.99999;}",
+  fragmentShader:"uniform vec3 uZen,uHor,uSun;varying vec3 vD;void main(){float h=max(vD.y,0.);vec3 c=mix(uHor,uZen,pow(h,.55));float s=max(dot(normalize(vD),normalize(uSun)),0.);c+=vec3(1.,.85,.6)*(pow(s,600.)*6.+pow(s,12.)*.18);if(vD.y<0.)c=uHor;gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n#include <encodings_fragment>\n}"}));
+sky.renderOrder=-1;scene.add(sky);
+
+// 雲
+function cloudTex(){const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");
+  for(let i=0;i<26;i++){const px=24+Math.random()*80,py=48+Math.random()*36,r=14+Math.random()*24;const g=x.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,"rgba(255,255,255,.55)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,128,128)}
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t}
+const clouds=new THREE.Group();scene.add(clouds);
+{const tex=cloudTex();for(let i=0;i<34;i++){const m=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthWrite:false,fog:true,opacity:.85}));
+  const a=Math.random()*Math.PI*2,r=2500+Math.random()*6500;m.position.set(Math.cos(a)*r,500+Math.random()*700,Math.sin(a)*r);const s=900+Math.random()*1400;m.scale.set(s,s*.45,1);clouds.add(m)}}
+
+// 海
+function seaNormal(){const N=256,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d"),im=x.createImageData(N,N);
+  const per=(i,j,f)=>{let s=0;for(let k=0;k<3;k++){const a=k*2.1+1;s+=Math.sin((i*Math.cos(a)+j*Math.sin(a))*f*Math.PI*2/N*(k+2))}return s};
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const dx=per(i+1,j,1)-per(i-1,j,1),dz=per(i,j+1,1)-per(i,j-1,1);const o=(j*N+i)*4;im.data[o]=128+dx*40;im.data[o+1]=128+dz*40;im.data[o+2]=255;im.data[o+3]=255}
+  x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(400,400);return t}
+const seaMat=new THREE.MeshStandardMaterial({color:lin(0x2f6688),roughness:.28,metalness:.05,normalMap:seaNormal(),normalScale:new THREE.Vector2(.35,.35)});
+const seaMesh=new THREE.Mesh(new THREE.PlaneGeometry(40000,40000),seaMat);seaMesh.rotation.x=-Math.PI/2;scene.add(seaMesh);
+
+// 樹木ジオメトリ（スギ・広葉樹）
+function merge(parts){let n=0;const gs=parts.map(([g,c])=>{g=g.index?g.toNonIndexed():g;n+=g.attributes.position.count;return[g,c]});
+  const P=new Float32Array(n*3),N=new Float32Array(n*3),Cc=new Float32Array(n*3);let o=0;
+  for(const [g,c] of gs){const cnt=g.attributes.position.count;P.set(g.attributes.position.array,o*3);N.set(g.attributes.normal.array,o*3);const cl=lin(c);for(let i=0;i<cnt;i++){Cc[(o+i)*3]=cl.r;Cc[(o+i)*3+1]=cl.g;Cc[(o+i)*3+2]=cl.b}o+=cnt}
+  const m=new THREE.BufferGeometry();m.setAttribute("position",new THREE.BufferAttribute(P,3));m.setAttribute("normal",new THREE.BufferAttribute(N,3));m.setAttribute("color",new THREE.BufferAttribute(Cc,3));return m}
+const cedarGeo=merge([[new THREE.CylinderGeometry(.05,.08,.35,6).translate(0,.175,0),0x5a4330],
+  [new THREE.ConeGeometry(.32,.42,8).translate(0,.38,0),0x2f5a32],[new THREE.ConeGeometry(.26,.38,8).translate(0,.58,0),0x335f35],[new THREE.ConeGeometry(.18,.34,8).translate(0,.8,0),0x386a39]]);
+const broadGeo=merge([[new THREE.CylinderGeometry(.05,.08,.45,6).translate(0,.22,0),0x5e4a34],
+  [new THREE.IcosahedronGeometry(.3,1).translate(0,.62,0),0x4c7a3a],[new THREE.IcosahedronGeometry(.24,1).translate(.2,.55,.08),0x55833f],[new THREE.IcosahedronGeometry(.22,1).translate(-.18,.58,-.1),0x46713a],[new THREE.IcosahedronGeometry(.2,1).translate(.02,.82,.04),0x5a8a44]]);
+const treeMat=new THREE.MeshLambertMaterial({vertexColors:true});
+
+/* ================= ホールのシーン生成 ================= */
+let world=null;     // ホールごとのオブジェクト群
+let trees=[],treeGrid=new Map();
+function disposeWorld(){if(!world)return;world.traverse(o=>{if(o.geometry&&o.geometry!==cedarGeo&&o.geometry!==broadGeo)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m!==treeMat){if(m.map)m.map.dispose();m.dispose()}})}});scene.remove(world);world=null}
+let texCanvas=null;
+const COL={deep:[52,78,38],rough:[76,116,48],fw:[104,158,62],fr:[112,168,70],gr:[118,178,76],bk:[226,212,170],wa:[44,70,58],tee:[100,160,64],cl:[118,104,86],va:[48,72,36],path:[150,148,140]};
+function paintTexture(hd,TW,TH){
+  const b=hd.box,w=b.x1-b.x0,d=b.z1-b.z0;
+  const c=document.createElement("canvas");c.width=TW;c.height=TH;const x=c.getContext("2d"),im=x.createImageData(TW,TH),D=im.data;
+  for(let j=0;j<TH;j++){const wz=b.z0+(j+.5)/TH*d;for(let i=0;i<TW;i++){const wx=b.x0+(i+.5)/TW*w;
+    const sf=surf(wx,wz);let col,br=1;
+    const nn=hash(i,j)*.07-.035,lf=fbm(wx*.03,wz*.03,3)*.08;
+    switch(sf){
+      case S_FW:{col=COL.fw;const s=near(hd,wx,wz).s;br=(Math.floor(s/9)&1)?1.05:.95;break}
+      case S_GR:{col=COL.gr;const [u]=gLocal(hd,wx,wz);br=(Math.floor((u+40)/2.6)&1)?1.03:.97;break}
+      case S_FR:col=COL.fr;break;case S_ROUGH:col=COL.rough;br=1+lf;break;case S_DEEP:col=COL.deep;br=1+lf*2;break;
+      case S_BK:col=COL.bk;br=1+lf*.4;break;case S_WA:col=COL.wa;break;case S_TEE:{col=COL.tee;br=(Math.floor((wz+30)/1.5)&1)?1.03:.97;break}
+      case S_CL:col=COL.cl;br=1+lf*2;break;case S_VA:col=COL.va;br=1+lf*2;break;case S_PATH:col=COL.path;break;default:col=COL.deep}
+    br+=nn;if(sf===S_FW||sf===S_ROUGH||sf===S_DEEP)br+=lf*.6;
+    const o=(j*TW+i)*4;D[o]=col[0]*br;D[o+1]=col[1]*br;D[o+2]=col[2]*br;D[o+3]=255}}
+  x.putImageData(im,0,0);return c}
+function detailTex(){const N=256,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d"),im=x.createImageData(N,N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){let v=0,a=.5;for(let o=0;o<4;o++){const f=8<<o;const ii=i/N*f,jj=j/N*f;const i0=Math.floor(ii),j0=Math.floor(jj);
+      const h=(p,q)=>hash(((p%f)+f)%f+o*999,((q%f)+f)%f);const fx=ii-i0,fy=jj-j0;const u=fx*fx*(3-2*fx),w=fy*fy*(3-2*fy);
+      v+=a*(lerp(lerp(h(i0,j0),h(i0+1,j0),u),lerp(h(i0,j0+1),h(i0+1,j0+1),u),w));a*=.5}
+    v=v/.94;const g=128+(v-.5)*70+(hash(i*7,j*13)-.5)*30;const o=(j*N+i)*4;D(o,g)}
+  function D(o,g){im.data[o]=g;im.data[o+1]=g;im.data[o+2]=g;im.data[o+3]=255}
+  x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
+const DETAIL=detailTex();
+
+function stakeMesh(list,color,h=1){const g=new THREE.CylinderGeometry(.07,.07,h,6);g.translate(0,h/2,0);const m=new THREE.InstancedMesh(g,new THREE.MeshLambertMaterial({color:lin(color)}),list.length);
+  const M=new THREE.Matrix4();list.forEach((p,i)=>{M.makeTranslation(p[0],H(p[0],p[1])-.1,p[1]);m.setMatrixAt(i,M)});m.castShadow=true;return m}
+function labelSprite(txt,bg,fg,size){const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");x.fillStyle=bg;x.beginPath();x.arc(64,64,58,0,7);x.fill();x.strokeStyle="#fff";x.lineWidth=6;x.stroke();
+  x.fillStyle=fg;x.font="900 70px 'JetBrains Mono',monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(txt,64,68);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,fog:false,sizeAttenuation:false}));s.scale.set(size,size,1);s.renderOrder=10;return s}
+
+let flag=null,aimGroup=null,aimMarker=null,guideRing=null,ballMesh=null,trail=null,cupMesh=null;
+function buildScene(){
+  disposeWorld();world=new THREE.Group();scene.add(world);
+  const hd=HD,b=hd.box,w=b.x1-b.x0,d=b.z1-b.z0,cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2;
+  const res=cfg.q?2.4:3.4;
+  const sx=Math.min(380,Math.ceil(w/res)),sz=Math.min(380,Math.ceil(d/res));
+  // 詳細地形
+  const geo=new THREE.PlaneGeometry(w,d,sx,sz);geo.rotateX(-Math.PI/2);
+  const pa=geo.attributes.position;for(let i=0;i<pa.count;i++){pa.setY(i,H(pa.getX(i)+cx,pa.getZ(i)+cz))}
+  geo.computeVertexNormals();
+  const TM=cfg.q?2048:1400,TW=Math.round(TM*Math.min(1,w/d)),TH=Math.round(TM*Math.min(1,d/w));
+  texCanvas=paintTexture(hd,TW,TH);
+  const tex=new THREE.CanvasTexture(texCanvas);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+  const mat=new THREE.MeshStandardMaterial({map:tex,roughness:.93,metalness:0});
+  mat.onBeforeCompile=sh=>{sh.uniforms.dMap={value:DETAIL};sh.uniforms.dRep={value:new THREE.Vector2(w/4,d/4)};sh.uniforms.dRep2={value:new THREE.Vector2(w/37,d/37)};
+    sh.fragmentShader="uniform sampler2D dMap;uniform vec2 dRep,dRep2;\n"+sh.fragmentShader.replace("#include <map_fragment>","#include <map_fragment>\n diffuseColor.rgb*=mix(vec3(1.),texture2D(dMap,vUv*dRep).rgb*1.9,.55)*mix(vec3(1.),texture2D(dMap,vUv*dRep2).rgb*1.9,.35);")};
+  const terr=new THREE.Mesh(geo,mat);terr.position.set(cx,0,cz);terr.receiveShadow=true;terr.name="terrain";world.add(terr);
+  // 遠景地形
+  const FS=cfg.q?220:150,FW=9000;const fg=new THREE.PlaneGeometry(FW,FW,FS,FS);fg.rotateX(-Math.PI/2);
+  const fp=fg.attributes.position,fc=new Float32Array(fp.count*3);const cc=new THREE.Color();
+  for(let i=0;i<fp.count;i++){const X=fp.getX(i)+cx,Z=fp.getZ(i)+cz;const inside=X>b.x0+40&&X<b.x1-40&&Z>b.z0+40&&Z<b.z1-40;let y=Hbase(HD,X,Z);if(inside)y-=30;fp.setY(i,y);
+    const v=fbm(X*.004,Z*.004,3);if(y<SEA_LEVEL+6)cc.setRGB(.42,.4,.33);else cc.setRGB(.13+v*.05,.23+v*.08,.11+v*.03);
+    fc[i*3]=cc.r;fc[i*3+1]=cc.g;fc[i*3+2]=cc.b}
+  fg.setAttribute("color",new THREE.BufferAttribute(fc,3));fg.computeVertexNormals();
+  const farT=new THREE.Mesh(fg,new THREE.MeshLambertMaterial({vertexColors:true}));farT.position.set(cx,0,cz);world.add(farT);
+  // 伊豆大島（遠景）
+  {const a=Math.atan2(hd.sea[1],hd.sea[0])+.45;const isl=new THREE.Mesh(new THREE.ConeGeometry(1500,260,24),new THREE.MeshLambertMaterial({color:lin(0x5b6f78)}));isl.position.set(Math.cos(a)*8200,SEA_LEVEL+110,Math.sin(a)*8200);isl.scale.set(1.6,1,1);world.add(isl)}
+  seaMesh.position.y=SEA_LEVEL;
+  // 池
+  const waterMat=new THREE.MeshStandardMaterial({color:lin(0x2f5f6e),roughness:.12,metalness:.1,normalMap:seaMat.normalMap,normalScale:new THREE.Vector2(.15,.15),transparent:true,opacity:.92});
+  for(const p of hd.ponds){const m=new THREE.Mesh(new THREE.CircleGeometry(1,48),waterMat);m.rotation.x=-Math.PI/2;m.scale.set(p.rx*1.03,p.rz*1.03,1);m.position.set(p.x,p.lv,p.z);m.receiveShadow=true;world.add(m)}
+  // 樹木
+  trees=[];treeGrid=new Map();
+  const place=(x,z,inner)=>{const y=H(x,z);if(y<SEA_LEVEL+4)return;const cedar=rnd()<.62;const hgt=cedar?(14+rnd()*14):(9+rnd()*8);const wd=cedar?hgt*(.55+rnd()*.2):hgt*(.9+rnd()*.3);
+    trees.push({x,z,y,cedar,hgt,wd,inner});};
+  const area=w*d,N1=Math.round(area/(cfg.q?70:110));
+  for(let i=0;i<N1;i++){const x=b.x0+rnd()*w,z=b.z0+rnd()*d;const sf=surf(x,z);if(sf!==S_DEEP&&sf!==S_VA)continue;
+    const n=near(hd,x,z);if(n.dist<37+rnd()*6&&sf!==S_VA)continue;if(greenR(hd,x,z)<3.3)continue;if(Math.hypot(x,z)<22)continue;if(hd.ponds.some(p=>ell(p,x,z)<1.4))continue;place(x,z,true)}
+  const N2=cfg.q?9000:4500;
+  for(let i=0;i<N2;i++){const a=rnd()*Math.PI*2,r=Math.sqrt(rnd())*2400;const x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;if(x>b.x0&&x<b.x1&&z>b.z0&&z<b.z1)continue;place(x,z,false)}
+  const mk=(list,geo,shadow)=>{const m=new THREE.InstancedMesh(geo,treeMat,Math.max(1,list.length));m.count=list.length;const M=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),c=new THREE.Color();
+    list.forEach((t,i)=>{e.set(0,rnd()*6.28,0);q.setFromEuler(e);M.compose(new THREE.Vector3(t.x,t.y-.3,t.z),q,new THREE.Vector3(t.wd,t.hgt,t.wd));m.setMatrixAt(i,M);const v=.82+rnd()*.3;c.setRGB(v,v*(.95+rnd()*.1),v*.95);m.setColorAt(i,c)});
+    m.castShadow=shadow;m.receiveShadow=true;world.add(m)};
+  mk(trees.filter(t=>t.inner&&t.cedar),cedarGeo,true);mk(trees.filter(t=>t.inner&&!t.cedar),broadGeo,true);
+  mk(trees.filter(t=>!t.inner&&t.cedar),cedarGeo,false);mk(trees.filter(t=>!t.inner&&!t.cedar),broadGeo,false);
+  for(const t of trees)if(t.inner){const key=Math.floor(t.x/12)+","+Math.floor(t.z/12);(treeGrid.get(key)||treeGrid.set(key,[]).get(key)).push(t)}
+  // OB杭・1ペナ杭
+  const ob=hd.h.ob||"",pen=hd.h.pen||"";const obs=[],pens=[];
+  for(let s=10;s<hd.len+30;s+=13){for(const sd of [-1,1]){const lab=sd<0?"L":"R";const p=lateralPt(hd,s,sd*(hd.obD));if(ob.includes(lab))obs.push(p);if(pen.includes(lab))pens.push(lateralPt(hd,s,sd*hd.penD))}}
+  if(hd.h.obBack)for(let v=-34;v<=34;v+=11){obs.push([hd.G.x+hd.G.fx*24+hd.G.rx*v,hd.G.z+hd.G.fz*24+hd.G.rz*v])}
+  if(obs.length)world.add(stakeMesh(obs,0xf4f4f4));if(pens.length)world.add(stakeMesh(pens,0xd8322b));
+  // 残り距離杭 (100/150/200Y)
+  const yd=[];[[100,0xd8322b],[150,0xf4f4f4],[200,0x2a64c8]].forEach(([r,c])=>{const s=hd.len-r;if(s>20){const p1=lateralPt(hd,s,-(hd.fwH+3)),p2=lateralPt(hd,s,hd.fwH+3);world.add(stakeMesh([p1,p2],c,.8))}});
+  // ティーマーカー
+  for(const sx2 of [-3.5,3.5]){const m=new THREE.Mesh(new THREE.SphereGeometry(.16,16,10),new THREE.MeshStandardMaterial({color:lin(0xf2f2f2),roughness:.4}));m.position.set(sx2,H(sx2,1)+.12,1);m.castShadow=true;world.add(m)}
+  // ピン・旗・カップ
+  const cup=hd.cup,cy=H(cup.x,cup.z);
+  cupMesh=new THREE.Mesh(new THREE.CircleGeometry(.075,24),new THREE.MeshBasicMaterial({color:0x111111,polygonOffset:true,polygonOffsetFactor:-4}));cupMesh.rotation.x=-Math.PI/2;cupMesh.position.set(cup.x,cy+.012,cup.z);world.add(cupMesh);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,2.5,8),new THREE.MeshStandardMaterial({color:lin(0xf6f6f6),roughness:.3}));pole.position.set(cup.x,cy+1.25,cup.z);pole.castShadow=true;world.add(pole);
+  const fgeo=new THREE.PlaneGeometry(.62,.42,10,4);fgeo.translate(.31,0,0);
+  flag=new THREE.Mesh(fgeo,new THREE.MeshStandardMaterial({color:lin(0xe8382d),side:THREE.DoubleSide,roughness:.7,emissive:lin(0x3a0a06)}));flag.position.set(cup.x,cy+2.28,cup.z);flag.castShadow=true;flag.userData.base=fgeo.attributes.position.array.slice();world.add(flag);
+  // 狙い目マーカー
+  aimGroup=new THREE.Group();world.add(aimGroup);
+  hd.aims.forEach((a,i)=>{const y=H(a.x,a.z);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(5.4,6.6,48),new THREE.MeshBasicMaterial({color:0xffa53a,transparent:true,opacity:.75,depthWrite:false,fog:false}));ring.rotation.x=-Math.PI/2;ring.position.set(a.x,y+.25,a.z);ring.renderOrder=3;aimGroup.add(ring);
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,26,8,1,true),new THREE.MeshBasicMaterial({color:0xffa53a,transparent:true,opacity:.28,depthWrite:false,fog:false}));beam.position.set(a.x,y+13,a.z);aimGroup.add(beam);
+    const sp=labelSprite(String(i+1),"#ff9a2a","#fff",.045);sp.position.set(a.x,y+27,a.z);aimGroup.add(sp)});
+  aimGroup.visible=cfg.aims;
+  // 狙いマーカー・ガイド
+  aimMarker=new THREE.Group();
+  {const r=new THREE.Mesh(new THREE.RingGeometry(1.6,2.1,40),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.95,depthWrite:false,depthTest:false,fog:false}));r.rotation.x=-Math.PI/2;r.renderOrder=5;aimMarker.add(r);
+   const l=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,6,6),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.7,depthWrite:false,fog:false}));l.position.y=3;aimMarker.add(l)}
+  world.add(aimMarker);
+  guideRing=new THREE.Mesh(new THREE.RingGeometry(.92,1,64),new THREE.MeshBasicMaterial({color:0x9fe8ff,transparent:true,opacity:.8,depthWrite:false,depthTest:false,fog:false}));guideRing.rotation.x=-Math.PI/2;guideRing.renderOrder=4;world.add(guideRing);
+  // ボール・軌跡
+  ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.0467,20,14),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.35,emissive:0x222222}));ballMesh.castShadow=true;world.add(ballMesh);
+  trail=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xffe9a8,transparent:true,opacity:.85,fog:false}));trail.frustumCulled=false;world.add(trail);
+  // 光源の向き
+  const sd=new THREE.Vector3(hd.sun[0],.85,hd.sun[1]).normalize();sunL.userData.dir=sd;skyU.uSun.value.copy(sd);
+  sunL.shadow.mapSize.set(cfg.q?2048:1024,cfg.q?2048:1024);if(sunL.shadow.map){sunL.shadow.map.dispose();sunL.shadow.map=null}
+}
+
+/* ================= ゲーム状態 ================= */
+const st={hole:0,strokes:0,scores:Array(18).fill(null),ball:{x:0,y:0,z:0},prev:null,lie:S_TEE,club:0,aim:{x:0,z:-200},
+  phase:"aim",power:0,pdir:1,look:{yaw:0,pitch:0},fly:null,cam:{x:0,y:0,z:0},walk:null,fast:false,wind:{x:0,z:0,ms:0}};
+function clubCarry(c){return c.putt?c.c:c.c*cfg.drv/220}
+function yawTo(fx,fz,tx,tz){return Math.atan2(tx-fx,-(tz-fz))}
+function setAimYaw(yaw,dist){st.aim.x=st.ball.x+Math.sin(yaw)*dist;st.aim.z=st.ball.z-Math.cos(yaw)*dist}
+function aimYaw(){return yawTo(st.ball.x,st.ball.z,st.aim.x,st.aim.z)}
+function aimDist(){return Math.hypot(st.aim.x-st.ball.x,st.aim.z-st.ball.z)}
+function distPin(){return Math.hypot(HD.cup.x-st.ball.x,HD.cup.z-st.ball.z)}
+
+function loadHole(i){
+  $("loading").hidden=false;$("ldTxt").textContent=`${i+1}番ホールを生成中…`;
+  setTimeout(()=>{
+    st.hole=i;HD=buildHole(HOLES[i]);buildScene();
+    // 風
+    const wd=WINDS[cfg.wind];const ms=wd.lo+Math.random()*(wd.hi-wd.lo);let a=Math.random()*Math.PI*2;
+    if(i===9&&cfg.wind>0)a=Math.atan2(-HD.sea[1],-HD.sea[0])+(Math.random()-.5)*.6; // 10番は海風（向かい風）
+    st.wind={x:Math.cos(a)*ms*1.094,z:Math.sin(a)*ms*1.094,ms};
+    st.strokes=0;st.lie=S_TEE;st.ball={x:0,y:H(0,0)+.03,z:0};st.prev=null;
+    setupAim(true);st.phase="aim";st.walk=null;st.fly=null;
+    placeCam(true);updateHoleUI();renderTips();drawMini();$("holeSel").value=i;
+    $("bNext").hidden=true;$("bOK").hidden=true;$("bGive").hidden=true;
+    $("loading").hidden=true;
+    toast(`HOLE ${HD.h.n}  PAR ${HD.h.p}`,`${HD.h.y}Y · HDCP ${HD.h.hc}`,2200);
+  },30)}
+
+function nextTarget(){ // 攻略の狙い目のうち、現在地より先で届く範囲の最初の地点
+  const n=near(HD,st.ball.x,st.ball.z),s=n.s;
+  for(const a of HD.aims){const an=near(HD,a.x,a.z).s;if(an>s+40)return a}
+  return HD.cup}
+function setupAim(tee){
+  const onGreen=st.lie===S_GR||(st.lie===S_FR&&distPin()<14);
+  let tgt=cfg.aims?nextTarget():HD.cup;if(onGreen)tgt=HD.cup;
+  st.aim={x:tgt.x,z:tgt.z};
+  // クラブ選択
+  if(onGreen){st.club=CLUBS.length-1}
+  else if(tee&&HD.h.club){st.club=CLUBS.findIndex(c=>c.id===HD.h.club)}
+  else{const dh=H(tgt.x,tgt.z)-st.ball.y;const nearGreen=Math.hypot(tgt.x-HD.cup.x,tgt.z-HD.cup.z)<25;const need=Math.hypot(tgt.x-st.ball.x,tgt.z-st.ball.z)+dh-(nearGreen?4:12);
+    let pick=st.lie===S_TEE?0:1;for(let i=0;i<CLUBS.length-1;i++){if(i===0&&st.lie!==S_TEE)continue;if(clubCarry(CLUBS[i])*SURF[st.lie].k>=need)pick=i}
+    st.club=pick}
+  st.look.yaw=0;updateClubUI()}
+
+/* ================= 弾道 ================= */
+function simCarry(v,c){let x=0,y=0,vx=v*Math.cos(c.la*Math.PI/180),vy=v*Math.sin(c.la*Math.PI/180),t=0;
+  while(t<15){const s=Math.hypot(vx,vy),sp=Math.exp(-t/SPIN_T);const ax=-KD*s*vx-c.kl*s*sp*vy,ay=-KD*s*vy+c.kl*s*sp*vx-G;vx+=ax*DT;vy+=ay*DT;x+=vx*DT;y+=vy*DT;t+=DT;if(y<0&&t>.1)break}return x}
+const vCache=new Map();
+function speedFor(c,carry){const key=c.id+"|"+Math.round(carry*2);if(vCache.has(key))return vCache.get(key);let lo=3,hi=140;for(let i=0;i<30;i++){const m=(lo+hi)/2;if(simCarry(m,c)<carry)lo=m;else hi=m}vCache.set(key,lo);return lo}
+
+function shoot(power){
+  const c=CLUBS[st.club],sk=SKILL[cfg.skill],sf=SURF[st.lie];
+  st.prev={x:st.ball.x,y:st.ball.y,z:st.ball.z,lie:st.lie};st.strokes++;
+  const over=Math.max(0,power-1),yaw0=aimYaw();
+  if(c.putt){
+    const dist=Math.min(power,1.1)*clubCarry(c)*(1+gauss()*sk.pd);
+    const yaw=yaw0+gauss()*sk.pa*Math.PI/180;const v0=Math.sqrt(2*SURF[S_GR].mu*G*Math.max(.05,dist));
+    st.fly={mode:"roll",p:{...st.ball},v:{x:Math.sin(yaw)*v0,y:0,z:-Math.cos(yaw)*v0},t:0,c,pts:[],tree:false};
+  }else{
+    let mult=sf.dsp*(1+over*9)*(c.id==="1W"&&st.lie!==S_TEE?1.4:1);
+    let k=sf.k;if(st.lie===S_BK&&c.id==="SW")k=.92;if(c.id==="1W"&&st.lie!==S_TEE)k*=.9;
+    const carry=Math.max(3,clubCarry(c)*Math.min(power,1.1)*k*(1+gauss()*sk.d*mult));
+    const v=speedFor(c,carry);
+    const yaw=yaw0+gauss()*sk.a*mult*(c.id==="1W"?1:.75)*Math.PI/180;
+    const la=(c.la+(st.lie===S_ROUGH||st.lie===S_DEEP?-2:0))*Math.PI/180;
+    st.fly={mode:"air",p:{x:st.ball.x,y:st.ball.y+.02,z:st.ball.z},v:{x:Math.sin(yaw)*Math.cos(la)*v,y:Math.sin(la)*v,z:-Math.cos(yaw)*Math.cos(la)*v},
+      t:0,c,side:gauss()*sk.s*mult+(st.lie===S_ROUGH?gauss()*.05:0),kl:c.kl*(st.lie===S_ROUGH||st.lie===S_DEEP?.6:1),pts:[],tree:false,bounces:0};
+  }
+  st.phase="flight";$("bFast").hidden=false;$("bOK").hidden=true;$("bGive").hidden=true;
+  updateHoleUI()}
+
+function stepBall(){
+  const f=st.fly,p=f.p,v=f.v;f.t+=DT;
+  if(f.mode==="air"){
+    const rx=v.x-st.wind.x,ry=v.y,rz=v.z-st.wind.z,s=Math.hypot(rx,ry,rz)||1e-6;
+    const sp=Math.exp(-f.t/SPIN_T);
+    let sx=-rz,sz=rx;const sl=Math.hypot(sx,sz)||1e-6;sx/=sl;sz/=sl;                 // 右方向
+    let lx=-sz*ry, ly=sz*rx-sx*rz, lz=sx*ry;                                           // side×vr（上向き揚力）
+    const ll=Math.hypot(lx,ly,lz)||1e-6;lx/=ll;ly/=ll;lz/=ll;
+    const L=f.kl*s*s*sp,Sd=f.side*f.kl*s*s*sp;
+    v.x+=(-KD*s*rx+lx*L+sx*Sd)*DT;v.y+=(-KD*s*ry+ly*L-G)*DT;v.z+=(-KD*s*rz+lz*L+sz*Sd)*DT;
+    p.x+=v.x*DT;p.y+=v.y*DT;p.z+=v.z*DT;
+    // 木
+    if(!f.tree){const lst=treeGrid.get(Math.floor(p.x/12)+","+Math.floor(p.z/12));if(lst)for(const t of lst){const dy=p.y-t.y;if(dy<t.hgt*.12||dy>t.hgt)continue;
+      const rr=t.cedar?t.wd*.32*(1-(dy-t.hgt*.35)/(t.hgt*.65)):t.wd*.33;if(Math.hypot(p.x-t.x,p.z-t.z)<Math.max(.3,rr)){f.tree=true;v.x*=-.15+Math.random()*.2;v.z*=-.15+Math.random()*.2;v.y*=.1;sfx("木に当たった！");break}}}
+    const gy=H(p.x,p.z);
+    if(p.y<=gy){p.y=gy;const sfc=surf(p.x,p.z);
+      if(sfc===S_WA){return end("water")}
+      const n=normal(p.x,p.z),props=SURF[sfc];
+      const vn=v.x*n.x+v.y*n.y+v.z*n.z;let tx=v.x-vn*n.x,ty=v.y-vn*n.y,tz=v.z-vn*n.z;
+      let ft=props.ft;if(f.bounces===0&&(sfc===S_GR||sfc===S_FR||sfc===S_FW))ft*=f.c.sp||1;
+      const e=props.e*(f.bounces?1:1);v.x=tx*ft-vn*e*n.x;v.y=ty*ft-vn*e*n.y;v.z=tz*ft-vn*e*n.z;f.bounces++;
+      if(-vn*e<1.3||f.bounces>6){f.mode="roll";v.y=0}else p.y=gy+.002}
+  }else{
+    const e=.25,hx=(H(p.x+e,p.z)-H(p.x-e,p.z))/(2*e),hz=(H(p.x,p.z+e)-H(p.x,p.z-e))/(2*e),q=1+hx*hx+hz*hz;
+    const sfc=surf(p.x,p.z);if(sfc===S_WA)return end("water");
+    const mu=SURF[sfc].mu+(f.c.putt?0:.34*ss(2.5,9,Math.hypot(v.x,v.z)));  // 着地直後は滑り・跳ねで減速が大きい
+    v.x+=-G*hx/q*DT;v.z+=-G*hz/q*DT;
+    let sp=Math.hypot(v.x,v.z);const dec=mu*G/Math.sqrt(q)*DT;
+    if(sp<=dec){v.x=0;v.z=0;sp=0}else{v.x-=v.x/sp*dec;v.z-=v.z/sp*dec;sp-=dec}
+    p.x+=v.x*DT;p.z+=v.z*DT;p.y=H(p.x,p.z);
+    const dc=Math.hypot(p.x-HD.cup.x,p.z-HD.cup.z);
+    if(dc<.06&&sp<1.45)return end("holed");
+    if(dc<.07&&sp>=1.45){const a=(Math.random()-.5)*.8;const c=Math.cos(a),s2=Math.sin(a);const vx=v.x*c-v.z*s2;v.z=v.x*s2+v.z*c;v.x=vx*.8;v.z*=.8}
+    const slope=Math.sqrt(hx*hx+hz*hz);
+    if(sp<.035&&G*slope/Math.sqrt(q)<mu*G*1.15)return end("stop");
+    if(f.t>45)return end("stop");
+  }
+  if(((f.t/DT)|0)%4===0)f.pts.push(new THREE.Vector3(p.x,p.y,p.z));
+}
+function normal(x,z){const e=.3,hx=(H(x+e,z)-H(x-e,z))/(2*e),hz=(H(x,z+e)-H(x,z-e))/(2*e);const l=Math.hypot(hx,1,hz);return{x:-hx/l,y:1/l,z:-hz/l}}
+let sfxT=0;function sfx(t){toast(t,"",1100)}
+
+function end(kind){
+  const f=st.fly,p=f.p;st.fly=null;$("bFast").hidden=true;st.fast=false;$("bFast").setAttribute("aria-pressed","false");
+  const carryStart=st.prev;const moved=Math.round(Math.hypot(p.x-carryStart.x,p.z-carryStart.z));
+  let msg="",sub="",newPos={x:p.x,y:p.y,z:p.z},hold=1500;
+  if(kind==="holed"){
+    st.ball=newPos;st.phase="holed";const diff=st.strokes-HD.h.p;st.scores[st.hole]=st.strokes;
+    const nm={"-3":"アルバトロス！","-2":"イーグル！","-1":"バーディー！","0":"パー","1":"ボギー","2":"ダブルボギー","3":"トリプルボギー"}[diff]||(diff<-3?"すごい！":`+${diff}`);
+    toast(st.strokes===1?"ホールインワン！":`カップイン！ ${nm}`,`${st.strokes}打 · ${totalTxt()}`,3500);
+    $("bNext").hidden=false;$("bNext").textContent=st.hole<17?"次のホールへ ▶":"スコアカード ▶";updateHoleUI();drawMini();return}
+  let pen=kind==="water"?(()=>{const pd=HD.ponds.find(q=>ell(q,p.x,p.z)<1.02)||HD.ponds[0];return{t:"WATER",p:pd}})():penalty(p.x,p.z);
+  if(pen){
+    st.strokes++;
+    if(pen.t==="OB"||pen.t==="RE"){newPos={...st.prev};msg=pen.t==="OB"?"OB":"ペナルティ";sub="1打罰・元の位置から打ち直し"}
+    else if(pen.t==="PEN"){newPos={x:pen.x,z:pen.z,y:H(pen.x,pen.z)};msg="ペナルティエリア";sub="1打罰・ドロップ"}
+    else{const q=pen.p;let dx=st.prev.x-q.x,dz=st.prev.z-q.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;let r=1;
+      // 池の外縁 + 3Y（ティー側）
+      let x=q.x,z=q.z;for(let i=0;i<200;i++){x=q.x+dx*i;z=q.z+dz*i;if(ell(q,x,z)>1.15)break}x+=dx*3;z+=dz*3;newPos={x,z,y:H(x,z)};msg="池ポチャ";sub="1打罰・池の手前にドロップ"}
+    hold=2200}
+  else{const sfc=surf(p.x,p.z);const left=Math.round(Math.hypot(HD.cup.x-p.x,HD.cup.z-p.z));
+    msg=f.c.putt?(left<=1?"惜しい！":"")+`残り ${left}Y`:`${moved}Y`;sub=`${SURF[sfc].nm}`+(f.c.putt?"":` · 残り ${left}Y`)}
+  toast(msg,sub,hold);
+  st.phase="result";
+  setTimeout(()=>{startWalk(newPos)},hold*.8)}
+function startWalk(np){
+  const from={...st.cam};st.ball={x:np.x,y:np.y+(0),z:np.z};st.lie=surf(np.x,np.z);if(st.lie===S_TEE&&st.prev&&st.prev.lie!==S_TEE)st.lie=S_FW;
+  if(st.prev&&st.prev.lie===S_TEE&&np.x===st.prev.x&&np.z===st.prev.z)st.lie=S_TEE;
+  setupAim(false);
+  const to=camPos();const dist=Math.hypot(to.x-from.x,to.z-from.z);
+  st.walk={from,to,t:0,dur:Math.min(2.4,.4+dist/160),fromYaw:camera.rotation.y,fromPitch:camera.rotation.x};st.phase="walk";
+  updateHoleUI();drawMini()}
+function totalTxt(){let d=0,any=false;st.scores.forEach((s,i)=>{if(s!=null){d+=s-HOLES[i].p;any=true}});return any?`トータル ${d===0?"E":(d>0?"+"+d:d)}`:"トータル E"}
+
+/* ================= カメラ ================= */
+function eyeH(){return CLUBS[st.club].putt?1.5:1.72}
+function camPos(){const yaw=aimYaw(),back=CLUBS[st.club].putt?1.3:2.3;const x=st.ball.x-Math.sin(yaw)*back,z=st.ball.z+Math.cos(yaw)*back;return{x,z,y:Math.max(H(x,z),st.ball.y-.3)+eyeH()}}
+function aimPitch(cp){const tx=CLUBS[st.club].putt?HD.cup.x:st.aim.x,tz=CLUBS[st.club].putt?HD.cup.z:st.aim.z;const ty=H(tx,tz);const d=Math.hypot(tx-cp.x,tz-cp.z);return clamp(Math.atan2(ty-cp.y,d)*(CLUBS[st.club].putt?1:.6)+(CLUBS[st.club].putt?-.12:.02),-.6,.3)}
+function placeCam(snap){const cp=camPos();st.cam=cp;camera.position.set(cp.x,cp.y,cp.z);camera.rotation.set(aimPitch(cp)+st.look.pitch,-aimYaw()-st.look.yaw,0)}
+function angLerp(a,b,t){let d=b-a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return a+d*t}
+
+/* ================= 入力 ================= */
+let drag=null;
+canvas.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,moved:0,id:e.pointerId};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);drag.x=e.clientX;drag.y=e.clientY;
+  st.look.yaw-=dx*.0035;st.look.pitch=clamp(st.look.pitch-dy*.003,-.9,.9)});
+canvas.addEventListener("pointerup",e=>{if(drag&&drag.moved<6&&st.phase==="aim")clickAim(e.clientX,e.clientY);drag=null});
+const ray=new THREE.Raycaster(),mv=new THREE.Vector2();
+function clickAim(cx,cy){const r=canvas.getBoundingClientRect();mv.set((cx-r.left)/r.width*2-1,-(cy-r.top)/r.height*2+1);ray.setFromCamera(mv,camera);
+  const t=world.getObjectByName("terrain");const hit=ray.intersectObject(t,false)[0];if(!hit)return;
+  st.aim={x:hit.point.x,z:hit.point.z};st.look.yaw=0;st.look.pitch=0;drawMini()}
+function turn(d){if(st.phase!=="aim")return;const yaw=aimYaw()+d,dist=aimDist();setAimYaw(yaw,dist);st.look.yaw=0;drawMini()}
+function clubStep(d){if(st.phase!=="aim")return;st.club=clamp(st.club+d,0,CLUBS.length-1);updateClubUI();drawMini()}
+let holdKey=false;
+function swingStart(){if(st.phase!=="aim")return;st.phase="swing";st.power=0;st.pdir=1;$("shot").classList.add("on")}
+function swingEnd(){if(st.phase!=="swing")return;$("shot").classList.remove("on");const p=st.power;$("meterFill").style.width="0";
+  if(p<.04){st.phase="aim";$("meterTxt").textContent="長押しでスイング";return}shoot(p)}
+addEventListener("keydown",e=>{if(e.target.tagName==="SELECT")return;const k=e.key;
+  if(k===" "){e.preventDefault();if(!holdKey){holdKey=true;swingStart()}}
+  else if(k==="ArrowLeft"||k==="a"){e.preventDefault();turn(e.shiftKey?-.05:-.012)}
+  else if(k==="ArrowRight"||k==="d"){e.preventDefault();turn(e.shiftKey?.05:.012)}
+  else if(k==="ArrowUp"||k==="w"){e.preventDefault();clubStep(-1)}
+  else if(k==="ArrowDown"||k==="s"){e.preventDefault();clubStep(1)}
+  else if(k==="f"){toggleFast()}else if(k==="c"){toggle("cam","bCam")}else if(k==="m"){$("mini").hidden=!$("mini").hidden}});
+addEventListener("keyup",e=>{if(e.key===" "){holdKey=false;swingEnd()}});
+const shotB=$("shot");shotB.addEventListener("pointerdown",e=>{e.preventDefault();shotB.setPointerCapture(e.pointerId);swingStart()});
+shotB.addEventListener("pointerup",()=>swingEnd());shotB.addEventListener("pointercancel",()=>swingEnd());
+const rep=(id,fn)=>{let t=null;const b=$(id);b.addEventListener("pointerdown",e=>{e.preventDefault();fn();t=setInterval(fn,90)});["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,()=>{clearInterval(t)}))};
+rep("bL",()=>turn(-.012));rep("bR",()=>turn(.012));
+$("bClubUp").onclick=()=>clubStep(-1);$("bClubDn").onclick=()=>clubStep(1);
+function toggleFast(){if(st.phase!=="flight")return;st.fast=!st.fast;$("bFast").setAttribute("aria-pressed",st.fast)}
+$("bFast").onclick=toggleFast;
+function toggle(key,id){cfg[key]=!cfg[key];$(id).setAttribute("aria-pressed",cfg[key]);saveCfg();if(key==="aims"&&aimGroup)aimGroup.visible=cfg.aims;drawMini()}
+$("bAims").onclick=()=>toggle("aims","bAims");$("bGuide").onclick=()=>toggle("guide","bGuide");$("bCam").onclick=()=>toggle("cam","bCam");
+["bAims","bGuide","bCam"].forEach((id,i)=>$(id).setAttribute("aria-pressed",cfg[["aims","guide","cam"][i]]));
+$("bOK").onclick=()=>{if(st.phase!=="aim")return;st.strokes++;st.scores[st.hole]=st.strokes;st.phase="holed";toast("OK！",`${st.strokes}打 · ${totalTxt()}`,2500);$("bOK").hidden=true;$("bGive").hidden=true;$("bNext").hidden=false;$("bNext").textContent=st.hole<17?"次のホールへ ▶":"スコアカード ▶";updateHoleUI()};
+$("bGive").onclick=()=>{if(st.phase!=="aim")return;st.strokes=HD.h.p*2;st.scores[st.hole]=st.strokes;st.phase="holed";toast("ギブアップ",`ダブルパー ${st.strokes}打で記録`,2500);$("bGive").hidden=true;$("bOK").hidden=true;$("bNext").hidden=false;updateHoleUI()};
+$("bNext").onclick=()=>{if(st.hole<17)loadHole(st.hole+1);else openCard()};
+const sel=$("holeSel");HOLES.forEach((h,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${h.n}番 PAR${h.p} ${h.y}Y`;sel.appendChild(o)});
+sel.onchange=()=>{loadHole(+sel.value);sel.blur()};
+$("bHelp").onclick=()=>{$("mHelp").hidden=false};$("bStart").onclick=()=>{$("mHelp").hidden=true};
+$("bCard").onclick=openCard;$("bCardClose").onclick=()=>{$("mCard").hidden=true};
+function openCard(){const row=(a,b)=>{let h="<tr><th>H</th>";for(let i=a;i<b;i++)h+=`<th>${i+1}</th>`;h+=`<th>${a?"IN":"OUT"}</th></tr><tr><th>PAR</th>`;let ps=0,ss2=0,any=false;
+  for(let i=a;i<b;i++){h+=`<td>${HOLES[i].p}</td>`;ps+=HOLES[i].p}h+=`<td>${ps}</td></tr><tr><th>打数</th>`;
+  for(let i=a;i<b;i++){const s=st.scores[i];if(s!=null){ss2+=s;any=true}h+=`<td class="${s==null?"":s<HOLES[i].p?"u":s>HOLES[i].p?"o":""}">${s??"—"}</td>`}h+=`<td>${any?ss2:"—"}</td></tr>`;return[h,ss2,any]};
+  const [o,os]=row(0,9),[n,ns]=row(9,18);const tot=st.scores.reduce((a,s)=>a+(s||0),0);
+  $("scBody").innerHTML=`<table>${o}</table><br><table>${n}</table><p style="margin-top:10px">合計 <b class="num">${tot||"—"}</b>（${totalTxt()}）</p>`;$("mCard").hidden=false}
+// 設定
+$("bSet").onclick=()=>{$("mSet").hidden=false};$("bSetClose").onclick=()=>{$("mSet").hidden=true};
+{const s=$("sDrv");for(let v=170;v<=290;v+=10){const o=document.createElement("option");o.value=v;o.textContent=v+" Y";s.appendChild(o)}s.value=cfg.drv;s.onchange=()=>{cfg.drv=+s.value;saveCfg();updateClubUI()};
+ const opts=(id,list,key,after)=>{const box=$(id);list.forEach((it,i)=>{const b=document.createElement("button");b.className="btn";b.id=id+i;b.textContent=it;b.setAttribute("aria-pressed",cfg[key]===i);b.onclick=()=>{cfg[key]=i;saveCfg();box.querySelectorAll("button").forEach((x,j)=>x.setAttribute("aria-pressed",j===i));after&&after()};box.appendChild(b)})};
+ opts("sSkill",SKILL.map(s=>s.nm),"skill");opts("sWind",WINDS.map(w=>w.nm),"wind");opts("sQual",["軽量","高品質"],"q",resize)}
+
+/* ================= HUD ================= */
+let toastT=null;function toast(a,b,ms){const t=$("toast");t.innerHTML=`${a}${b?`<small>${b}</small>`:""}`;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),ms)}
+function updateHoleUI(){const h=HD.h;$("hNo").textContent=h.n;$("hPar").textContent="PAR "+h.p;$("hMeta").textContent=`${h.y}Y · HDCP ${h.hc}`;
+  const next=st.phase==="holed"?`${st.strokes}打でホールアウト`:`${st.strokes+1}打目`;$("hStroke").textContent=`${next} · ${totalTxt()}`}
+function updateClubUI(){const c=CLUBS[st.club];$("clubName").textContent=c.nm;$("clubCarry").textContent=c.putt?"最大 "+c.c+"Y（転がり）":`キャリー ${Math.round(clubCarry(c)*SURF[st.lie].k)}Y`+(SURF[st.lie].k<1?`（${SURF[st.lie].nm}）`:"")}
+function renderTips(){const h=HD.h;$("tips").innerHTML=`<h3>攻略メモ · ${h.n}番</h3><ol>${h.tips.map(t=>`<li>${t}</li>`).join("")}</ol><div class="dg">危険：${h.danger}</div>`}
+let hudT=0;
+function updateHUD(){
+  const b=st.ball,dp=distPin(),dh=H(HD.cup.x,HD.cup.z)-b.y;
+  $("iPin").textContent=dp<20?dp.toFixed(1):Math.round(dp);
+  $("iElev").textContent=Math.abs(dh)<.5?"ほぼ平坦":(dh>0?`打ち上げ ${dh.toFixed(dh<5?1:0)}Y`:`打ち下ろし ${(-dh).toFixed(-dh<5?1:0)}Y`);
+  $("iPlay").textContent=Math.round(dp+dh);
+  $("iAim").textContent=Math.round(aimDist());
+  $("iLie").textContent=SURF[st.lie].nm;
+  // 風: 視線方向に対する相対角度
+  const wa=Math.atan2(st.wind.x,-st.wind.z),view=-camera.rotation.y;const rel=(wa-view)*180/Math.PI;
+  $("windArrow").style.transform=`rotate(${rel}deg)`;
+  const head=-(st.wind.x*Math.sin(aimYaw())-st.wind.z*Math.cos(aimYaw()))/1.094;
+  $("windTxt").innerHTML=`風 <b class="num">${st.wind.ms.toFixed(1)}</b> m/s<br><span style="color:var(--muted)">${st.wind.ms<.3?"無風":head>.3?"向かい風":head<-.3?"追い風":"横風"}</span>`;
+  // パット・OK・ギブアップ
+  const onG=st.lie===S_GR||st.lie===S_FR;
+  $("bOK").hidden=!(st.phase==="aim"&&onG&&dp<=1.0);
+  $("bGive").hidden=!(st.phase==="aim"&&st.strokes>=HD.h.p+3);
+  const pg=$("putGuide");
+  if(st.phase==="aim"&&CLUBS[st.club].putt){const e=.3,mx=(b.x+HD.cup.x)/2,mz=(b.z+HD.cup.z)/2;const hx=(H(mx+e,mz)-H(mx-e,mz))/(2*e),hz=(H(mx,mz+e)-H(mx,mz-e))/(2*e);
+    const yaw=yawTo(b.x,b.z,HD.cup.x,HD.cup.z);const rx=Math.cos(yaw),rz=Math.sin(yaw);const lat=hx*rx+hz*rz;  // 右方向の勾配
+    pg.hidden=false;pg.innerHTML=`ピンまで <b class="num">${dp.toFixed(1)}</b>Y · ${dh>0?"上り":"下り"} <b class="num">${Math.abs(dh*91.44).toFixed(0)}</b>cm · 傾斜 ${Math.abs(lat)<.004?"ほぼストレート":(lat>0?"右が高い→左に切れる":"左が高い→右に切れる")} ${Math.abs(lat*100).toFixed(1)}%`}
+  else pg.hidden=true;
+}
+
+/* ================= ミニマップ ================= */
+const mini=$("mini"),mx=mini.getContext("2d");
+function w2m(x,z){const b=HD.box,W=mini.width,Hh=mini.height,sc=Math.min(W/(b.x1-b.x0),Hh/(b.z1-b.z0));const ox=(W-(b.x1-b.x0)*sc)/2,oy=(Hh-(b.z1-b.z0)*sc)/2;return[ox+(x-b.x0)*sc,oy+(z-b.z0)*sc,sc]}
+function drawMini(){if(!HD||!texCanvas)return;const W=mini.width,Hh=mini.height;mx.fillStyle="#22341f";mx.fillRect(0,0,W,Hh);
+  const [ox,oy,sc]=w2m(HD.box.x0,HD.box.z0);mx.drawImage(texCanvas,ox,oy,(HD.box.x1-HD.box.x0)*sc,(HD.box.z1-HD.box.z0)*sc);
+  // 池
+  mx.fillStyle="#3d8fb8";for(const p of HD.ponds){const [x,y]=w2m(p.x,p.z);mx.beginPath();mx.ellipse(x,y,p.rx*sc,p.rz*sc,0,0,7);mx.fill()}
+  if(cfg.aims){HD.aims.forEach((a,i)=>{const [x,y]=w2m(a.x,a.z);mx.fillStyle="#ff9a2a";mx.beginPath();mx.arc(x,y,8,0,7);mx.fill();mx.fillStyle="#fff";mx.font="700 11px JetBrains Mono,monospace";mx.textAlign="center";mx.textBaseline="middle";mx.fillText(i+1,x,y+1)})}
+  const [bx,by]=w2m(st.ball.x,st.ball.z),[ax,ay]=w2m(st.aim.x,st.aim.z),[px,py]=w2m(HD.cup.x,HD.cup.z);
+  mx.strokeStyle="rgba(255,255,255,.9)";mx.setLineDash([5,4]);mx.lineWidth=2;mx.beginPath();mx.moveTo(bx,by);mx.lineTo(ax,ay);mx.stroke();mx.setLineDash([]);
+  mx.fillStyle="#e8382d";mx.fillRect(px-1,py-12,2,12);mx.beginPath();mx.moveTo(px+1,py-12);mx.lineTo(px+9,py-9);mx.lineTo(px+1,py-6);mx.fill();
+  mx.fillStyle="#fff";mx.strokeStyle="#000";mx.lineWidth=1.5;mx.beginPath();mx.arc(bx,by,5,0,7);mx.fill();mx.stroke()}
+
+/* ================= メインループ ================= */
+const tmpV=new THREE.Vector3();let lastT=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-lastT)/1000);lastT=now;if(!HD||!world){return}
+  // スイングメーター
+  if(st.phase==="swing"){st.power+=st.pdir*dt/1.15;if(st.power>=1.1){st.power=1.1;st.pdir=-1}if(st.power<=0){st.power=0;st.pdir=1}
+    $("meterFill").style.width=(st.power/1.1*100)+"%";const c=CLUBS[st.club];
+    $("meterTxt").textContent=c.putt?`${Math.round(st.power*100)}% · ${(st.power*clubCarry(c)).toFixed(1)}Y`:`${Math.round(st.power*100)}% · ${Math.round(st.power*clubCarry(c)*SURF[st.lie].k)}Y${st.power>1?" ⚠":""}`}
+  else if(st.phase==="aim")$("meterTxt").textContent=isTouch?"長押しでスイング":"Space長押しでスイング";
+  // ボール
+  if(st.phase==="flight"&&st.fly){const n=Math.round(dt*(st.fast?3:1)/DT);for(let i=0;i<n&&st.fly;i++)stepBall();
+    if(st.fly){const p=st.fly.p;ballMesh.position.set(p.x,p.y+.047,p.z);if(st.fly.pts.length>1){trail.geometry.dispose();trail.geometry=new THREE.BufferGeometry().setFromPoints(st.fly.pts)}}}
+  else{ballMesh.position.set(st.ball.x,st.ball.y+.047+(st.lie===S_TEE&&!CLUBS[st.club].putt?.03:0),st.ball.z);if(st.phase==="aim"&&trail.geometry.attributes.position.count>1&&!st.keepTrail){}}
+  const camD=camera.position.distanceTo(ballMesh.position);ballMesh.scale.setScalar(Math.max(1,camD/55));
+  // カメラ
+  if(st.phase==="walk"&&st.walk){const w=st.walk;w.t+=dt/w.dur;const t=ss(0,1,w.t);const to=camPos();
+    camera.position.set(lerp(w.from.x,to.x,t),lerp(w.from.y,to.y,t)+Math.sin(t*Math.PI)*1.5,lerp(w.from.z,to.z,t));
+    camera.rotation.y=angLerp(w.fromYaw,-aimYaw(),t);camera.rotation.x=lerp(w.fromPitch,aimPitch(to),t);
+    if(w.t>=1){st.walk=null;st.phase="aim";st.look.pitch=0;trail.geometry.dispose();trail.geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3()]);placeCam()}}
+  else if((st.phase==="flight"||st.phase==="result")){const bp=ballMesh.position;
+    if(cfg.cam&&st.fly&&st.fly.mode==="air"){const v=st.fly.v,l=Math.hypot(v.x,v.z)||1;tmpV.set(bp.x-v.x/l*9,bp.y+2.5,bp.z-v.z/l*9);const gy=H(tmpV.x,tmpV.z)+1;if(tmpV.y<gy)tmpV.y=gy;camera.position.lerp(tmpV,.25)}
+    const dx=bp.x-camera.position.x,dy=bp.y-camera.position.y,dz=bp.z-camera.position.z;const yaw=Math.atan2(-dx,-dz),pit=Math.atan2(dy,Math.hypot(dx,dz));
+    camera.rotation.y=angLerp(camera.rotation.y,yaw,Math.min(1,dt*4));camera.rotation.x=lerp(camera.rotation.x,clamp(pit,-1.2,1.2),Math.min(1,dt*4))}
+  else if(st.phase==="aim"||st.phase==="swing"||st.phase==="holed"){const cp=camPos();camera.position.set(cp.x,cp.y,cp.z);
+    camera.rotation.y=angLerp(camera.rotation.y,-aimYaw()-st.look.yaw,Math.min(1,dt*10));camera.rotation.x=lerp(camera.rotation.x,aimPitch(cp)+st.look.pitch,Math.min(1,dt*10))}
+  // マーカー
+  const showAim=st.phase==="aim"||st.phase==="swing";aimMarker.visible=showAim&&!CLUBS[st.club].putt;
+  if(aimMarker.visible){aimMarker.position.set(st.aim.x,H(st.aim.x,st.aim.z)+.15,st.aim.z);const s=Math.max(1,camera.position.distanceTo(aimMarker.position)/90);aimMarker.scale.setScalar(s)}
+  guideRing.visible=showAim&&cfg.guide&&!CLUBS[st.club].putt;
+  if(guideRing.visible){const c=CLUBS[st.club],yaw=aimYaw(),car=clubCarry(c)*SURF[st.lie].k;const gx=st.ball.x+Math.sin(yaw)*car,gz=st.ball.z-Math.cos(yaw)*car;
+    guideRing.position.set(gx,H(gx,gz)+.2,gz);const r=Math.max(3,car*Math.tan(SKILL[cfg.skill].a*Math.PI/180)*1.6*SURF[st.lie].dsp);guideRing.scale.set(r,r,1)}
+  // 旗
+  if(flag){const a=flag.geometry.attributes.position,base=flag.userData.base,t=now/1000,wv=Math.min(1,.25+st.wind.ms/5);
+    for(let i=0;i<a.count;i++){const x=base[i*3];a.setZ(i,Math.sin(x*9-t*6)*.05*x*wv*2)}a.needsUpdate=true;
+    flag.rotation.y=Math.atan2(-st.wind.z,st.wind.x)}
+  seaMat.normalMap.offset.set(now*.0000025,now*.0000015);
+  sky.position.copy(camera.position);clouds.position.set(camera.position.x*.9,0,camera.position.z*.9);
+  // 影
+  const sd=sunL.userData.dir;if(sd){camera.getWorldDirection(tmpV);const fx=camera.position.x+tmpV.x*90,fz=camera.position.z+tmpV.z*90;sunL.target.position.set(fx,camera.position.y-5,fz);sunL.position.set(fx+sd.x*600,camera.position.y-5+sd.y*600,fz+sd.z*600);sunL.target.updateMatrixWorld()}
+  hudT-=dt;if(hudT<=0){hudT=.12;updateHUD();if(st.phase==="aim"&&!drag)drawMini()}
+  renderer.render(scene,camera)}
+
+loadHole(0);requestAnimationFrame(loop);
+window.__carry=i=>clubCarry(CLUBS[i])*SURF[st.lie].k;window.__sim={st,HD:()=>HD,H:(x,z)=>H(x,z),shoot,loadHole,run:()=>{let i=0;while(st.fly&&i++<200000)stepBall();return i},skip:()=>{if(st.walk)st.walk.t=1},step:()=>{const f=st.fly;stepBall();return f?{x:f.p.x,y:f.p.y,z:f.p.z,m:f.mode}:null},pen:(x,z)=>penalty(x,z),surf:(x,z)=>surf(x,z),near:(x,z)=>({...near(HD,x,z)})};
+})();
+</script>
