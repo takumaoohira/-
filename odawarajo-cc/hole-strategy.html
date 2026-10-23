@@ -1,0 +1,258 @@
+<title>小田原城CC 攻略ヤーデージブック</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: yardage-book — one card per hole, schematic diagram left, strategy right; stacks on phones */
+:root{
+  --bg:#eef3ef; --surface:#ffffff; --ink:#15302a; --muted:#5b6f68; --line:#cfdcd5;
+  --accent:#0f6b4f; --target:#e07a12; --pen:#d23a3a; --ob:#24302c;
+  --rough:#cfe2c8; --fairway:#8cc77a; --green-c:#4fa64a; --tee:#6b4f2a; --water:#5aa9d6; --cliff:#a58c6a; --sand:#efe0b0;
+  --chip:#e2ece6;
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1714; --surface:#16231f; --ink:#e3eee9; --muted:#9db3aa; --line:#2b3d37;
+  --accent:#5fd0a3; --target:#ffa64d; --pen:#ff6b6b; --ob:#e3eee9;
+  --rough:#1f3a2a; --fairway:#3f7a3a; --green-c:#5cb356; --tee:#c9a46e; --water:#3b86b3; --cliff:#7d6a50; --sand:#8c7d55;
+  --chip:#20322c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1714; --surface:#16231f; --ink:#e3eee9; --muted:#9db3aa; --line:#2b3d37;
+  --accent:#5fd0a3; --target:#ffa64d; --pen:#ff6b6b; --ob:#e3eee9;
+  --rough:#1f3a2a; --fairway:#3f7a3a; --green-c:#5cb356; --tee:#c9a46e; --water:#3b86b3; --cliff:#7d6a50; --sand:#8c7d55;
+  --chip:#20322c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-display);line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:28px}
+header{display:grid;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--accent);font-weight:700}
+h1{margin:0;font-size:clamp(26px,4.5vw,40px);font-weight:900;line-height:1.2;text-wrap:balance}
+.lead{margin:0;color:var(--muted);max-width:62ch}
+.stats{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--muted)}
+.stats b{font-family:var(--f-num);color:var(--ink);font-size:15px;margin-right:4px}
+.note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--target);padding:6px 12px;background:var(--surface);max-width:72ch}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.tabs{display:flex;gap:6px}
+.tabs button{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 16px;border-radius:999px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.tabs button:focus-visible{outline:2px solid var(--target);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:14px;height:10px;border-radius:2px;display:inline-block}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,500px),1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:200px minmax(0,1fr);overflow:hidden}
+.card.hard{border-color:color-mix(in srgb,var(--pen) 55%,var(--line))}
+.map{background:var(--rough);display:flex;align-items:center;justify-content:center;padding:6px}
+.map svg{width:100%;max-width:200px;height:auto;display:block}
+.body{padding:14px 16px 16px;display:grid;gap:10px;align-content:start;min-width:0}
+.hn{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hn .no{font-family:var(--f-num);font-weight:700;font-size:30px;line-height:1;color:var(--accent)}
+.hn .par{font-weight:900;font-size:17px}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;background:var(--chip);border-radius:4px;padding:2px 8px;font-variant-numeric:tabular-nums}
+.chip.num{font-family:var(--f-num)}
+.chip.warn{background:color-mix(in srgb,var(--pen) 18%,var(--surface));color:var(--pen);font-weight:700}
+.chip.elev{background:color-mix(in srgb,var(--accent) 16%,var(--surface));color:var(--accent);font-weight:700}
+.feat{margin:0;font-size:13.5px;color:var(--muted)}
+ol.aim{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+ol.aim li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;font-size:13.5px;line-height:1.55}
+ol.aim .n{width:22px;height:22px;border-radius:50%;background:var(--target);color:#fff;font-family:var(--f-num);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+ol.aim b{font-weight:700}
+.danger{font-size:13px;display:flex;gap:6px;align-items:baseline}
+.danger::before{content:"×";color:var(--pen);font-weight:900}
+.goal{font-size:12.5px;color:var(--muted)}
+.goal b{color:var(--ink);font-family:var(--f-num)}
+footer{font-size:12px;color:var(--muted);display:grid;gap:4px}
+footer a{color:var(--accent)}
+@media (max-width:560px){.card{grid-template-columns:1fr}.map svg{max-width:180px}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">ODAWARAJO COUNTRY CLUB · YARDAGE BOOK</div>
+  <h1>小田原城カントリー倶楽部<br>18ホール攻略ガイド</h1>
+  <p class="lead">各ホールの狙い目（①②③）、ハザード、危険ゾーンを図にまとめました。山岳コースなので、飛距離より「どこに置くか」でスコアが決まります。</p>
+  <div class="stats">
+    <span><b>72</b>パー</span><span><b>6,080</b>Y レギュラー</span><span><b>6,350</b>Y バック</span><span>ベント1グリーン</span><span>ドラコン 4・18番</span><span>ニアピン 9・14番</span>
+  </div>
+  <p class="note">図は公開されているホール情報（ドッグレッグ・OB・池・高低差）をもとにした<b>模式図</b>で、実際の形状・縮尺とは異なります。距離はレギュラーティー。プレー前にゴルフ場のコースガイドと照らし合わせてください。</p>
+</header>
+
+<div class="bar">
+  <div class="tabs" role="group" aria-label="表示するコース">
+    <button id="t-all" data-f="all" aria-pressed="true">全18H</button>
+    <button id="t-out" data-f="out" aria-pressed="false">OUT</button>
+    <button id="t-in" data-f="in" aria-pressed="false">IN</button>
+  </div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--fairway)"></i>FW</span>
+    <span><i class="sw" style="background:var(--green-c);border-radius:50%"></i>グリーン</span>
+    <span><i class="sw" style="background:var(--water)"></i>池・谷</span>
+    <span><i class="sw" style="background:var(--cliff)"></i>崖</span>
+    <span><svg width="18" height="10" aria-hidden="true"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--ob)" stroke-width="2" stroke-dasharray="4 3"/></svg>OB</span>
+    <span><svg width="18" height="10" aria-hidden="true"><line x1="0" y1="5" x2="18" y2="5" stroke="var(--pen)" stroke-width="2"/></svg>1ペナ</span>
+    <span><i class="sw" style="background:var(--target);border-radius:50%"></i>狙い目</span>
+  </div>
+</div>
+
+<div class="list" id="list"></div>
+
+<footer>
+  <div>出典：<a href="https://golf-jalan.net/gc01003/detail/" target="_blank" rel="noopener">じゃらんゴルフ</a> ／ <a href="https://booking.gora.golf.rakuten.co.jp/guide/layout_disp/c_id/140007" target="_blank" rel="noopener">楽天GORA</a> ／ <a href="https://shotnavi.jp/gcguide/gcinfo_1097.htm" target="_blank" rel="noopener">Shot Navi</a> ／ <a href="https://www.golflab.jp/kanagawa-golf/odawarajocc/" target="_blank" rel="noopener">ゴルフラボ</a> ／ <a href="https://www.odawarajocc.com/course.html" target="_blank" rel="noopener">公式サイト</a></div>
+  <div>INのHDCPはShot Navi値。11番は暫定グリーン（パー3運用）の時期あり。15・16番は公開情報にハザード記載なし。</div>
+</footer>
+</div>
+
+<script>
+// pts: FW centerline tee→green in a 200x340 box. haz: ob/pen sides, pond/cliff/valley shapes. aims: target spots.
+const H=[
+{n:1,p:4,y:380,hc:3,elev:"打ち上げ",shape:"左ドッグレッグ",pts:[[100,318],[112,205],[86,110],[70,48]],
+ haz:{ob:"L",cliff:[[42,150,22,70]]},aims:[[116,200,"右寄りFW"],[70,48,"手前から"]],
+ feat:"打ち上げの左ドッグレッグ。左はOBと崖下。",
+ aim:[["FW右サイド","左の角は詰めない。右寄りに置けばグリーンが見える。"],["グリーン手前","打ち上げなので＋1番手。ショートは厳禁。"]],
+ danger:"左サイド全域（OB・崖下）",club:"ドライバー / 3W"},
+{n:2,p:3,y:192,hc:9,elev:"打ち下ろし",shape:"パー3",pts:[[100,318],[100,60]],
+ haz:{ob:"L",pen:"R"},aims:[[90,62,"左寄りセンター"]],
+ feat:"打ち下ろしのパー3。左OB・右1ペナ。グリーンは右から左への傾斜。",
+ aim:[["グリーン左寄りセンター","打ち下ろし分1番手落とす。外すなら右手前が安全。"]],
+ danger:"左（OB）",club:"UT / 5I"},
+{n:3,p:4,y:294,hc:15,elev:"砲台グリーン",shape:"短いパー4",pts:[[100,318],[98,175],[100,60]],
+ haz:{ob:"L",pen:"R",pond:[[148,140,24,34]]},aims:[[90,188,"150Y残し"],[100,60,"キャリーで"]],
+ feat:"右に池、左OB・右1ペナ。砲台グリーン。",
+ aim:[["FW左〜センター","ドライバー不要。UT/5Iで池に届かない位置へ。"],["グリーン","砲台なのでキャリーで乗せる番手を選ぶ。"]],
+ danger:"右の池・左OB",club:"UT / 5I"},
+{n:4,p:4,y:370,hc:7,elev:"強い打ち上げ",shape:"ドラコン",pts:[[100,318],[95,190],[100,55]],
+ haz:{},aims:[[88,185,"やや左"],[100,55,"＋10〜15Y"]],
+ feat:"かなりの打ち上げ。ドラコン推奨ホール。",
+ aim:[["FWやや左","打ち上げで距離が出ないので強振より芯で。"],["グリーン","残り距離＋10〜15Yの番手。乗らなければ寄せワン狙い。"]],
+ danger:"番手不足のショート",club:"ドライバー"},
+{n:5,p:4,y:313,hc:13,elev:"",shape:"短いパー4",pts:[[100,318],[104,180],[100,58]],
+ haz:{ob:"L",pen:"R",pond:[[58,170,18,32]]},aims:[[114,182,"右寄りFW"],[100,58,"ピン狙い"]],
+ feat:"短いパー4。左OB・右1ペナ、FW左に池。",
+ aim:[["FW右寄り","刻んで左の池とOBを完全に消す。"],["グリーン","ショートアイアンでピンを狙えるチャンスホール。"]],
+ danger:"左（OB・池）",club:"UT / 5W"},
+{n:6,p:5,y:626,hc:1,elev:"打ち下ろし連続",shape:"蛇行パー5",pts:[[100,322],[72,246],[122,168],[82,98],[102,40]],
+ haz:{ob:"LR"},aims:[[74,244,"1打目"],[120,170,"2打目"],[86,104,"3打目"]],
+ feat:"HDCP1・626Y。狭く長く、蛇行して2打目からグリーンが見えない。左右OB。",
+ aim:[["1打目 左サイド","FWに置けるクラブで。飛距離より方向。"],["2打目 曲がり角の右","次のショットでグリーン方向が見える位置へ。"],["3打目 グリーン手前","4オン1パットでも良しと割り切る。"]],
+ danger:"左右（OB）。ダボは打たない",club:"3W / UT"},
+{n:7,p:5,y:453,hc:5,elev:"",shape:"右ドッグレッグ",pts:[[100,320],[94,205],[128,125],[148,52]],
+ haz:{ob:"R",pen:"L",cliff:[[160,92,18,26]]},aims:[[88,210,"左〜センター"],[122,132,"100Y残し"],[140,52,"左寄り"]],
+ feat:"右ドッグレッグ。右OB・左1ペナ。グリーン右手前に崖。",
+ aim:[["FW左〜センター","右OBを消す。角は狙わない。"],["100Y前後に刻む","2オン狙いは不要。得意距離を残す。"],["グリーン左寄り","右手前の崖を避ける。"]],
+ danger:"右（OB・崖）",club:"ドライバー / 3W"},
+{n:8,p:4,y:276,hc:11,elev:"",shape:"短いパー4",pts:[[100,318],[96,180],[100,58]],
+ haz:{ob:"R",pen:"L"},aims:[[88,186,"左〜センター"],[100,58,"縦距離"]],
+ feat:"距離の短いパー4。右OB・左1ペナ。",
+ aim:[["FW左〜センター","UT/アイアンで刻む。"],["グリーン","ウェッジで縦距離を合わせパーを取る。"]],
+ danger:"右（OB）",club:"UT / 5I"},
+{n:9,p:3,y:198,hc:17,elev:"",shape:"ニアピン",pts:[[100,318],[100,60]],
+ haz:{ob:"L",pen:"R"},aims:[[92,64,"左寄り"]],
+ feat:"左OB・右1ペナ。グリーンは右傾斜。ニアピン推奨ホール。",
+ aim:[["グリーン左寄りセンター","届かなくても手前でOK。右からの傾斜で戻る。"]],
+ danger:"左（OB）",club:"UT / 5W"},
+{n:10,p:4,y:377,hc:4,elev:"約100Y打ち下ろし",shape:"相模湾へ",pts:[[100,318],[100,185],[100,55]],
+ haz:{ob:"LR"},aims:[[100,190,"センター"],[100,55,"下りに注意"]],
+ sea:true,
+ feat:"高低差約100Yの打ち下ろし。相模湾に向かって打つ名物ホール。",
+ aim:[["FWセンター","落差で大きく飛ぶ。海風を確認し、方向性重視。"],["グリーン","芝目は山→海が順目。下りのパットは速い。"]],
+ danger:"左右に曲げると大きく流される",club:"3W / UT"},
+{n:11,p:4,y:369,hc:6,elev:"",shape:"左右OB",pts:[[100,318],[100,190],[100,58]],
+ haz:{ob:"LR",narrow:true},aims:[[100,195,"FWキープ"],[100,78,"手前"]],
+ feat:"左右OBの狭いホール。暫定グリーン（パー3）運用の時期あり。",
+ aim:[["FWセンター","刻んででもFWキープ最優先。"],["グリーン手前","無理せず花道へ。ボギーで十分。"]],
+ danger:"左右（OB）",club:"3W / UT"},
+{n:12,p:4,y:346,hc:18,elev:"平坦",shape:"チャンス",pts:[[100,318],[100,180],[100,58]],
+ haz:{},aims:[[100,175,"振っていく"],[100,58,"ピン狙い"]],
+ feat:"平坦でやさしいホール（HDCP18）。",
+ aim:[["FW","ドライバーでしっかり振れるホール。"],["ピン","ショートアイアンでバーディーも狙える。"]],
+ danger:"特になし（取りこぼし注意）",club:"ドライバー"},
+{n:13,p:5,y:484,hc:10,elev:"",shape:"池越えグリーン",pts:[[100,320],[106,205],[96,128],[100,40]],
+ haz:{pond:[[100,82,46,16]]},aims:[[106,210,"FW"],[96,128,"池手前100Y"],[100,40,"大きめ"]],
+ feat:"グリーン手前に大きな池。風の計算が必要。",
+ aim:[["FW","ドライバーでFWキープ。"],["池手前100Y","2打目は池に届かない番手で刻む。"],["グリーン奥目","池越えはキャリー＋風で1番手大きく。"]],
+ danger:"グリーン手前の池",club:"ドライバー"},
+{n:14,p:3,y:168,hc:8,elev:"谷越え打ち下ろし",shape:"ニアピン",pts:[[100,318],[100,62]],
+ haz:{ob:"LR",obBack:true,valley:[[100,190,70,44]]},aims:[[100,74,"手前目"]],
+ feat:"谷越えの打ち下ろし。左右・奥がOB。ニアピン推奨ホール。",
+ aim:[["グリーン手前〜センター","奥OBなので打ち下ろし分しっかり番手を落とす。"]],
+ danger:"奥・左右（OB）",club:"7I〜6I目安"},
+{n:15,p:4,y:315,hc:14,elev:"",shape:"短いパー4",pts:[[100,318],[100,182],[100,58]],
+ haz:{},aims:[[100,186,"FWキープ"],[100,58,"センター"]],
+ feat:"短めのパー4。公開情報にハザード記載なし（現地確認）。",
+ aim:[["FW","刻みも可。FWからショートアイアンを持てる位置へ。"],["グリーン中央","パーを取りにいく。"]],
+ danger:"現地で要確認",club:"UT / ドライバー"},
+{n:16,p:4,y:326,hc:12,elev:"",shape:"短いパー4",pts:[[100,318],[100,182],[100,58]],
+ haz:{},aims:[[100,190,"100Y以内"],[100,58,"パー狙い"]],
+ feat:"短めのパー4。公開情報にハザード記載なし（現地確認）。",
+ aim:[["FW","100Y以内を残せればパーチャンス。"],["グリーン","ウェッジで縦距離を合わせる。"]],
+ danger:"現地で要確認",club:"ドライバー / 3W"},
+{n:17,p:3,y:158,hc:16,elev:"",shape:"池越え・馬の背",pts:[[100,318],[100,62]],
+ haz:{pond:[[100,165,58,40]],ridge:true},aims:[[100,62,"センター"]],
+ feat:"池越えのパー3。グリーンは馬の背（中央が高い）。",
+ aim:[["グリーンセンター","池越えのキャリーを確保。端を狙うと馬の背でこぼれる。"]],
+ danger:"手前の池",club:"8I〜7I目安"},
+{n:18,p:5,y:435,hc:2,elev:"打ち上げ・砲台",shape:"ドラコン",pts:[[100,320],[100,215],[100,128],[100,48]],
+ haz:{},aims:[[100,220,"FW"],[100,132,"得意距離"],[100,48,"キャリー"]],
+ feat:"HDCP2。打ち上げの砲台グリーン。ドラコン推奨ホール。",
+ aim:[["FW","ドラコン以外は飛ばしすぎ不要。"],["3打目の得意距離","打ち上げ分を引いた距離を残す。"],["グリーン","砲台なのでショート厳禁。キャリーで乗せる。"]],
+ danger:"グリーン手前のショート",club:"ドライバー"},
+];
+const goal90=h=>h.hc>=16?h.p:h.p+1;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function svg(h){
+  const P=h.pts, d="M"+P.map(p=>p.join(",")).join(" L"), g=P[P.length-1], t=P[0], z=h.haz;
+  const fw=z.narrow?30:(h.p===3?0:40);
+  let s=`<svg viewBox="0 0 200 340" role="img" aria-label="${h.n}番ホール模式図">`;
+  s+=`<rect width="200" height="340" fill="var(--rough)"/>`;
+  if(h.sea) s+=`<rect width="200" height="22" fill="var(--water)" opacity=".55"/><text x="100" y="15" text-anchor="middle" font-size="9" fill="var(--ink)">相模湾方向</text>`;
+  (z.valley||[]).forEach(([x,y,rx,ry])=>s+=`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="var(--water)" opacity=".35"/><text x="${x}" y="${y+3}" text-anchor="middle" font-size="9" fill="var(--ink)">谷</text>`);
+  if(fw) s+=`<path d="${d}" fill="none" stroke="var(--fairway)" stroke-width="${fw}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  else s+=`<path d="M${t[0]},${t[1]-14} L${g[0]},${g[1]+22}" stroke="var(--fairway)" stroke-width="14" opacity=".35" stroke-linecap="round"/>`;
+  (z.pond||[]).forEach(([x,y,rx,ry])=>s+=`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="var(--water)"/><text x="${x}" y="${y+3}" text-anchor="middle" font-size="9" fill="#fff">池</text>`);
+  (z.cliff||[]).forEach(([x,y,w,hh])=>s+=`<rect x="${x-w/2}" y="${y-hh/2}" width="${w}" height="${hh}" rx="4" fill="var(--cliff)"/><text x="${x}" y="${y+3}" text-anchor="middle" font-size="9" fill="#fff">崖</text>`);
+  const side=(x,col,dash,lab)=>`<line x1="${x}" y1="20" x2="${x}" y2="325" stroke="${col}" stroke-width="2" ${dash?'stroke-dasharray="5 4"':""}/><text x="${x}" y="335" text-anchor="middle" font-size="9" font-weight="700" fill="${col}">${lab}</text>`;
+  const ob=z.ob||"", pen=z.pen||"";
+  if(ob.includes("L")) s+=side(14,"var(--ob)",1,"OB");
+  if(ob.includes("R")) s+=side(186,"var(--ob)",1,"OB");
+  if(pen.includes("L")) s+=side(14,"var(--pen)",0,"1ペナ");
+  if(pen.includes("R")) s+=side(186,"var(--pen)",0,"1ペナ");
+  if(z.obBack) s+=`<line x1="14" y1="24" x2="186" y2="24" stroke="var(--ob)" stroke-width="2" stroke-dasharray="5 4"/><text x="100" y="17" text-anchor="middle" font-size="9" font-weight="700" fill="var(--ob)">奥OB</text>`;
+  s+=`<ellipse cx="${g[0]}" cy="${g[1]}" rx="20" ry="15" fill="var(--green-c)"/>`;
+  if(z.ridge) s+=`<line x1="${g[0]-18}" y1="${g[1]}" x2="${g[0]+18}" y2="${g[1]}" stroke="#fff" stroke-width="1" stroke-dasharray="2 2"/>`;
+  s+=`<line x1="${g[0]+2}" y1="${g[1]}" x2="${g[0]+2}" y2="${g[1]-18}" stroke="var(--ink)" stroke-width="1.2"/><path d="M${g[0]+2},${g[1]-18} l9,3 -9,3z" fill="var(--pen)"/>`;
+  s+=`<rect x="${t[0]-9}" y="${t[1]-5}" width="18" height="9" rx="2" fill="var(--tee)"/>`;
+  const route=[t,...h.aims.map(a=>[a[0],a[1]])];
+  s+=`<polyline points="${route.map(p=>p.join(",")).join(" ")}" fill="none" stroke="var(--target)" stroke-width="1.6" stroke-dasharray="3 3"/>`;
+  h.aims.forEach(([x,y,lab],i)=>{
+    const r=x>125, lx=r?x-14:x+14;
+    s+=`<circle cx="${x}" cy="${y}" r="9" fill="var(--target)" stroke="var(--surface)" stroke-width="1.5"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="JetBrains Mono,monospace">${i+1}</text>`;
+    s+=`<text x="${lx}" y="${y+4}" text-anchor="${r?"end":"start"}" font-size="10" font-weight="700" fill="var(--ink)" paint-order="stroke" stroke="var(--rough)" stroke-width="3">${esc(lab)}</text>`;
+  });
+  s+=`<text x="${t[0]+14}" y="${t[1]+3}" font-size="9" fill="var(--muted)">TEE</text>`;
+  return s+"</svg>";
+}
+function card(h){
+  return `<article class="card${h.hc<=3?" hard":""}" data-half="${h.n<=9?"out":"in"}" id="h${h.n}">
+  <div class="map">${svg(h)}</div>
+  <div class="body">
+    <div class="hn"><span class="no">${h.n}</span><span class="par">PAR ${h.p}</span><span style="color:var(--muted);font-size:13px">${esc(h.shape)}</span></div>
+    <div class="meta"><span class="chip num">${h.y} Y</span><span class="chip ${h.hc<=3?"warn":""}">HDCP ${h.hc}</span>${h.elev?`<span class="chip elev">${esc(h.elev)}</span>`:""}<span class="chip">${esc(h.club)}</span></div>
+    <p class="feat">${esc(h.feat)}</p>
+    <ol class="aim">${h.aim.map((a,i)=>`<li><span class="n">${i+1}</span><span><b>${esc(a[0])}</b>　${esc(a[1])}</span></li>`).join("")}</ol>
+    <div class="danger"><span>危険：${esc(h.danger)}</span></div>
+    <div class="goal">90切り目標 <b>${goal90(h)}</b>（${goal90(h)===h.p?"パー":"ボギー"}）</div>
+  </div></article>`;
+}
+const list=document.getElementById("list");
+list.innerHTML=H.map(card).join("");
+function filt(f){
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.f===f));
+  list.querySelectorAll(".card").forEach(c=>c.hidden=!(f==="all"||c.dataset.half===f));
+  try{localStorage.setItem("odw-f",f)}catch(e){}
+}
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>filt(b.dataset.f)));
+let f0="all";try{f0=localStorage.getItem("odw-f")||"all"}catch(e){}
+filt(f0);
+</script>
