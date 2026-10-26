@@ -12,7 +12,10 @@
 [hidden]{display:none!important}
 html,body{height:100%;margin:0;overflow:hidden;background:#0b1410;color:var(--ink);font-family:var(--f-ui)}
 #app{position:fixed;inset:0}
-#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;filter:saturate(1.06) contrast(1.06)}
+#grain{position:absolute;inset:-40px;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-size:160px;animation:grain .6s steps(4) infinite}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-23px,11px)}50%{transform:translate(17px,-19px)}75%{transform:translate(-9px,-27px)}}
+@media (prefers-reduced-motion:reduce){#grain{animation:none}}
 .panel{position:absolute;background:var(--glass);border:1px solid var(--line);border-radius:10px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 58%,rgba(0,0,0,.26) 100%)}
 .num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
@@ -97,6 +100,7 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
 <div id="app">
   <canvas id="gl" aria-label="一人称ゴルフコースビュー"></canvas>
   <div id="vig" aria-hidden="true"></div>
+  <div id="grain" aria-hidden="true"></div>
 
   <div class="panel" id="holeCard">
     <div class="hn"><span>HOLE</span><b id="hNo">1</b><span id="hPar">PAR 4</span></div>
@@ -395,6 +399,7 @@ function penalty(x,z){const hd=HD,b=hd.box;
   if(sf===S_WA){const p=hd.ponds.find(p=>ell(p,x,z)<1);return{t:"WATER",p}}
   return null}
 
+{const c=document.createElement("canvas");c.width=c.height=160;const x=c.getContext("2d"),im=x.createImageData(160,160);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}x.putImageData(im,0,0);$("grain").style.backgroundImage=`url(${c.toDataURL()})`}
 /* ================= THREE セットアップ ================= */
 const canvas=$("gl");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
@@ -424,7 +429,7 @@ float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
 float fb(vec2 p){float s=0.,a=.5;for(int i=0;i<6;i++){s+=a*n2(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return s;}
 void main(){vec3 d=normalize(vD);float y=d.y;vec3 sd=normalize(uSun);
  vec3 zen=vec3(.27,.47,.78);vec3 c=mix(uHaze,zen,pow(clamp(y,0.,1.),.45));
- float s=max(dot(d,sd),0.);
+ float s=max(dot(d,sd),0.);c+=vec3(.16,.12,.06)*pow(s,3.)*(1.-clamp(y*2.,0.,1.));
  if(y>0.){vec2 uv=d.xz/(y+.06)*1.4+vec2(uTime*.003,uTime*.001);
   float cov=fb(uv*.8);float cl=smoothstep(.5,.76,cov);
   float wisp=smoothstep(.55,.95,fb(uv*.25+vec2(5.,2.)))*.3;
@@ -452,12 +457,12 @@ const seaMat=new THREE.MeshStandardMaterial({color:lin(0x17384b),roughness:.07,m
 const seaMesh=new THREE.Mesh(new THREE.PlaneGeometry(40000,40000),seaMat);seaMesh.rotation.x=-Math.PI/2;scene.add(seaMesh);
 
 // 樹木（手続き生成の葉テクスチャ × 交差ビルボード）
-function treeCanvas(kind){const R=Math.random,W=kind?512:256,Hh=512,c=document.createElement("canvas");c.width=W;c.height=Hh;const x=c.getContext("2d");
+function treeCanvas(kind){const R=Math.random,W=kind?512:256,Hh=512,S=cfg.q?1.6:1.2,c=document.createElement("canvas");c.width=W*S;c.height=Hh*S;const x=c.getContext("2d");x.scale(S,S);
   const rgb=(a,b,f)=>`rgb(${a[0]+(b[0]-a[0])*f|0},${a[1]+(b[1]-a[1])*f|0},${a[2]+(b[2]-a[2])*f|0})`;
   if(kind===0){ // スギ・ヒノキ
     x.fillStyle="#3b2b1f";x.fillRect(W/2-4,Hh*.45,8,Hh*.55);
     const dk=[16,28,19],lt=[74,98,60];
-    for(let k=0;k<11000;k++){const t=Math.pow(R(),.75),y=8+t*Hh*.88;const tier=.68+.32*((t*15+R()*.15)%1);
+    for(let k=0;k<(cfg.q?20000:13000);k++){const t=Math.pow(R(),.75),y=8+t*Hh*.88;const tier=.68+.32*((t*15+R()*.15)%1);
       const half=W*.46*Math.pow(t,.85)*tier+3;const u=R()*2-1,xx=W/2+u*half;
       let f=.18+.38*(1-t*.7)+.2*(.5-u*.5)+(R()-.5)*.4-(1-Math.abs(u))*.12;f=Math.max(0,Math.min(1,f));
       x.fillStyle=rgb(dk,lt,f);x.beginPath();x.ellipse(xx,y,2+R()*3.2,1+R()*1.4,(u>0?.45:-.45)+(R()-.5)*.7,0,6.283);x.fill()}
@@ -467,10 +472,10 @@ function treeCanvas(kind){const R=Math.random,W=kind?512:256,Hh=512,c=document.c
     const cl=[];for(let k=0;k<18;k++){const a=R()*6.283,r=Math.sqrt(R());cl.push({x:256+Math.cos(a)*r*175,y:225+Math.sin(a)*r*150,r:55+R()*45,t:R()})}
     cl.sort((a,b)=>b.y-a.y);
     const dk=[22,34,18],lt=kind===2?[128,128,58]:[104,128,58];
-    for(const q of cl)for(let k=0;k<900;k++){const rr=q.r*Math.sqrt(R()),a=R()*6.283,dx=Math.cos(a)*rr,dy=Math.sin(a)*rr;
+    for(const q of cl)for(let k=0;k<(cfg.q?1500:1000);k++){const rr=q.r*Math.sqrt(R()),a=R()*6.283,dx=Math.cos(a)*rr,dy=Math.sin(a)*rr;
       let f=.32+.38*(-(dx+dy*1.3)/(q.r*1.6))+.18*(1-q.y/450)+(R()-.5)*.35;f=Math.max(0,Math.min(1,f));
       let col=rgb(dk,lt,f);if(kind===2&&R()<.22)col=rgb([90,46,20],R()<.5?[196,120,40]:[178,64,32],f);
-      x.fillStyle=col;x.beginPath();x.ellipse(q.x+dx,q.y+dy,2.6+R()*2.4,1.8+R()*1.6,R()*3.14,0,6.283);x.fill()}}
+      x.fillStyle=col;x.beginPath();x.ellipse(q.x+dx,q.y+dy,2.2+R()*2.2,1.5+R()*1.4,R()*3.14,0,6.283);x.fill()}}
   const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t}
 function crossGeo(n){const pos=[],nor=[],uv=[];const U=[[0,0],[1,0],[1,1],[0,1]];
   for(let k=0;k<n;k++){const a=k*Math.PI/n,ca=Math.cos(a),sa=Math.sin(a);const P=[[-.5,0],[.5,0],[.5,1],[-.5,1]].map(([u,v])=>[u*ca,v,u*sa]);
@@ -489,75 +494,113 @@ grassMat.onBeforeCompile=sh=>{sh.uniforms.uT=grassU.uT;
   sh.vertexShader="uniform float uT;attribute float tip;\n"+sh.vertexShader.replace("#include <begin_vertex>","#include <begin_vertex>\n transformed.x+=tip*.012*sin(uT*1.7+position.x*.9+position.z*.6);transformed.z+=tip*.008*cos(uT*1.3+position.z*.8);");
   sh.fragmentShader=sh.fragmentShader.replace("normal = normal * faceDirection;","")};
 let grassMesh=null;
-/* ================= キャラクター（デフォルメ調のオリジナルデザイン） ================= */
-const toonGrad=(()=>{const t=new THREE.DataTexture(new Uint8Array([80,160,255]),3,1,THREE.RedFormat);t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;t.needsUpdate=true;return t})();
-const OUTLINE=new THREE.MeshBasicMaterial({color:0x241a14,side:THREE.BackSide});
-function toon(hex){const c=lin(hex);return new THREE.MeshToonMaterial({color:c,gradientMap:toonGrad,emissive:c.clone().multiplyScalar(.2)})}
-function part(geo,mat,parent,pos,scl,ol){const m=new THREE.Mesh(geo,mat);m.castShadow=true;if(pos)m.position.set(pos[0],pos[1],pos[2]);if(scl)m.scale.set(scl[0],scl[1],scl[2]);parent.add(m);
-  if(ol!==0){const o=new THREE.Mesh(geo,OUTLINE);o.scale.setScalar(ol||1.07);m.add(o)}return m}
+/* ================= キャラクター（デフォルメ体型のオリジナルデザイン・PBR質感） ================= */
+function pnoise(x,y,Px,Py,o=0){const i=Math.floor(x),j=Math.floor(y),fx=x-i,fy=y-j,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
+  const h=(a,b)=>hash(((a%Px)+Px)%Px+o*131,((b%Py)+Py)%Py+o*71);const a=h(i,j),b=h(i+1,j),c=h(i,j+1),d=h(i+1,j+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+function heightNormal(N,fn,str){const c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d"),im=x.createImageData(N,N),hg=new Float32Array(N*N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++)hg[j*N+i]=fn(i,j);const Hh=(i,j)=>hg[((j+N)%N)*N+((i+N)%N)];
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const dx=(Hh(i+1,j)-Hh(i-1,j))*str,dy=(Hh(i,j-1)-Hh(i,j+1))*str,l=Math.hypot(dx,dy,1),o=(j*N+i)*4;
+    im.data[o]=(-dx/l*.5+.5)*255;im.data[o+1]=(-dy/l*.5+.5)*255;im.data[o+2]=(1/l*.5+.5)*255;im.data[o+3]=255}
+  x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t}
+const CTEX={
+  knit:heightNormal(128,(i,j)=>{const r=Math.floor(j/4),cx=((i+(r&1)*2)%4)-1.5,cy=(j%4)-1.5;return Math.max(0,1-(cx*cx+cy*cy)/3)+pnoise(i/8,j/8,16,16)*.25},1.6),
+  twill:heightNormal(128,(i,j)=>Math.sin((i+j)*Math.PI*2/8)*.5+pnoise(i/4,j/4,32,32)*.3,1.1),
+  hair:heightNormal(256,(i,j)=>pnoise(i/2,j/32,128,8)*.8+pnoise(i,j/16,256,16)*.4,2.2),
+  leather:heightNormal(128,(i,j)=>pnoise(i/2,j/2,64,64)*.6+pnoise(i/8,j/8,16,16)*.4,1.2),
+  skin:heightNormal(256,(i,j)=>pnoise(i/2,j/2,128,128)*.4+pnoise(i/8,j/8,32,32)*.6,.5)};
+function eyeTex(c1,c2){const W=256,Hh=128,c=document.createElement("canvas");c.width=W;c.height=Hh;const x=c.getContext("2d");
+  x.fillStyle="#f3efe9";x.fillRect(0,0,W,Hh);const cx=W*.25,cy=Hh*.53;
+  const g=x.createRadialGradient(cx,cy+4,2,cx,cy,46);g.addColorStop(0,c1);g.addColorStop(.55,c2);g.addColorStop(1,"#130b06");x.fillStyle=g;x.beginPath();x.ellipse(cx,cy,30,52,0,0,6.283);x.fill();
+  x.lineWidth=1;for(let k=0;k<90;k++){const a=Math.random()*6.283;x.strokeStyle=`rgba(255,${200+Math.random()*40|0},150,${.08+Math.random()*.14})`;x.beginPath();x.moveTo(cx+Math.cos(a)*11,cy+Math.sin(a)*19);x.lineTo(cx+Math.cos(a)*29,cy+Math.sin(a)*50);x.stroke()}
+  x.fillStyle="#070403";x.beginPath();x.ellipse(cx,cy,11,20,0,0,6.283);x.fill();
+  const sh=x.createLinearGradient(0,cy-54,0,cy-8);sh.addColorStop(0,"rgba(25,12,6,.8)");sh.addColorStop(1,"rgba(25,12,6,0)");x.fillStyle=sh;x.fillRect(cx-42,cy-56,84,48);
+  x.fillStyle="rgba(255,255,255,.95)";x.beginPath();x.ellipse(cx-9,cy-19,7,9,0,0,6.283);x.fill();x.beginPath();x.arc(cx+10,cy+23,3,0,6.283);x.fill();
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t}
+const txr=(t,rx,ry)=>{const c=t.clone();c.needsUpdate=true;c.wrapS=c.wrapT=THREE.RepeatWrapping;c.repeat.set(rx,ry);return c};
+const V2=a=>new THREE.Vector2(a,a);
+function mat(kind,hex,rx=1,ry=1){const c=lin(hex),lt=c.clone().lerp(new THREE.Color(1,1,1),.35);
+  switch(kind){
+    case"skin":return new THREE.MeshPhysicalMaterial({color:c,roughness:.5,sheen:.45,sheenRoughness:.45,sheenColor:lin(0xffc4a8),normalMap:txr(CTEX.skin,rx,ry),normalScale:V2(.16),emissive:c.clone().multiplyScalar(.05)});
+    case"knit":return new THREE.MeshPhysicalMaterial({color:c,roughness:.9,sheen:.9,sheenRoughness:.6,sheenColor:lt,normalMap:txr(CTEX.knit,rx,ry),normalScale:V2(.6)});
+    case"twill":return new THREE.MeshPhysicalMaterial({color:c,roughness:.88,sheen:.5,sheenRoughness:.6,sheenColor:lt,normalMap:txr(CTEX.twill,rx,ry),normalScale:V2(.45)});
+    case"hair":return new THREE.MeshPhysicalMaterial({color:c,roughness:.38,sheen:1,sheenRoughness:.25,sheenColor:lt,clearcoat:.3,clearcoatRoughness:.35,normalMap:txr(CTEX.hair,rx,ry),normalScale:V2(.9)});
+    case"leather":return new THREE.MeshPhysicalMaterial({color:c,roughness:.4,clearcoat:.6,clearcoatRoughness:.22,normalMap:txr(CTEX.leather,rx,ry),normalScale:V2(.3)});
+    case"plastic":return new THREE.MeshPhysicalMaterial({color:c,roughness:.3,clearcoat:.7,clearcoatRoughness:.15});
+    case"metal":return new THREE.MeshStandardMaterial({color:c,metalness:1,roughness:rx===1?.2:rx});
+    default:return new THREE.MeshStandardMaterial({color:c,roughness:.85})}}
+function part(geo,m,parent,pos,scl){const o=new THREE.Mesh(geo,m);o.castShadow=true;if(pos)o.position.set(pos[0],pos[1],pos[2]);if(scl)o.scale.set(scl[0],scl[1],scl[2]);parent.add(o);return o}
 const onHead=(r,az,el)=>new THREE.Vector3(Math.sin(az)*Math.cos(el)*r,Math.sin(el)*r,Math.cos(az)*Math.cos(el)*r);
-function onFace(m,pos){m.position.copy(pos);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),pos.clone().normalize());return m}
+function onFace(m,pos){m.position.copy(pos);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),pos.clone().normalize());m.castShadow=false;return m}
+function pleat(g,n,amp){const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),a=Math.atan2(z,x),k=1+amp*Math.sin(a*n)*(.5-y/.25+.5)*.5;p.setX(i,x*k);p.setZ(i,z*k)}g.computeVertexNormals();return g}
+const shadowBlob=(()=>{const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d"),g=x.createRadialGradient(64,64,4,64,64,62);g.addColorStop(0,"rgba(0,0,0,.6)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c)})();
 function buildChar(F){
-  const P=F?{skin:0xffdcc6,hair:0x9a5528,shirt:0xff8fb3,bottom:0x2d3f73,shoe:0xffffff,hat:0xffffff,acc:0xffd34d}
-           :{skin:0xf3c9a6,hair:0x2a1c13,shirt:0x2f86e6,bottom:0xf0efe8,shoe:0x6b4426,hat:0xd8322b,acc:0xffffff};
+  const P=F?{skin:0xf7d2bb,hair:0x7a3f1d,shirt:0xf27aa2,bottom:0x26365f,shoe:0xf4f4f2,hat:0xf6f6f4,acc:0xf2c641,iris:["#c98a3c","#6b3b17"]}
+           :{skin:0xeac0a0,hair:0x231710,shirt:0x2a72c8,bottom:0xe9e6dc,shoe:0x5e3a20,hat:0xc8302a,acc:0xffffff,iris:["#7a5232","#2e1a0c"]};
   const root=new THREE.Group(),body=new THREE.Group();root.add(body);
-  const SKIN=toon(P.skin),SHIRT=toon(P.shirt),BOT=toon(P.bottom),HAIR=toon(P.hair),SHOE=toon(P.shoe),HAT=toon(P.hat),ACC=toon(P.acc);
-  const DARK=new THREE.MeshBasicMaterial({color:0x1b1410}),WHITE=new THREE.MeshBasicMaterial({color:0xffffff});
+  const SKIN=mat("skin",P.skin,3,3),SHIRT=mat("knit",P.shirt,10,6),BOT=mat("twill",P.bottom,10,6),HAIR=mat("hair",P.hair,4,2),SHOE=mat("leather",P.shoe,3,3);
+  const SOLE=mat("rubber",0xeeeeea),ACC=mat("plastic",P.acc);
+  const sb=new THREE.Mesh(new THREE.PlaneGeometry(1.2,1.2),new THREE.MeshBasicMaterial({map:shadowBlob,transparent:true,depthWrite:false,color:0x000000,opacity:.55}));sb.rotation.x=-Math.PI/2;sb.position.y=.012;root.add(sb);
   // 脚・靴
-  for(const sx of [-1,1]){part(new THREE.CylinderGeometry(.068,.058,.44,14),F?SKIN:BOT,body,[sx*.1,.27,0]);
-    if(F)part(new THREE.CylinderGeometry(.064,.061,.09,14),toon(0xffffff),body,[sx*.1,.11,0],null,0);
-    part(new THREE.SphereGeometry(.085,16,10),SHOE,body,[sx*.1,.05,.035],[1,.62,1.55])}
+  for(const sx of [-1,1]){part(new THREE.CylinderGeometry(.066,.056,.44,20),F?SKIN:BOT,body,[sx*.1,.27,0]);
+    if(F)part(new THREE.CylinderGeometry(.062,.06,.09,20),mat("knit",0xffffff,6,1),body,[sx*.1,.11,0]);
+    part(new THREE.SphereGeometry(.085,24,14),SHOE,body,[sx*.1,.058,.035],[1,.6,1.55]);
+    part(new THREE.SphereGeometry(.088,24,10),SOLE,body,[sx*.1,.03,.035],[1.04,.3,1.6])}
   // 腰
   const hips=new THREE.Group();hips.position.y=.5;body.add(hips);
-  if(F)part(new THREE.CylinderGeometry(.17,.27,.25,18),BOT,hips,[0,0,0]);
-  else{part(new THREE.CylinderGeometry(.18,.19,.2,18),BOT,hips,[0,.02,0]);part(new THREE.CylinderGeometry(.186,.186,.04,18),toon(0x3a2a20),hips,[0,.11,0],null,0)}
-  // 胴
+  if(F)part(pleat(new THREE.CylinderGeometry(.17,.28,.25,48,3),14,.06),BOT,hips,[0,0,0]);
+  else{part(new THREE.CylinderGeometry(.18,.19,.2,32),BOT,hips,[0,.02,0]);part(new THREE.CylinderGeometry(.187,.187,.04,32),mat("leather",0x2b1d14,6,1),hips,[0,.11,0]);
+    part(new THREE.BoxGeometry(.05,.035,.01),mat("metal",0xcfc6a8,.25),hips,[0,.11,.19])}
+  // 胴（ポロシャツ）
   const torso=new THREE.Group();torso.position.y=.62;body.add(torso);
-  part(new THREE.CylinderGeometry(.17,.185,.33,18),SHIRT,torso,[0,.16,0]);
-  part(new THREE.SphereGeometry(.172,18,10,0,6.283,0,1.57),SHIRT,torso,[0,.32,0],[1,.55,1]);
-  const col=part(new THREE.TorusGeometry(.08,.024,8,18),ACC,torso,[0,.42,0],null,0);col.rotation.x=Math.PI/2;
+  part(new THREE.CylinderGeometry(.17,.185,.33,32),SHIRT,torso,[0,.16,0]);
+  part(new THREE.SphereGeometry(.172,32,14,0,6.283,0,1.57),SHIRT,torso,[0,.32,0],[1,.55,1]);
+  const col=part(new THREE.TorusGeometry(.085,.028,10,28),mat("knit",P.shirt,12,1),torso,[0,.41,.0],[1,1,.6]);col.rotation.x=Math.PI/2;
+  part(new THREE.BoxGeometry(.045,.11,.012),mat("knit",P.shirt,1,3),torso,[0,.34,.168]);
+  for(const y of [.36,.31])part(new THREE.SphereGeometry(.009,10,8),mat("plastic",0xf8f6f0),torso,[0,y,.176]);
   // 頭
   const head=new THREE.Group();head.position.y=1.1;body.add(head);
-  const R=.3;part(new THREE.SphereGeometry(R,32,22),SKIN,head,[0,0,0],[1,.96,.97]);
-  for(const sx of [-1,1])part(new THREE.SphereGeometry(.05,10,8),SKIN,head,[sx*.29,-.02,0],[.6,1,1]);
+  const R=.3;part(new THREE.SphereGeometry(R,48,32),SKIN,head,[0,0,0],[1,.96,.97]);
+  for(const sx of [-1,1])part(new THREE.SphereGeometry(.05,16,12),SKIN,head,[sx*.29,-.02,0],[.6,1,1]);
+  part(new THREE.SphereGeometry(.022,12,10),SKIN,head,[0,-.13,.285]);
+  const EYE=new THREE.MeshPhysicalMaterial({map:eyeTex(P.iris[0],P.iris[1]),roughness:.12,clearcoat:1,clearcoatRoughness:.04});
   for(const sx of [-1,1]){
-    const e=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,16,12),DARK),onHead(R*.97,sx*.34,-.06));e.scale.set(F?.05:.042,F?.076:.064,.02);head.add(e);
-    const h1=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,8,6),WHITE),onHead(R*.99,sx*.34-.03,-.02));h1.scale.set(.016,.019,.01);head.add(h1);
-    const h2=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,8,6),WHITE),onHead(R*.99,sx*.34+.02,-.1));h2.scale.set(.008,.009,.008);head.add(h2);
-    const br=onFace(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),HAIR),onHead(R*.99,sx*.34,F?.17:.15));br.scale.set(F?.06:.075,F?.012:.019,.012);br.rotateZ(sx*(F?.14:-.06));head.add(br);
-    if(F){const l=onFace(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),DARK),onHead(R*.99,sx*.36,.07));l.scale.set(.062,.012,.01);l.rotateZ(sx*-.25);head.add(l)}
-    const bl=onFace(new THREE.Mesh(new THREE.CircleGeometry(1,16),new THREE.MeshBasicMaterial({color:0xff8fa0,transparent:true,opacity:F?.55:.28})),onHead(R*1.005,sx*.56,-.2));bl.scale.set(.045,.028,1);head.add(bl)}
-  const mouth=onFace(new THREE.Mesh(new THREE.TorusGeometry(.03,.007,6,14,Math.PI),new THREE.MeshBasicMaterial({color:0x8a2a2a})),onHead(R*.99,0,-.33));mouth.rotateZ(Math.PI);head.add(mouth);
+    const e=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,32,24),EYE),onHead(R*.965,sx*.34,-.06));e.scale.set(F?.052:.045,F?.078:.066,.022);head.add(e);
+    const br=onFace(new THREE.Mesh(new THREE.CapsuleGeometry(.5,1.6,4,8),HAIR),onHead(R*.995,sx*.34,F?.18:.16));br.rotateZ(Math.PI/2+sx*(F?.14:-.06));br.scale.set(F?.012:.018,F?.03:.034,.012);head.add(br);
+    if(F){const l=onFace(new THREE.Mesh(new THREE.CapsuleGeometry(.5,2,4,8),mat("hair",0x140b06)),onHead(R*.99,sx*.36,.075));l.rotateZ(Math.PI/2+sx*-.25);l.scale.set(.012,.026,.01);head.add(l)}
+    const bl=onFace(new THREE.Mesh(new THREE.CircleGeometry(1,24),new THREE.MeshBasicMaterial({color:0xf08a8a,transparent:true,opacity:F?.28:.14,depthWrite:false})),onHead(R*1.004,sx*.56,-.2));bl.scale.set(.045,.028,1);head.add(bl)}
+  const LIP=new THREE.MeshPhysicalMaterial({color:lin(F?0xd0606a:0xb86a64),roughness:.35,clearcoat:.5,clearcoatRoughness:.2});
+  const mouth=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,20,12),LIP),onHead(R*.985,0,-.33));mouth.scale.set(.034,.011,.01);head.add(mouth);
   // 髪・帽子
   let tail=null;
-  part(new THREE.SphereGeometry(R*1.04,28,16,0,6.283,0,1.42),HAIR,head,[0,.02,-.01]);
-  part(new THREE.SphereGeometry(R*1.03,24,14,Math.PI,Math.PI,0,F?2.5:2.15),HAIR,head,[0,0,-.01]);
+  part(new THREE.SphereGeometry(R*1.04,40,20,0,6.283,0,1.42),HAIR,head,[0,.02,-.01]);
+  part(new THREE.SphereGeometry(R*1.03,32,20,Math.PI,Math.PI,0,F?2.5:2.15),HAIR,head,[0,0,-.01]);
   if(!F){
-    for(let i=0;i<5;i++){const az=-.5+i*.25;const c=part(new THREE.ConeGeometry(.06,.17,6),HAIR,head,null,null,1.1);c.position.copy(onHead(R*1.0,az,.42));c.rotation.set(2.45,az,0)}
-    part(new THREE.SphereGeometry(R*1.09,28,14,0,6.283,0,1.22),HAT,head,[0,.04,0]);
-    part(new THREE.CylinderGeometry(.21,.21,.025,24,1,false,-Math.PI/2,Math.PI),HAT,head,[0,.13,.2],[1,1,1.15]).rotation.x=.18;
-    part(new THREE.SphereGeometry(.03,8,6),HAT,head,[0,.36,0],null,0);
+    for(const sx of [-1,1])part(new THREE.CapsuleGeometry(.03,.07,6,10),HAIR,head,[sx*.265,-.06,.07]);
+    const CAP=mat("twill",P.hat,8,4);
+    part(new THREE.SphereGeometry(R*1.09,40,18,0,6.283,0,1.22),CAP,head,[0,.04,0]);
+    part(new THREE.CylinderGeometry(.21,.21,.025,32,1,false,-Math.PI/2,Math.PI),CAP,head,[0,.13,.2],[1,1,1.15]).rotation.x=.18;
+    part(new THREE.SphereGeometry(.03,12,8),CAP,head,[0,.36,0]);
   }else{
-    for(let i=0;i<5;i++){const az=-.55+i*.275;const b=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,12,8),HAIR),onHead(R*1.02,az,.38));b.scale.set(.085,.06,.04);b.castShadow=true;head.add(b)}
-    for(const sx of [-1,1])part(new THREE.CapsuleGeometry(.05,.2,6,10),HAIR,head,[sx*.27,-.17,.05]);
+    for(let i=0;i<5;i++){const az=-.55+i*.275;const b=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,20,14),HAIR),onHead(R*1.02,az,.38));b.scale.set(.085,.06,.04);b.castShadow=true;head.add(b)}
+    for(const sx of [-1,1])part(new THREE.CapsuleGeometry(.05,.2,8,14),HAIR,head,[sx*.27,-.17,.05]);
     tail=new THREE.Group();tail.position.set(0,.12,-.29);head.add(tail);
-    [[.1,0,0],[.09,-.1,-.05],[.075,-.2,-.07],[.06,-.29,-.06]].forEach(([r,y,z])=>part(new THREE.SphereGeometry(r,14,10),HAIR,tail,[0,y,z]));
-    part(new THREE.TorusGeometry(.06,.018,6,14),ACC,tail,[0,.02,.02],null,0);
-    const vg=new THREE.Group();vg.rotation.y=.47;head.add(vg);
-    const vb=part(new THREE.TorusGeometry(R*1.03,.035,8,30,Math.PI*1.3),HAT,vg,[0,.1,0],null,0);vb.rotation.x=Math.PI/2;
-    part(new THREE.CylinderGeometry(.23,.23,.022,24,1,false,-Math.PI/2,Math.PI),HAT,head,[0,.11,.21],[1,1,1.1]).rotation.x=.12;
+    [[.1,0,0],[.09,-.1,-.05],[.075,-.2,-.07],[.06,-.29,-.06]].forEach(([r,y,z])=>part(new THREE.SphereGeometry(r,20,14),HAIR,tail,[0,y,z]));
+    part(new THREE.TorusGeometry(.06,.018,8,18),ACC,tail,[0,.02,.02]);
+    const VIS=mat("plastic",P.hat);const vg=new THREE.Group();vg.rotation.y=.47;head.add(vg);
+    const vb=part(new THREE.TorusGeometry(R*1.03,.035,12,40,Math.PI*1.3),VIS,vg,[0,.1,0]);vb.rotation.x=Math.PI/2;
+    part(new THREE.CylinderGeometry(.23,.23,.022,32,1,false,-Math.PI/2,Math.PI),VIS,head,[0,.11,.21],[1,1,1.1]).rotation.x=.12;
   }
   // 腕・手・クラブ
   const arms=[0,1].map(()=>{const g=new THREE.Group();body.add(g);
-    const a=part(new THREE.CylinderGeometry(.046,.042,1,10),SKIN,g,null,null,0);const sl=part(new THREE.CylinderGeometry(.078,.07,1,12),SHIRT,g,null,null,0);return{g,a,sl}});
-  const hands=[part(new THREE.SphereGeometry(.058,12,10),toon(0xffffff),body,null,null,0),part(new THREE.SphereGeometry(.056,12,10),SKIN,body,null,null,0)];
-  const metal=new THREE.MeshStandardMaterial({color:0xc4c8cf,metalness:.85,roughness:.28});
-  const shaft=part(new THREE.CylinderGeometry(.009,.007,1,8),metal,body,null,null,0);
-  const grip=part(new THREE.CylinderGeometry(.017,.013,.15,8),new THREE.MeshStandardMaterial({color:0x1d1d1d,roughness:.85}),body,null,null,0);
+    const a=part(new THREE.CylinderGeometry(.046,.042,1,16),SKIN,g);const sl=part(new THREE.CylinderGeometry(.078,.07,1,20),SHIRT,g);return{g,a,sl}});
+  const hands=[part(new THREE.SphereGeometry(.058,20,14),mat("leather",0xf7f7f5,2,2),body),part(new THREE.SphereGeometry(.056,20,14),SKIN,body)];
+  const metal=mat("metal",0xd3d7dd,.16);
+  const shaft=part(new THREE.CylinderGeometry(.009,.007,1,12),metal,body);
+  const grip=part(new THREE.CylinderGeometry(.017,.013,.15,14),mat("twill",0x1b1b1b,2,4),body);
   const heads={wood:new THREE.Group(),iron:new THREE.Group(),putt:new THREE.Group()};
-  part(new THREE.SphereGeometry(.065,16,10),new THREE.MeshStandardMaterial({color:0x1c2430,metalness:.6,roughness:.3}),heads.wood,[.02,.03,0],[1.1,.55,.85],0);
-  part(new THREE.BoxGeometry(.085,.05,.014),metal,heads.iron,[.03,.025,0],null,0);
-  part(new THREE.BoxGeometry(.11,.028,.032),metal,heads.putt,[.035,.016,0],null,0);
+  part(new THREE.SphereGeometry(.065,28,16),new THREE.MeshPhysicalMaterial({color:lin(0x151a22),metalness:.5,roughness:.25,clearcoat:1,clearcoatRoughness:.05}),heads.wood,[.02,.03,0],[1.1,.55,.85]);
+  part(new THREE.BoxGeometry(.085,.05,.014),mat("metal",0xc9ccd1,.32),heads.iron,[.03,.025,0]);
+  part(new THREE.BoxGeometry(.11,.028,.032),mat("metal",0xb9bcc2,.22),heads.putt,[.035,.016,0]);
   for(const k in heads)body.add(heads[k]);
   root.visible=false;scene.add(root);
   return{root,body,hips,torso,head,tail,arms,hands,shaft,grip,heads}}
@@ -663,29 +706,38 @@ function disposeWorld(){if(!world)return;world.traverse(o=>{if(o.geometry&&!o.ge
 let texCanvas=null;
 // 地表色（sRGB）
 const COL={deep:[66,62,42],moss:[50,64,36],rough:[78,104,46],dry:[116,114,66],fw:[94,134,56],fr:[90,132,54],gr:[90,136,60],bk:[212,197,163],wa:[36,48,38],tee:[92,134,56],cl:[100,92,80],path:[126,124,118]};
+const SPV={[S_DEEP]:.95,[S_ROUGH]:.72,[S_FW]:.45,[S_FR]:.32,[S_GR]:.25,[S_BK]:.03,[S_WA]:.1,[S_TEE]:.45,[S_CL]:.9,[S_VA]:.95,[S_PATH]:.02};
 function paintTexture(hd,TW,TH,shade,SG){
   const b=hd.box,w=b.x1-b.x0,d=b.z1-b.z0;
   const c=document.createElement("canvas");c.width=TW;c.height=TH;const x=c.getContext("2d"),im=x.createImageData(TW,TH),D=im.data;
   for(let j=0;j<TH;j++){const wz=b.z0+(j+.5)/TH*d;for(let i=0;i<TW;i++){const wx=b.x0+(i+.5)/TW*w;
-    const sf=surf(wx,wz);let r,g,bb,br=1;
+    const sf=surf(wx,wz);let r,g,bb,br=1,sp=SPV[sf];
     const nn=hash(i,j)-.5,lf=fbm(wx*.035,wz*.035,3),mf=fbm(wx*.008,wz*.008,3);
     const mix=(A,B,t)=>{r=A[0]+(B[0]-A[0])*t;g=A[1]+(B[1]-A[1])*t;bb=A[2]+(B[2]-A[2])*t};
     switch(sf){
-      case S_FW:{mix(COL.fw,COL.dry,ss(.25,.7,mf)*.25);const s=near(hd,wx,wz).s;br=((Math.floor(s/9)&1)?1.04:.96)+lf*.06+nn*.05;break}
-      case S_GR:{mix(COL.gr,COL.fw,.15+lf*.15);const [u]=gLocal(hd,wx,wz);br=((Math.floor((u+40)/2.4)&1)?1.025:.975)+nn*.03;break}
-      case S_FR:mix(COL.fr,COL.gr,.3);br=1+nn*.05;break;
+      case S_FW:{mix(COL.fw,COL.dry,ss(.25,.7,mf)*.25);const s=near(hd,wx,wz).s;br=((Math.floor(s/9)&1)?1.04:.96)+lf*.06+nn*.04;break}
+      case S_GR:{mix(COL.gr,COL.fw,.15+lf*.15);const [u]=gLocal(hd,wx,wz);br=((Math.floor((u+40)/2.4)&1)?1.025:.975)+nn*.02;break}
+      case S_FR:mix(COL.fr,COL.gr,.3);br=1+nn*.04;break;
       case S_TEE:{mix(COL.tee,COL.tee,0);br=((Math.floor((wz+30)/1.5)&1)?1.03:.97)+nn*.04;break}
-      case S_ROUGH:mix(COL.rough,COL.dry,ss(.15,.65,mf+lf*.4)*.55);br=1+lf*.12+nn*.1;break;
-      case S_BK:mix(COL.bk,COL.bk,0);br=1+nn*.1+lf*.04;break;
+      case S_ROUGH:mix(COL.rough,COL.dry,ss(.15,.65,mf+lf*.4)*.55);br=1+lf*.12+nn*.08;break;
+      case S_BK:mix(COL.bk,COL.bk,0);br=1+nn*.05+lf*.04;break;
       case S_WA:mix(COL.wa,COL.wa,0);break;
-      case S_CL:mix(COL.cl,COL.deep,.3+lf*.4);br=1+nn*.25+lf*.3;break;
-      case S_PATH:mix(COL.path,COL.path,0);br=1+nn*.08;break;
-      default:mix(COL.deep,COL.moss,ss(-.2,.3,lf));br=1+nn*.22+lf*.15}
+      case S_CL:mix(COL.cl,COL.deep,.3+lf*.4);br=1+nn*.2+lf*.3;break;
+      case S_PATH:mix(COL.path,COL.path,0);br=1+nn*.06;break;
+      default:mix(COL.deep,COL.moss,ss(-.2,.3,lf));br=1+nn*.18+lf*.15}
+    // バンカーの縁の影、池のまわりのぬかるみ、フェアウェイ・ティーのディボット跡
+    if(hd.bunkers.length){let bR=9;for(const bk of hd.bunkers){const q=Math.hypot(...bLocal(hd,bk,wx,wz));if(q<bR)bR=q}
+      if(sf===S_BK)br*=1-.25*ss(.72,1,bR);else if(bR<1.15)br*=.88+.12*ss(1,1.15,bR)}
+    if(hd.ponds.length&&sf!==S_WA){let pR=9;for(const q of hd.ponds){const e=ell(q,wx,wz);if(e<pR)pR=e}
+      if(pR<1.2){const k=(1-ss(1,1.2,pR))*.75;r+=(66-r)*k;g+=(60-g)*k;bb+=(42-bb)*k;sp=sp*(1-k)+.5*k}}
+    if((sf===S_FW||sf===S_TEE)&&hash(i*7+3,j*11+5)<(sf===S_TEE?.008:.0015)){r=r*.4+112*.6;g=g*.4+92*.6;bb=bb*.4+60*.6}
     // 樹冠の影・林床の暗さ
     if(shade){const gi=Math.floor((wx-b.x0)/SG),gj=Math.floor((wz-b.z0)/SG);const sh=Math.min(1,shade.a[gj*shade.w+gi]||0);
       if(sh>0){br*=1-.55*sh;if(sf===S_ROUGH||sf===S_DEEP){r=r*(1-.3*sh)+70*.3*sh;g=g*(1-.3*sh)+60*.3*sh;bb=bb*(1-.3*sh)+38*.3*sh}}}
-    const o=(j*TW+i)*4;D[o]=r*br;D[o+1]=g*br;D[o+2]=bb*br;D[o+3]=255}}
-  x.putImageData(im,0,0);return c}
+    const o=(j*TW+i)*4;D[o]=r*br;D[o+1]=g*br;D[o+2]=bb*br;D[o+3]=128+127*sp}}
+  x.putImageData(im,0,0);
+  const mc=document.createElement("canvas");mc.width=TW;mc.height=TH;const D2=new Uint8ClampedArray(D);for(let k=3;k<D2.length;k+=4)D2[k]=255;mc.getContext("2d").putImageData(new ImageData(D2,TW,TH),0,0);
+  return{c,mini:mc}}
 function detailTex(){const N=256,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d"),im=x.createImageData(N,N);
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){let v=0,a=.5;for(let o=0;o<4;o++){const f=8<<o;const ii=i/N*f,jj=j/N*f;const i0=Math.floor(ii),j0=Math.floor(jj);
       const h=(p,q)=>hash(((p%f)+f)%f+o*999,((q%f)+f)%f);const fx=ii-i0,fy=jj-j0;const u=fx*fx*(3-2*fx),w=fy*fy*(3-2*fy);
@@ -693,6 +745,34 @@ function detailTex(){const N=256,c=document.createElement("canvas");c.width=c.he
     v=v/.94;const g=128+(v-.5)*60+(hash(i*7,j*13)-.5)*44;const o=(j*N+i)*4;im.data[o]=g;im.data[o+1]=g;im.data[o+2]=g;im.data[o+3]=255}
   x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.userData={};return t}
 const DETAIL=detailTex();
+// 地表ディテール（R:芝の葉、G:砂粒、B:落ち葉）と凹凸用ノーマル
+const TDET=(()=>{const N=512,mk=()=>{const c=document.createElement("canvas");c.width=c.height=N;return c};const nr=p=>p<14?[0,N]:p>N-14?[0,-N]:[0];
+  const gc=mk(),gx=gc.getContext("2d");gx.fillStyle="#808080";gx.fillRect(0,0,N,N);gx.lineCap="round";
+  for(let k=0;k<26000;k++){const x=Math.random()*N,y=Math.random()*N,a=Math.random()*Math.PI,L=3+Math.random()*7,v=60+Math.random()*150|0;gx.strokeStyle=`rgb(${v},${v},${v})`;gx.lineWidth=.8+Math.random()*1.2;
+    const dx=Math.cos(a)*L,dy=Math.sin(a)*L;for(const ox of nr(x))for(const oy of nr(y)){gx.beginPath();gx.moveTo(x+ox,y+oy);gx.lineTo(x+ox+dx,y+oy+dy);gx.stroke()}}
+  const lc=mk(),lx=lc.getContext("2d");lx.fillStyle="#808080";lx.fillRect(0,0,N,N);
+  for(let k=0;k<3200;k++){const x=Math.random()*N,y=Math.random()*N,r=2+Math.random()*7,v=50+Math.random()*170|0,a=Math.random()*3.14;lx.fillStyle=`rgba(${v},${v},${v},.8)`;
+    for(const ox of nr(x))for(const oy of nr(y)){lx.beginPath();lx.ellipse(x+ox,y+oy,r,r*.45,a,0,6.283);lx.fill()}}
+  const G=gx.getImageData(0,0,N,N).data,Lt=lx.getImageData(0,0,N,N).data;
+  const oc=mk(),ox=oc.getContext("2d"),im=ox.createImageData(N,N),D=im.data,hg=new Float32Array(N*N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const o=(j*N+i)*4,pn=pnoise(i/16,j/16,32,32);
+    const gr=G[o]*.8+pn*51,sd=128+(hash(i,j)-.5)*80+(pnoise(i/4,j/4,128,128)-.5)*50+Math.sin(Math.PI*2*(7*i+3*j)/N)*8;
+    D[o]=gr;D[o+1]=sd;D[o+2]=Lt[o]*.85+pn*38;D[o+3]=255;hg[j*N+i]=gr/255+sd/255*.25}
+  ox.putImageData(im,0,0);const a=new THREE.CanvasTexture(oc);a.wrapS=a.wrapT=THREE.RepeatWrapping;a.anisotropy=8;
+  const n=heightNormal(N,(i,j)=>hg[j*N+i],3.2);n.anisotropy=8;return{a,n}})();
+function terrainMat(map,w,d){const m=new THREE.MeshStandardMaterial({map,roughness:1,metalness:0,envMapIntensity:.6,normalMap:TDET.n});
+  m.onBeforeCompile=sh=>{sh.uniforms.dMap={value:TDET.a};sh.uniforms.dRep={value:new THREE.Vector2(w/3.4,d/3.4)};sh.uniforms.dRep2={value:new THREE.Vector2(w/31,d/31)};
+    sh.fragmentShader="uniform sampler2D dMap;uniform vec2 dRep,dRep2;\n"+sh.fragmentShader
+     .replace("#include <map_fragment>",`#include <map_fragment>
+  float sp=clamp((sampledDiffuseColor.a*255.-128.)/127.,0.,1.);diffuseColor.a=1.;
+  vec3 dt=texture2D(dMap,vUv*dRep).rgb,dt2=texture2D(dMap,vUv*dRep2).rgb;
+  float wS=1.-smoothstep(.06,.14,sp),wL=smoothstep(.84,1.,sp);
+  float gD=mix(1.,dt.r*2.,mix(.3,.75,smoothstep(.2,.8,sp)));
+  float det=mix(gD,mix(1.,dt.g*2.,.55),wS);det=mix(det,det*mix(1.,dt.b*2.,.7),wL);
+  diffuseColor.rgb*=det*mix(1.,dt2.r*2.,.22);`)
+     .replace("#include <roughnessmap_fragment>","#include <roughnessmap_fragment>\n  roughnessFactor=mix(.6,.97,smoothstep(.18,.6,sp))*mix(1.,.92,wS);")
+     .replace("#include <normal_fragment_maps>","vec3 mapN=texture2D(normalMap,vUv*dRep).xyz*2.-1.;mapN.xy*=normalScale*mix(.35,1.25,smoothstep(.15,.9,sp))*mix(1.,.7,wS);normal=perturbNormal2Arb(-vViewPosition,normal,mapN,faceDirection);")};
+  return m}
 function addDetail(mat,w,d,s1,s2,k1,k2){mat.onBeforeCompile=sh=>{sh.uniforms.dMap={value:DETAIL};sh.uniforms.dRep={value:new THREE.Vector2(w/s1,d/s1)};sh.uniforms.dRep2={value:new THREE.Vector2(w/s2,d/s2)};
   sh.fragmentShader="uniform sampler2D dMap;uniform vec2 dRep,dRep2;\n"+sh.fragmentShader.replace("#include <map_fragment>",`#include <map_fragment>\n diffuseColor.rgb*=mix(vec3(1.),texture2D(dMap,vUv*dRep).rgb*2.,${k1})*mix(vec3(1.),texture2D(dMap,vUv*dRep2).rgb*2.,${k2});`)}}
 function farTexture(hd,fp,FS,FW,cx,cz){const N=cfg.q?1024:640,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d"),im=x.createImageData(N,N),D=im.data;
@@ -705,10 +785,10 @@ function farTexture(hd,fp,FS,FW,cx,cz){const N=cfg.q?1024:640,c=document.createE
   x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t}
 function buildGrass(px,pz){
   if(grassMesh){world.remove(grassMesh);grassMesh.geometry.dispose();grassMesh=null}
-  const N=cfg.q?55000:22000,R=24,pos=new Float32Array(N*9),col=new Float32Array(N*9),tip=new Float32Array(N*3);let n=0;const cc=new THREE.Color();
+  const N=cfg.q?90000:32000,R=cfg.q?30:22,pos=new Float32Array(N*9),col=new Float32Array(N*9),tip=new Float32Array(N*3);let n=0;const cc=new THREE.Color();
   for(let k=0;k<N*2&&n<N;k++){const a=Math.random()*6.283,r=R*Math.sqrt(Math.random()),x=px+Math.cos(a)*r,z=pz+Math.sin(a)*r;const sf=surf(x,z);
     const fade=1-(r/R)**2;if(Math.random()>fade+.15)continue;
-    let h,base;if(sf===S_ROUGH){h=.03+Math.random()*.04;base=COL.rough}else if(sf===S_DEEP){h=.06+Math.random()*.09;base=COL.moss}else if(sf===S_FW&&Math.random()<.35){h=.016+Math.random()*.01;base=COL.fw}else continue;
+    let h,base;if(sf===S_ROUGH){h=.03+Math.random()*.04;base=COL.rough}else if(sf===S_DEEP){h=.06+Math.random()*.09;base=COL.moss}else if((sf===S_FW||sf===S_TEE)&&Math.random()<.6){h=.012+Math.random()*.012;base=COL.fw}else if(sf===S_FR&&Math.random()<.4){h=.01+Math.random()*.006;base=COL.fr}else continue;
     h*=.35+.65*fade;
     const y=H(x,z)-.004,ang=Math.random()*3.14,wd=.008+Math.random()*.01,lx=Math.cos(ang)*wd,lz=Math.sin(ang)*wd,la=Math.random()*6.283,lean=h*(.15+Math.random()*.35);
     const o=n*9;pos.set([x-lx,y,z-lz,x+lx,y,z+lz,x+Math.cos(la)*lean,y+h,z+Math.sin(la)*lean],o);
@@ -751,9 +831,9 @@ function buildScene(){
   const pa=geo.attributes.position;for(let i=0;i<pa.count;i++){pa.setY(i,H(pa.getX(i)+cx,pa.getZ(i)+cz))}
   geo.computeVertexNormals();
   const TM=cfg.q?2048:1400,TW=Math.round(TM*Math.min(1,w/d)),TH=Math.round(TM*Math.min(1,d/w));
-  texCanvas=paintTexture(hd,TW,TH,shade,SG);
-  const tex=new THREE.CanvasTexture(texCanvas);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
-  const mat=new THREE.MeshStandardMaterial({map:tex,roughness:.95,metalness:0,envMapIntensity:.55});addDetail(mat,w,d,3.2,29,".6",".35");
+  const pt=paintTexture(hd,TW,TH,shade,SG);texCanvas=pt.mini;
+  const tex=new THREE.CanvasTexture(pt.c);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+  const mat=terrainMat(tex,w,d);
   const terr=new THREE.Mesh(geo,mat);terr.position.set(cx,0,cz);terr.receiveShadow=true;terr.name="terrain";world.add(terr);
   // 遠景地形（森の樹冠テクスチャ）
   const FS=cfg.q?240:160,FW=9000;const fg=new THREE.PlaneGeometry(FW,FW,FS,FS);fg.rotateX(-Math.PI/2);
@@ -782,7 +862,7 @@ function buildScene(){
   // 残り距離杭 (100/150/200Y)
   const yd=[];[[100,0xd8322b],[150,0xf4f4f4],[200,0x2a64c8]].forEach(([r,c])=>{const s=hd.len-r;if(s>20){const p1=lateralPt(hd,s,-(hd.fwH+3)),p2=lateralPt(hd,s,hd.fwH+3);world.add(stakeMesh([p1,p2],c,.8))}});
   // ティーマーカー
-  for(const sx2 of [-3.5,3.5]){const m=new THREE.Mesh(new THREE.SphereGeometry(.16,16,10),new THREE.MeshStandardMaterial({color:lin(0xf2f2f2),roughness:.4}));m.position.set(sx2,H(sx2,1)+.12,1);m.castShadow=true;world.add(m)}
+  for(const sx2 of [-3.5,3.5]){const m=new THREE.Mesh(new THREE.SphereGeometry(.09,24,14),new THREE.MeshPhysicalMaterial({color:lin(0xf2f2f2),roughness:.3,clearcoat:.6}));m.position.set(sx2,H(sx2,1)+.07,1);m.castShadow=true;world.add(m)}
   // ピン・旗・カップ
   const cup=hd.cup,cy=H(cup.x,cup.z);
   cupMesh=new THREE.Mesh(new THREE.CircleGeometry(.075,24),new THREE.MeshBasicMaterial({color:0x111111,polygonOffset:true,polygonOffsetFactor:-4}));cupMesh.rotation.x=-Math.PI/2;cupMesh.position.set(cup.x,cy+.012,cup.z);world.add(cupMesh);
