@@ -32,7 +32,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#0b1410;color:var(--in
 #infoBox dd{margin:0;font-weight:700}
 #infoBox dd .num{font-size:17px}
 #infoBox .big .num{font-size:24px;color:var(--accent)}
-#ctrl{left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:10px 12px;display:grid;gap:8px;width:min(440px,calc(100% - 20px))}
+#ctrl{right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:10px 12px;display:grid;gap:8px;width:min(420px,calc(100% - 20px))}
 .row{display:flex;align-items:center;gap:8px}
 .btn{font:inherit;font-weight:700;font-size:13px;color:var(--ink);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:8px;padding:7px 11px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .btn:hover{background:rgba(255,255,255,.16)}
@@ -86,11 +86,11 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
   #windArrow{width:26px;height:26px}
   #mini{width:84px;height:124px;top:calc(116px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px))}
   #tips{display:none}
-  #infoBox{left:calc(8px + env(safe-area-inset-left,0px));bottom:calc(172px + env(safe-area-inset-bottom,0px));font-size:11px;padding:6px 10px;grid-template-columns:auto auto auto auto;gap:0 8px}
+  #infoBox{left:calc(8px + env(safe-area-inset-left,0px));bottom:auto;top:calc(142px + env(safe-area-inset-top,0px));max-width:calc(100% - 110px);font-size:11px;padding:6px 10px;grid-template-columns:auto auto auto auto;gap:0 8px}
   #infoBox .big .num{font-size:18px}
   #infoBox dd .num{font-size:14px}
-  #ctrl{bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:8px}
-  #putGuide{bottom:auto;top:calc(142px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));transform:none;white-space:normal;max-width:calc(100% - 110px);font-size:11.5px}
+  #ctrl{left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:8px}
+  #putGuide{bottom:auto;top:calc(214px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));transform:none;white-space:normal;max-width:calc(100% - 110px);font-size:11.5px}
 }
 </style>
 
@@ -108,7 +108,9 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
     <select id="holeSel" aria-label="ホール選択"></select>
     <button class="btn" id="bAims" aria-pressed="true" title="攻略の狙い目①②③を表示">狙い目</button>
     <button class="btn" id="bGuide" aria-pressed="true" title="落下予想地点を表示">ガイド</button>
+    <button class="btn" id="bView" aria-pressed="true" title="キャラクター視点と一人称視点を切り替え (V)">キャラ視点</button>
     <button class="btn" id="bCam" aria-pressed="false" title="ボールを追いかけるカメラ (C)">ボールカメラ</button>
+    <button class="btn" id="bBgm" aria-pressed="true" title="BGMのオン・オフ">♪ BGM</button>
     <button class="btn" id="bCard">スコア</button>
     <button class="btn" id="bSet">設定</button>
     <button class="btn" id="bHelp">操作</button>
@@ -163,10 +165,13 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
         <li><kbd>ドラッグ</kbd> 見回す ／ <kbd>クリック</kbd> その地点を狙う</li>
         <li><kbd>←</kbd><kbd>→</kbd> 向きの微調整 ／ <kbd>↑</kbd><kbd>↓</kbd> クラブ変更</li>
         <li><kbd>Space</kbd> または「ショット」を長押し → 離した位置がパワー（100%でフルショット、110%はオーバースイング）</li>
-        <li><kbd>F</kbd> 早送り ／ <kbd>C</kbd> ボールカメラ ／ <kbd>M</kbd> マップ</li>
+        <li><kbd>F</kbd> 早送り ／ <kbd>C</kbd> ボールカメラ ／ <kbd>V</kbd> キャラ視点・一人称の切り替え ／ <kbd>M</kbd> マップ</li>
+        <li>BGMと効果音はプレー開始で鳴り始めます。音量は「設定」で変えられます。</li>
         <li>オレンジの①②③は攻略ガイドの狙い目。白いリングは選んだクラブの落下予想地点です。</li>
         <li>OBは1打罰で打ち直し、池・1ペナエリアは1打罰でドロップ。グリーン上1Y以内は「OKパット」が使えます。</li>
       </ul>
+      <div class="row" style="flex-wrap:wrap;margin-top:10px"><span style="font-size:13px;color:var(--muted)">ゴルファーを選ぶ</span>
+        <button class="btn" id="pick0" aria-pressed="true">男性ゴルファー</button><button class="btn" id="pick1" aria-pressed="false">女性ゴルファー</button></div>
       <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="bStart" style="background:var(--accent);color:#1b1306;border-color:var(--accent)">プレー開始</button></div>
     </div>
   </div>
@@ -178,6 +183,9 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
       <span>ドライバー飛距離</span><div class="opts"><select id="sDrv" class="btn"></select></div>
       <span>腕前（ブレ幅）</span><div class="opts" id="sSkill"></div>
       <span>風</span><div class="opts" id="sWind"></div>
+      <span>キャラクター</span><div class="opts" id="sChar"></div>
+      <span>BGM</span><div class="opts" id="sBgm"></div>
+      <span>効果音</span><div class="opts" id="sSfx"></div>
       <span>描画品質</span><div class="opts" id="sQual"></div>
     </div>
     <p style="font-size:12px;color:var(--muted)">飛距離はキャリー。他のクラブはドライバーに比例して変わります。描画品質の変更はホールを読み込み直すと反映されます。</p>
@@ -264,7 +272,7 @@ const WINDS=[{nm:"なし",lo:0,hi:0},{nm:"弱",lo:0,hi:2},{nm:"普通",lo:1,hi:4
 
 /* ================= 設定 ================= */
 const isTouch=matchMedia("(pointer:coarse)").matches;
-const cfg={drv:220,skill:1,wind:2,q:isTouch?0:1,aims:true,guide:true,cam:false};
+const cfg={drv:220,skill:1,wind:2,q:isTouch?0:1,aims:true,guide:true,cam:false,char:0,tp:true,bgm:1,sfx:1};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem("odw-sim")||"{}"))}catch(e){}
 const saveCfg=()=>{try{localStorage.setItem("odw-sim",JSON.stringify(cfg))}catch(e){}};
 
@@ -481,6 +489,173 @@ grassMat.onBeforeCompile=sh=>{sh.uniforms.uT=grassU.uT;
   sh.vertexShader="uniform float uT;attribute float tip;\n"+sh.vertexShader.replace("#include <begin_vertex>","#include <begin_vertex>\n transformed.x+=tip*.012*sin(uT*1.7+position.x*.9+position.z*.6);transformed.z+=tip*.008*cos(uT*1.3+position.z*.8);");
   sh.fragmentShader=sh.fragmentShader.replace("normal = normal * faceDirection;","")};
 let grassMesh=null;
+/* ================= キャラクター（デフォルメ調のオリジナルデザイン） ================= */
+const toonGrad=(()=>{const t=new THREE.DataTexture(new Uint8Array([80,160,255]),3,1,THREE.RedFormat);t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;t.needsUpdate=true;return t})();
+const OUTLINE=new THREE.MeshBasicMaterial({color:0x241a14,side:THREE.BackSide});
+function toon(hex){const c=lin(hex);return new THREE.MeshToonMaterial({color:c,gradientMap:toonGrad,emissive:c.clone().multiplyScalar(.2)})}
+function part(geo,mat,parent,pos,scl,ol){const m=new THREE.Mesh(geo,mat);m.castShadow=true;if(pos)m.position.set(pos[0],pos[1],pos[2]);if(scl)m.scale.set(scl[0],scl[1],scl[2]);parent.add(m);
+  if(ol!==0){const o=new THREE.Mesh(geo,OUTLINE);o.scale.setScalar(ol||1.07);m.add(o)}return m}
+const onHead=(r,az,el)=>new THREE.Vector3(Math.sin(az)*Math.cos(el)*r,Math.sin(el)*r,Math.cos(az)*Math.cos(el)*r);
+function onFace(m,pos){m.position.copy(pos);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),pos.clone().normalize());return m}
+function buildChar(F){
+  const P=F?{skin:0xffdcc6,hair:0x9a5528,shirt:0xff8fb3,bottom:0x2d3f73,shoe:0xffffff,hat:0xffffff,acc:0xffd34d}
+           :{skin:0xf3c9a6,hair:0x2a1c13,shirt:0x2f86e6,bottom:0xf0efe8,shoe:0x6b4426,hat:0xd8322b,acc:0xffffff};
+  const root=new THREE.Group(),body=new THREE.Group();root.add(body);
+  const SKIN=toon(P.skin),SHIRT=toon(P.shirt),BOT=toon(P.bottom),HAIR=toon(P.hair),SHOE=toon(P.shoe),HAT=toon(P.hat),ACC=toon(P.acc);
+  const DARK=new THREE.MeshBasicMaterial({color:0x1b1410}),WHITE=new THREE.MeshBasicMaterial({color:0xffffff});
+  // 脚・靴
+  for(const sx of [-1,1]){part(new THREE.CylinderGeometry(.068,.058,.44,14),F?SKIN:BOT,body,[sx*.1,.27,0]);
+    if(F)part(new THREE.CylinderGeometry(.064,.061,.09,14),toon(0xffffff),body,[sx*.1,.11,0],null,0);
+    part(new THREE.SphereGeometry(.085,16,10),SHOE,body,[sx*.1,.05,.035],[1,.62,1.55])}
+  // 腰
+  const hips=new THREE.Group();hips.position.y=.5;body.add(hips);
+  if(F)part(new THREE.CylinderGeometry(.17,.27,.25,18),BOT,hips,[0,0,0]);
+  else{part(new THREE.CylinderGeometry(.18,.19,.2,18),BOT,hips,[0,.02,0]);part(new THREE.CylinderGeometry(.186,.186,.04,18),toon(0x3a2a20),hips,[0,.11,0],null,0)}
+  // 胴
+  const torso=new THREE.Group();torso.position.y=.62;body.add(torso);
+  part(new THREE.CylinderGeometry(.17,.185,.33,18),SHIRT,torso,[0,.16,0]);
+  part(new THREE.SphereGeometry(.172,18,10,0,6.283,0,1.57),SHIRT,torso,[0,.32,0],[1,.55,1]);
+  const col=part(new THREE.TorusGeometry(.08,.024,8,18),ACC,torso,[0,.42,0],null,0);col.rotation.x=Math.PI/2;
+  // 頭
+  const head=new THREE.Group();head.position.y=1.1;body.add(head);
+  const R=.3;part(new THREE.SphereGeometry(R,32,22),SKIN,head,[0,0,0],[1,.96,.97]);
+  for(const sx of [-1,1])part(new THREE.SphereGeometry(.05,10,8),SKIN,head,[sx*.29,-.02,0],[.6,1,1]);
+  for(const sx of [-1,1]){
+    const e=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,16,12),DARK),onHead(R*.97,sx*.34,-.06));e.scale.set(F?.05:.042,F?.076:.064,.02);head.add(e);
+    const h1=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,8,6),WHITE),onHead(R*.99,sx*.34-.03,-.02));h1.scale.set(.016,.019,.01);head.add(h1);
+    const h2=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,8,6),WHITE),onHead(R*.99,sx*.34+.02,-.1));h2.scale.set(.008,.009,.008);head.add(h2);
+    const br=onFace(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),HAIR),onHead(R*.99,sx*.34,F?.17:.15));br.scale.set(F?.06:.075,F?.012:.019,.012);br.rotateZ(sx*(F?.14:-.06));head.add(br);
+    if(F){const l=onFace(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),DARK),onHead(R*.99,sx*.36,.07));l.scale.set(.062,.012,.01);l.rotateZ(sx*-.25);head.add(l)}
+    const bl=onFace(new THREE.Mesh(new THREE.CircleGeometry(1,16),new THREE.MeshBasicMaterial({color:0xff8fa0,transparent:true,opacity:F?.55:.28})),onHead(R*1.005,sx*.56,-.2));bl.scale.set(.045,.028,1);head.add(bl)}
+  const mouth=onFace(new THREE.Mesh(new THREE.TorusGeometry(.03,.007,6,14,Math.PI),new THREE.MeshBasicMaterial({color:0x8a2a2a})),onHead(R*.99,0,-.33));mouth.rotateZ(Math.PI);head.add(mouth);
+  // 髪・帽子
+  let tail=null;
+  part(new THREE.SphereGeometry(R*1.04,28,16,0,6.283,0,1.42),HAIR,head,[0,.02,-.01]);
+  part(new THREE.SphereGeometry(R*1.03,24,14,Math.PI,Math.PI,0,F?2.5:2.15),HAIR,head,[0,0,-.01]);
+  if(!F){
+    for(let i=0;i<5;i++){const az=-.5+i*.25;const c=part(new THREE.ConeGeometry(.06,.17,6),HAIR,head,null,null,1.1);c.position.copy(onHead(R*1.0,az,.42));c.rotation.set(2.45,az,0)}
+    part(new THREE.SphereGeometry(R*1.09,28,14,0,6.283,0,1.22),HAT,head,[0,.04,0]);
+    part(new THREE.CylinderGeometry(.21,.21,.025,24,1,false,-Math.PI/2,Math.PI),HAT,head,[0,.13,.2],[1,1,1.15]).rotation.x=.18;
+    part(new THREE.SphereGeometry(.03,8,6),HAT,head,[0,.36,0],null,0);
+  }else{
+    for(let i=0;i<5;i++){const az=-.55+i*.275;const b=onFace(new THREE.Mesh(new THREE.SphereGeometry(1,12,8),HAIR),onHead(R*1.02,az,.38));b.scale.set(.085,.06,.04);b.castShadow=true;head.add(b)}
+    for(const sx of [-1,1])part(new THREE.CapsuleGeometry(.05,.2,6,10),HAIR,head,[sx*.27,-.17,.05]);
+    tail=new THREE.Group();tail.position.set(0,.12,-.29);head.add(tail);
+    [[.1,0,0],[.09,-.1,-.05],[.075,-.2,-.07],[.06,-.29,-.06]].forEach(([r,y,z])=>part(new THREE.SphereGeometry(r,14,10),HAIR,tail,[0,y,z]));
+    part(new THREE.TorusGeometry(.06,.018,6,14),ACC,tail,[0,.02,.02],null,0);
+    const vg=new THREE.Group();vg.rotation.y=.47;head.add(vg);
+    const vb=part(new THREE.TorusGeometry(R*1.03,.035,8,30,Math.PI*1.3),HAT,vg,[0,.1,0],null,0);vb.rotation.x=Math.PI/2;
+    part(new THREE.CylinderGeometry(.23,.23,.022,24,1,false,-Math.PI/2,Math.PI),HAT,head,[0,.11,.21],[1,1,1.1]).rotation.x=.12;
+  }
+  // 腕・手・クラブ
+  const arms=[0,1].map(()=>{const g=new THREE.Group();body.add(g);
+    const a=part(new THREE.CylinderGeometry(.046,.042,1,10),SKIN,g,null,null,0);const sl=part(new THREE.CylinderGeometry(.078,.07,1,12),SHIRT,g,null,null,0);return{g,a,sl}});
+  const hands=[part(new THREE.SphereGeometry(.058,12,10),toon(0xffffff),body,null,null,0),part(new THREE.SphereGeometry(.056,12,10),SKIN,body,null,null,0)];
+  const metal=new THREE.MeshStandardMaterial({color:0xc4c8cf,metalness:.85,roughness:.28});
+  const shaft=part(new THREE.CylinderGeometry(.009,.007,1,8),metal,body,null,null,0);
+  const grip=part(new THREE.CylinderGeometry(.017,.013,.15,8),new THREE.MeshStandardMaterial({color:0x1d1d1d,roughness:.85}),body,null,null,0);
+  const heads={wood:new THREE.Group(),iron:new THREE.Group(),putt:new THREE.Group()};
+  part(new THREE.SphereGeometry(.065,16,10),new THREE.MeshStandardMaterial({color:0x1c2430,metalness:.6,roughness:.3}),heads.wood,[.02,.03,0],[1.1,.55,.85],0);
+  part(new THREE.BoxGeometry(.085,.05,.014),metal,heads.iron,[.03,.025,0],null,0);
+  part(new THREE.BoxGeometry(.11,.028,.032),metal,heads.putt,[.035,.016,0],null,0);
+  for(const k in heads)body.add(heads[k]);
+  root.visible=false;scene.add(root);
+  return{root,body,hips,torso,head,tail,arms,hands,shaft,grip,heads}}
+const CH=[buildChar(false),buildChar(true)];
+const AN={th:0,mode:"idle",ft:0,top:0,kind:"wood",ct:0};
+const kindOf=c=>c.putt?"putt":(["1W","3W","5W","UT"].includes(c.id)?"wood":"iron");
+const STANCE={wood:.95,iron:.8,putt:.62};
+const _AX=new THREE.Vector3(1,0,0),_UP=new THREE.Vector3(0,1,0),_q=new THREE.Quaternion(),_v=[...Array(9)].map(()=>new THREE.Vector3());
+function poseChar(C,th,kind,now,cheer=0){
+  const putt=kind==="putt",tc=clamp(th,-3.6,2.8);
+  const tY=-tc*(putt?.12:.3);C.torso.rotation.y=tY;C.hips.rotation.y=-tc*(putt?.04:.13);
+  const fin=putt?0:ss(-1.2,-3.4,th);C.body.rotation.y=fin*1.05;
+  C.head.rotation.set((putt?.34:.24)*(1-fin),fin*.3,0);
+  if(C.tail)C.tail.rotation.x=.15*Math.sin(now/260)+fin*.5-ss(0,2.4,th)*.3;
+  const [pv,B,h0,c0,A,hh,cd,hp,sh]=_v;
+  pv.set(0,putt?.86:.9,.08);B.set(kind==="wood"?.08:0,.03,STANCE[kind]);h0.set(0,putt?.53:.5,putt?.3:.32);
+  c0.copy(B).sub(h0);const L=c0.length();c0.normalize();A.crossVectors(_AX,c0).normalize();
+  const hinge=putt?0:(1.15*ss(.3,1.9,th)-1.1*ss(-.5,-2.6,th));
+  _q.setFromAxisAngle(A,th);hh.copy(h0).sub(pv).applyQuaternion(_q).add(pv);
+  _q.setFromAxisAngle(A,th+hinge);cd.copy(c0).applyQuaternion(_q);
+  for(let i=0;i<2;i++){const sx=i===0?.19:-.19;sh.set(sx*Math.cos(tY),.92,-sx*Math.sin(tY));
+    hp.copy(hh).addScaledVector(cd,i===0?-.02:.055);if(cheer>0){hp.lerp(_v[1].set(sx*1.45,1.42+.05*Math.sin(now/90+i),.06),cheer)}const dir=_v[0].copy(hp).sub(sh);const len=dir.length();dir.normalize();
+    const a=C.arms[i];a.g.position.copy(sh).addScaledVector(dir,len/2);a.g.quaternion.setFromUnitVectors(_UP,dir);a.a.scale.set(1,len,1);a.a.position.set(0,0,0);a.sl.scale.set(1,.15,1);a.sl.position.set(0,-len/2+.075,0);
+    C.hands[i].position.copy(hp);pv.set(0,putt?.86:.9,.08)}
+  const showClub=cheer<.5;C.shaft.visible=C.grip.visible=showClub;
+  C.shaft.position.copy(hh).addScaledVector(cd,L/2);C.shaft.quaternion.setFromUnitVectors(_UP,cd);C.shaft.scale.set(1,L,1);
+  C.grip.position.copy(hh).addScaledVector(cd,.03);C.grip.quaternion.copy(C.shaft.quaternion);
+  for(const k in C.heads){const h=C.heads[k];h.visible=k===kind&&showClub;if(h.visible){h.position.copy(hh).addScaledVector(cd,L);h.quaternion.copy(C.shaft.quaternion)}}}
+function updateChar(dt,now){
+  CH[0].root.visible=CH[1].root.visible=false;
+  const C=CH[cfg.char|0];
+  // アニメーション角
+  if(st.phase==="aim"){AN.mode="idle";AN.kind=kindOf(CLUBS[st.club]);AN.th=lerp(AN.th,(AN.kind==="putt"?.015:.05)*Math.sin(now/420),Math.min(1,dt*8))}
+  else if(st.phase==="swing"){const tgt=(AN.kind==="putt"?.62:2.45)*Math.min(st.power,1.1);AN.th=lerp(AN.th,tgt,Math.min(1,dt*14))}
+  else if(AN.mode==="follow"){AN.ft+=dt;const fin=AN.kind==="putt"?-AN.top*.85:-3.45;const u=Math.min(1,AN.ft/(AN.kind==="putt"?.45:.55));AN.th=fin*(1-(1-u)*(1-u))}
+  if(cfg.tp===false||!HD||st.phase==="walk")return;
+  C.root.visible=true;
+  if(st.phase==="aim"||st.phase==="swing"||st.phase==="down"){const yaw=aimYaw(),Tx=Math.sin(yaw),Tz=-Math.cos(yaw),Fx=-Tz,Fz=Tx,sd=STANCE[AN.kind],fb=AN.kind==="wood"?.08:0;
+    const x=st.ball.x-Fx*sd-Tx*fb,z=st.ball.z-Fz*sd-Tz*fb;C.root.position.set(x,Math.min(H(x,z),st.ball.y+.05),z);C.root.rotation.y=Math.atan2(Fx,Fz)}
+  let cheer=0;if(st.phase==="holed"){AN.ct+=dt;cheer=Math.min(1,AN.ct*3);AN.th=lerp(AN.th,0,Math.min(1,dt*4));C.body.position.y=Math.abs(Math.sin(AN.ct*7))*.14*Math.max(0,1-AN.ct/2.2)}else{AN.ct=0;C.body.position.y=0}
+  poseChar(C,AN.th,AN.kind,now,cheer)}
+
+/* ================= サウンド（Web Audio で合成。音声ファイルなし） ================= */
+const AU={ctx:null};
+function auInit(){if(AU.ctx){if(AU.ctx.state==="suspended")AU.ctx.resume();return}
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;let c;try{c=new AC()}catch(e){return}AU.ctx=c;
+  AU.master=c.createGain();AU.master.gain.value=.9;AU.master.connect(c.destination);
+  AU.sfx=c.createGain();AU.sfx.connect(AU.master);AU.bgm=c.createGain();AU.bgm.gain.value=0;AU.bgm.connect(AU.master);
+  const len=c.sampleRate*2|0,ir=c.createBuffer(2,len,c.sampleRate);for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}
+  AU.rev=c.createConvolver();AU.rev.buffer=ir;const wet=c.createGain();wet.gain.value=.3;AU.rev.connect(wet);wet.connect(AU.bgm);
+  AU.mus=c.createGain();AU.mus.connect(AU.bgm);AU.mus.connect(AU.rev);
+  const nb=c.createBuffer(1,c.sampleRate*2|0,c.sampleRate),nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;AU.noise=nb;
+  applyVol();startMusic()}
+function applyVol(){if(!AU.ctx)return;const t=AU.ctx.currentTime;AU.bgm.gain.setTargetAtTime([0,.45,.85][cfg.bgm|0],t,.4);AU.sfx.gain.setTargetAtTime(cfg.sfx?1:0,t,.05)}
+function env(g,t,a,pk,d){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)}
+function route(c,g,dest,pan){if(pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(dest)}else g.connect(dest)}
+function tone(f,t,d,o={}){const c=AU.ctx,os=c.createOscillator(),g=c.createGain();os.type=o.type||"sine";os.frequency.setValueAtTime(f,t);if(o.f2)os.frequency.exponentialRampToValueAtTime(o.f2,t+(o.a||.004)+d);
+  env(g,t,o.a||.004,o.v||.2,d);os.connect(g);route(c,g,o.dest||AU.sfx,o.pan);os.start(t);os.stop(t+(o.a||.004)+d+.05)}
+function nz(t,d,o={}){const c=AU.ctx,sc=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();sc.buffer=AU.noise;fl.type=o.type||"bandpass";fl.frequency.setValueAtTime(o.f||1000,t);
+  if(o.f2)fl.frequency.exponentialRampToValueAtTime(o.f2,t+(o.a||.003)+d);fl.Q.value=o.q||1;env(g,t,o.a||.003,o.v||.3,d);sc.connect(fl);fl.connect(g);route(c,g,o.dest||AU.sfx,o.pan);sc.start(t,Math.random()*1.5);sc.stop(t+(o.a||.003)+d+.05)}
+const SND={
+  whoosh(p,dur){if(!AU.ctx)return;const t=AU.ctx.currentTime,k=Math.min(1,.35+p*.65);
+    nz(t,.06,{v:.12*k,type:"bandpass",f:600,f2:1400,q:1.2,a:dur*.75});nz(t+dur*.8,.22,{v:.55*k,type:"bandpass",f:2800*k+500,f2:450,q:1.3,a:.04})},
+  impact(kind,p,lie){if(!AU.ctx)return;const t=AU.ctx.currentTime,k=.4+.6*Math.min(1,p);
+    if(lie===S_BK&&kind!=="putt"){nz(t,.38,{v:.6*k,type:"lowpass",f:3200,f2:450,q:.7});nz(t,.05,{v:.35*k,type:"highpass",f:2500})}
+    if(kind==="wood"){nz(t,.045,{v:.7*k,type:"highpass",f:1800,q:.7});tone(2650,t,.24,{v:.2*k});tone(3980,t,.15,{v:.09*k});tone(5300,t,.07,{v:.05*k});tone(200,t,.09,{v:.35*k,f2:80})}
+    else if(kind==="iron"){nz(t,.03,{v:.9*k,type:"bandpass",f:3300,q:.9});tone(1750,t,.06,{v:.15*k,type:"triangle"});tone(150,t,.06,{v:.35*k,f2:70});if(lie!==S_BK)nz(t+.012,.17,{v:.3*k,type:"lowpass",f:900,f2:300})}
+    else{tone(1050,t,.06,{v:.3});tone(2150,t,.035,{v:.07});nz(t,.025,{v:.14,type:"lowpass",f:1600})}},
+  land(sf,sp){if(!AU.ctx)return;const t=AU.ctx.currentTime,k=Math.min(1,.25+sp/30);
+    if(sf===S_BK)nz(t,.14,{v:.32*k,type:"lowpass",f:1300});else if(sf===S_PATH){tone(2300,t,.05,{v:.14*k});nz(t,.03,{v:.2*k,type:"highpass",f:2200})}
+    else{nz(t,.08,{v:.4*k,type:"lowpass",f:sf===S_GR?520:380});tone(96,t,.07,{v:.28*k,f2:58})}},
+  tree(){if(!AU.ctx)return;const t=AU.ctx.currentTime;tone(330,t,.07,{v:.32,type:"triangle",f2:230});nz(t,.06,{v:.3,type:"bandpass",f:900,q:2});nz(t+.04,.55,{v:.12,type:"highpass",f:3200,a:.05})},
+  splash(){if(!AU.ctx)return;const t=AU.ctx.currentTime;nz(t,.75,{v:.55,type:"lowpass",f:3600,f2:240,q:.5});for(let i=0;i<7;i++)tone(380+Math.random()*600,t+.1+Math.random()*.55,.05,{v:.05,f2:900+Math.random()*600})},
+  cup(){if(!AU.ctx)return;const t=AU.ctx.currentTime;[0,.075,.14].forEach((d,i)=>{tone(560-i*70,t+d,.08,{v:.45*(1-i*.3),type:"triangle"});nz(t+d,.03,{v:.2*(1-i*.3),type:"bandpass",f:1400,q:3})});
+    [1046.5,1318.5,1568,2093].forEach((f,i)=>{tone(f,t+.42+i*.09,.5,{v:.11,type:"triangle"});tone(f*2,t+.42+i*.09,.22,{v:.025})})},
+  cheer(n){if(!AU.ctx)return;const t=AU.ctx.currentTime+.5;for(let i=0;i<n*45;i++)nz(t+Math.random()*1.8,.03+Math.random()*.03,{v:.06+Math.random()*.07,type:"bandpass",f:1100+Math.random()*1900,q:1.5,pan:Math.random()*1.6-.8})},
+  miss(){if(!AU.ctx)return;const t=AU.ctx.currentTime;tone(523,t,.18,{v:.1,type:"triangle"});tone(392,t+.18,.35,{v:.1,type:"triangle"})}};
+// BGM：ボサノバ風の穏やかなループ（Fメジャー、86BPM、8小節）
+const BPM=86,STEP=60/BPM/4,mf=m=>440*Math.pow(2,(m-69)/12);
+const CHD=[[53,57,60,64],[52,55,59,62],[50,53,57,60],[55,58,62,65,  48,52,55,58],[46,50,53,57],[45,48,52,55],[55,58,62,65],[48,53,55,58,  48,52,55,58]];
+const chordAt=(bar,s)=>{const c=CHD[bar];return c.length>4&&s>=8?c.slice(4):c.slice(0,4)};
+const MEL=(()=>{let seed=7;const r=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646};const sc=[65,67,69,72,74,77,79,81,84];const m=new Array(128).fill(-1);let idx=4;
+  for(let i=0;i<64;i+=2){if(r()<(i%8===0?.85:.45)){idx=clamp(idx+Math.round((r()-.5)*4),1,8);m[i]=sc[idx];if(r()<.3)i+=2}}
+  for(let i=0;i<64;i++)m[64+i]=m[i]>0&&i<56?m[i]+(i>=32&&i<48?-2:0):-1;m[112]=77;m[120]=72;return m})();
+const mus={step:0,next:0,timer:null,bird:0};
+function startMusic(){mus.next=AU.ctx.currentTime+.15;mus.bird=AU.ctx.currentTime+6;mus.timer=setInterval(schedMusic,50)}
+function schedMusic(){const c=AU.ctx;if(!c)return;
+  while(mus.next<c.currentTime+.25){if(cfg.bgm)playStep(mus.step,mus.next);mus.next+=STEP;mus.step=(mus.step+1)%128}
+  if(cfg.bgm&&c.currentTime>mus.bird){const t=c.currentTime+.05,n=3+Math.random()*4|0,pan=Math.random()*1.6-.8,b=2600+Math.random()*1500;
+    for(let i=0;i<n;i++)tone(b+Math.random()*300,t+i*.085,.05,{v:.022,f2:b*1.45,pan,dest:AU.bgm});mus.bird=c.currentTime+7+Math.random()*12}}
+function playStep(i,t){const bar=i>>4,s=i&15,ch=chordAt(bar,s),D=AU.mus;
+  if(s===0)tone(mf(ch[0]-12),t,STEP*7,{type:"triangle",v:.15,a:.012,dest:D});
+  if(s===8)tone(mf(ch[0]-5),t,STEP*6,{type:"triangle",v:.12,a:.012,dest:D});
+  if(s===0||s===6||s===10)for(const n of ch){const nn=n<57?n+12:n;tone(mf(nn),t,STEP*(s===0?5:3),{v:.036,a:.01,dest:D});tone(mf(nn)*2,t,STEP*2,{v:.008,a:.01,dest:D})}
+  if(MEL[i]>0){tone(mf(MEL[i]),t,.55,{v:.055,a:.004,dest:D});tone(mf(MEL[i])*3,t,.1,{v:.01,dest:D})}
+  if((s&1)===0)nz(t,.035,{v:(s&3)===2?.026:.012,type:"highpass",f:7200,dest:D});
+  if(s===0||s===6)tone(68,t,.13,{v:.07,f2:45,dest:D})}
+
 /* ================= ホールのシーン生成 ================= */
 let world=null;     // ホールごとのオブジェクト群
 let trees=[],treeGrid=new Map();
@@ -715,9 +890,9 @@ function stepBall(){
     p.x+=v.x*DT;p.y+=v.y*DT;p.z+=v.z*DT;
     // 木
     if(!f.tree){const lst=treeGrid.get(Math.floor(p.x/12)+","+Math.floor(p.z/12));if(lst)for(const t of lst){const dy=p.y-t.y;if(dy<t.hgt*.12||dy>t.hgt)continue;
-      const rr=t.cedar?t.wd*.46*(1-(dy-t.hgt*.3)/(t.hgt*.7)):t.wd*.4;if(Math.hypot(p.x-t.x,p.z-t.z)<Math.max(.3,rr)){f.tree=true;v.x*=-.15+Math.random()*.2;v.z*=-.15+Math.random()*.2;v.y*=.1;sfx("木に当たった！");break}}}
+      const rr=t.cedar?t.wd*.46*(1-(dy-t.hgt*.3)/(t.hgt*.7)):t.wd*.4;if(Math.hypot(p.x-t.x,p.z-t.z)<Math.max(.3,rr)){f.tree=true;v.x*=-.15+Math.random()*.2;v.z*=-.15+Math.random()*.2;v.y*=.1;sfx("木に当たった！");SND.tree();break}}}
     const gy=H(p.x,p.z);
-    if(p.y<=gy){p.y=gy;const sfc=surf(p.x,p.z);
+    if(p.y<=gy){p.y=gy;const sfc=surf(p.x,p.z);if(f.bounces===0&&sfc!==S_WA)SND.land(sfc,Math.hypot(v.x,v.y,v.z));
       if(sfc===S_WA){return end("water")}
       const n=normal(p.x,p.z),props=SURF[sfc];
       const vn=v.x*n.x+v.y*n.y+v.z*n.z;let tx=v.x-vn*n.x,ty=v.y-vn*n.y,tz=v.z-vn*n.z;
@@ -751,11 +926,11 @@ function end(kind){
   if(kind==="holed"){
     st.ball=newPos;st.phase="holed";const diff=st.strokes-HD.h.p;st.scores[st.hole]=st.strokes;
     const nm={"-3":"アルバトロス！","-2":"イーグル！","-1":"バーディー！","0":"パー","1":"ボギー","2":"ダブルボギー","3":"トリプルボギー"}[diff]||(diff<-3?"すごい！":`+${diff}`);
-    toast(st.strokes===1?"ホールインワン！":`カップイン！ ${nm}`,`${st.strokes}打 · ${totalTxt()}`,3500);
+    toast(st.strokes===1?"ホールインワン！":`カップイン！ ${nm}`,`${st.strokes}打 · ${totalTxt()}`,3500);SND.cup();if(diff<=0)SND.cheer(diff<0?2:1);
     $("bNext").hidden=false;$("bNext").textContent=st.hole<17?"次のホールへ ▶":"スコアカード ▶";updateHoleUI();drawMini();return}
   let pen=kind==="water"?(()=>{const pd=HD.ponds.find(q=>ell(q,p.x,p.z)<1.02)||HD.ponds[0];return{t:"WATER",p:pd}})():penalty(p.x,p.z);
   if(pen){
-    st.strokes++;
+    st.strokes++;if(kind==="water")SND.splash();else SND.miss();
     if(pen.t==="OB"||pen.t==="RE"){newPos={...st.prev};msg=pen.t==="OB"?"OB":"ペナルティ";sub="1打罰・元の位置から打ち直し"}
     else if(pen.t==="PEN"){newPos={x:pen.x,z:pen.z,y:H(pen.x,pen.z)};msg="ペナルティエリア";sub="1打罰・ドロップ"}
     else{const q=pen.p;let dx=st.prev.x-q.x,dz=st.prev.z-q.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;let r=1;
@@ -778,8 +953,8 @@ function totalTxt(){let d=0,any=false;st.scores.forEach((s,i)=>{if(s!=null){d+=s
 
 /* ================= カメラ ================= */
 function eyeH(){return CLUBS[st.club].putt?1.5:1.72}
-function camPos(){const yaw=aimYaw(),back=CLUBS[st.club].putt?1.3:2.3;const x=st.ball.x-Math.sin(yaw)*back,z=st.ball.z+Math.cos(yaw)*back;return{x,z,y:Math.max(H(x,z),st.ball.y-.3)+eyeH()}}
-function aimPitch(cp){const tx=CLUBS[st.club].putt?HD.cup.x:st.aim.x,tz=CLUBS[st.club].putt?HD.cup.z:st.aim.z;const ty=H(tx,tz);const d=Math.hypot(tx-cp.x,tz-cp.z);return clamp(Math.atan2(ty-cp.y,d)*(CLUBS[st.club].putt?1:.6)+(CLUBS[st.club].putt?-.12:.02),-.6,.3)}
+function camPos(){const yaw=aimYaw();if(cfg.tp){const pt=CLUBS[st.club].putt,bk=pt?3.6:5.4,up=pt?1.95:2.5;const x=st.ball.x-Math.sin(yaw)*bk,z=st.ball.z+Math.cos(yaw)*bk;return{x,z,y:Math.max(H(x,z)+.5,st.ball.y)+up}}const back=CLUBS[st.club].putt?1.3:2.3;const x=st.ball.x-Math.sin(yaw)*back,z=st.ball.z+Math.cos(yaw)*back;return{x,z,y:Math.max(H(x,z),st.ball.y-.3)+eyeH()}}
+function aimPitch(cp){const tx=CLUBS[st.club].putt?HD.cup.x:st.aim.x,tz=CLUBS[st.club].putt?HD.cup.z:st.aim.z;const ty=H(tx,tz);const d=Math.hypot(tx-cp.x,tz-cp.z);return clamp(Math.atan2(ty-cp.y,d)*(CLUBS[st.club].putt?1:.6)+(CLUBS[st.club].putt?(cfg.tp?-.3:-.12):(cfg.tp?-.15:.02)),-.7,.3)}
 function placeCam(snap){const cp=camPos();st.cam=cp;camera.position.set(cp.x,cp.y,cp.z);camera.rotation.set(aimPitch(cp)+st.look.pitch,-aimYaw()-st.look.yaw,0)}
 function angLerp(a,b,t){let d=b-a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return a+d*t}
 
@@ -798,14 +973,15 @@ function clubStep(d){if(st.phase!=="aim")return;st.club=clamp(st.club+d,0,CLUBS.
 let holdKey=false;
 function swingStart(){if(st.phase!=="aim")return;st.phase="swing";st.power=0;st.pdir=1;$("shot").classList.add("on")}
 function swingEnd(){if(st.phase!=="swing")return;$("shot").classList.remove("on");const p=st.power;$("meterFill").style.width="0";
-  if(p<.04){st.phase="aim";$("meterTxt").textContent="長押しでスイング";return}shoot(p)}
+  if(p<.04){st.phase="aim";$("meterTxt").textContent="長押しでスイング";return}
+  const kind=kindOf(CLUBS[st.club]);st.down={t:0,p,top:AN.th,kind};AN.top=AN.th;st.phase="down";if(kind!=="putt")SND.whoosh(p,.2)}
 addEventListener("keydown",e=>{if(e.target.tagName==="SELECT")return;const k=e.key;
   if(k===" "){e.preventDefault();if(!holdKey){holdKey=true;swingStart()}}
   else if(k==="ArrowLeft"||k==="a"){e.preventDefault();turn(e.shiftKey?-.05:-.012)}
   else if(k==="ArrowRight"||k==="d"){e.preventDefault();turn(e.shiftKey?.05:.012)}
   else if(k==="ArrowUp"||k==="w"){e.preventDefault();clubStep(-1)}
   else if(k==="ArrowDown"||k==="s"){e.preventDefault();clubStep(1)}
-  else if(k==="f"){toggleFast()}else if(k==="c"){toggle("cam","bCam")}else if(k==="m"){$("mini").hidden=!$("mini").hidden}});
+  else if(k==="f"){toggleFast()}else if(k==="c"){toggle("cam","bCam")}else if(k==="v"){setView(!cfg.tp)}else if(k==="m"){$("mini").hidden=!$("mini").hidden}});
 addEventListener("keyup",e=>{if(e.key===" "){holdKey=false;swingEnd()}});
 const shotB=$("shot");shotB.addEventListener("pointerdown",e=>{e.preventDefault();shotB.setPointerCapture(e.pointerId);swingStart()});
 shotB.addEventListener("pointerup",()=>swingEnd());shotB.addEventListener("pointercancel",()=>swingEnd());
@@ -822,7 +998,14 @@ $("bGive").onclick=()=>{if(st.phase!=="aim")return;st.strokes=HD.h.p*2;st.scores
 $("bNext").onclick=()=>{if(st.hole<17)loadHole(st.hole+1);else openCard()};
 const sel=$("holeSel");HOLES.forEach((h,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${h.n}番 PAR${h.p} ${h.y}Y`;sel.appendChild(o)});
 sel.onchange=()=>{loadHole(+sel.value);sel.blur()};
-$("bHelp").onclick=()=>{$("mHelp").hidden=false};$("bStart").onclick=()=>{$("mHelp").hidden=true};
+$("bHelp").onclick=()=>{$("mHelp").hidden=false};$("bStart").onclick=()=>{$("mHelp").hidden=true;auInit()};
+addEventListener("pointerdown",()=>auInit(),{once:true});
+function setChar(i){cfg.char=i;saveCfg();[0,1].forEach(j=>{$("pick"+j).setAttribute("aria-pressed",j===i);const b=$("sChar"+j);if(b)b.setAttribute("aria-pressed",j===i)})}
+$("pick0").onclick=()=>setChar(0);$("pick1").onclick=()=>setChar(1);
+function setView(tp){cfg.tp=tp;saveCfg();$("bView").setAttribute("aria-pressed",tp);$("bView").textContent=tp?"キャラ視点":"一人称視点"}
+$("bView").onclick=()=>setView(!cfg.tp);setView(cfg.tp!==false);
+$("bBgm").onclick=()=>{auInit();cfg.bgm=cfg.bgm?0:1;saveCfg();applyVol();$("bBgm").setAttribute("aria-pressed",!!cfg.bgm);document.querySelectorAll("#sBgm button").forEach((x,j)=>x.setAttribute("aria-pressed",j===cfg.bgm))};
+$("bBgm").setAttribute("aria-pressed",!!cfg.bgm);setChar(cfg.char|0);
 $("bCard").onclick=openCard;$("bCardClose").onclick=()=>{$("mCard").hidden=true};
 function openCard(){const row=(a,b)=>{let h="<tr><th>H</th>";for(let i=a;i<b;i++)h+=`<th>${i+1}</th>`;h+=`<th>${a?"IN":"OUT"}</th></tr><tr><th>PAR</th>`;let ps=0,ss2=0,any=false;
   for(let i=a;i<b;i++){h+=`<td>${HOLES[i].p}</td>`;ps+=HOLES[i].p}h+=`<td>${ps}</td></tr><tr><th>打数</th>`;
@@ -833,7 +1016,8 @@ function openCard(){const row=(a,b)=>{let h="<tr><th>H</th>";for(let i=a;i<b;i++
 $("bSet").onclick=()=>{$("mSet").hidden=false};$("bSetClose").onclick=()=>{$("mSet").hidden=true};
 {const s=$("sDrv");for(let v=170;v<=290;v+=10){const o=document.createElement("option");o.value=v;o.textContent=v+" Y";s.appendChild(o)}s.value=cfg.drv;s.onchange=()=>{cfg.drv=+s.value;saveCfg();updateClubUI()};
  const opts=(id,list,key,after)=>{const box=$(id);list.forEach((it,i)=>{const b=document.createElement("button");b.className="btn";b.id=id+i;b.textContent=it;b.setAttribute("aria-pressed",cfg[key]===i);b.onclick=()=>{cfg[key]=i;saveCfg();box.querySelectorAll("button").forEach((x,j)=>x.setAttribute("aria-pressed",j===i));after&&after()};box.appendChild(b)})};
- opts("sSkill",SKILL.map(s=>s.nm),"skill");opts("sWind",WINDS.map(w=>w.nm),"wind");opts("sQual",["軽量","高品質"],"q",resize)}
+ opts("sSkill",SKILL.map(s=>s.nm),"skill");opts("sWind",WINDS.map(w=>w.nm),"wind");opts("sQual",["軽量","高品質"],"q",resize);
+ opts("sChar",["男性","女性"],"char",()=>setChar(cfg.char));opts("sBgm",["オフ","小","中"],"bgm",()=>{applyVol();$("bBgm").setAttribute("aria-pressed",!!cfg.bgm)});opts("sSfx",["オフ","オン"],"sfx",applyVol)}
 
 /* ================= HUD ================= */
 let toastT=null;function toast(a,b,ms){const t=$("toast");t.innerHTML=`${a}${b?`<small>${b}</small>`:""}`;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),ms)}
@@ -886,6 +1070,10 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-lastT)
     $("meterFill").style.width=(st.power/1.1*100)+"%";const c=CLUBS[st.club];
     $("meterTxt").textContent=c.putt?`${Math.round(st.power*100)}% · ${(st.power*clubCarry(c)).toFixed(1)}Y`:`${Math.round(st.power*100)}% · ${Math.round(st.power*clubCarry(c)*SURF[st.lie].k)}Y${st.power>1?" ⚠":""}`}
   else if(st.phase==="aim")$("meterTxt").textContent=isTouch?"長押しでスイング":"Space長押しでスイング";
+  // ダウンスイング → インパクト
+  if(st.phase==="down"){const D=st.down;D.t+=dt;const dur=D.kind==="putt"?.3:.2,u=Math.min(1,D.t/dur);AN.th=D.top*(1-u*u);
+    if(u>=1){AN.th=0;AN.mode="follow";AN.ft=0;SND.impact(D.kind,D.p,st.lie);shoot(D.p)}}
+  updateChar(dt,now);
   // ボール
   if(st.phase==="flight"&&st.fly){const n=Math.round(dt*(st.fast?3:1)/DT);for(let i=0;i<n&&st.fly;i++)stepBall();
     if(st.fly){const p=st.fly.p;ballMesh.position.set(p.x,p.y+.047,p.z);if(st.fly.pts.length>1){trail.geometry.dispose();trail.geometry=new THREE.BufferGeometry().setFromPoints(st.fly.pts)}}}
@@ -900,10 +1088,14 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-lastT)
     if(cfg.cam&&st.fly&&st.fly.mode==="air"){const v=st.fly.v,l=Math.hypot(v.x,v.z)||1;tmpV.set(bp.x-v.x/l*9,bp.y+2.5,bp.z-v.z/l*9);const gy=H(tmpV.x,tmpV.z)+1;if(tmpV.y<gy)tmpV.y=gy;camera.position.lerp(tmpV,.25)}
     const dx=bp.x-camera.position.x,dy=bp.y-camera.position.y,dz=bp.z-camera.position.z;const yaw=Math.atan2(-dx,-dz),pit=Math.atan2(dy,Math.hypot(dx,dz));
     camera.rotation.y=angLerp(camera.rotation.y,yaw,Math.min(1,dt*4));camera.rotation.x=lerp(camera.rotation.x,clamp(pit,-1.2,1.2),Math.min(1,dt*4))}
-  else if(st.phase==="aim"||st.phase==="swing"||st.phase==="holed"){const cp=camPos();camera.position.set(cp.x,cp.y,cp.z);
+  else if(st.phase==="holed"&&cfg.tp!==false){const C=CH[cfg.char|0].root,ry=C.rotation.y,fx=Math.sin(ry),fz=Math.cos(ry);
+    tmpV.set(C.position.x+fx*3.1+fz*.5,0,C.position.z+fz*3.1-fx*.5);tmpV.y=Math.max(C.position.y+1.2,H(tmpV.x,tmpV.z)+1.5);camera.position.lerp(tmpV,Math.min(1,dt*2.5));
+    const dx=C.position.x-camera.position.x,dy=C.position.y+.75-camera.position.y,dz=C.position.z-camera.position.z;
+    camera.rotation.y=angLerp(camera.rotation.y,Math.atan2(-dx,-dz),Math.min(1,dt*3));camera.rotation.x=lerp(camera.rotation.x,Math.atan2(dy,Math.hypot(dx,dz)),Math.min(1,dt*3))}
+  else if(st.phase==="aim"||st.phase==="swing"||st.phase==="down"||st.phase==="holed"){const cp=camPos();camera.position.set(cp.x,cp.y,cp.z);
     camera.rotation.y=angLerp(camera.rotation.y,-aimYaw()-st.look.yaw,Math.min(1,dt*10));camera.rotation.x=lerp(camera.rotation.x,aimPitch(cp)+st.look.pitch,Math.min(1,dt*10))}
   // マーカー
-  const showAim=st.phase==="aim"||st.phase==="swing";if(aimGroup)aimGroup.visible=cfg.aims&&!CLUBS[st.club].putt;aimMarker.visible=showAim&&!CLUBS[st.club].putt;
+  const showAim=st.phase==="aim"||st.phase==="swing"||st.phase==="down";if(aimGroup)aimGroup.visible=cfg.aims&&!CLUBS[st.club].putt;aimMarker.visible=showAim&&!CLUBS[st.club].putt;
   if(aimMarker.visible){aimMarker.position.set(st.aim.x,H(st.aim.x,st.aim.z)+.15,st.aim.z);const s=Math.max(1,camera.position.distanceTo(aimMarker.position)/90);aimMarker.scale.setScalar(s)}
   guideRing.visible=showAim&&cfg.guide&&!CLUBS[st.club].putt;
   if(guideRing.visible){const c=CLUBS[st.club],yaw=aimYaw(),car=clubCarry(c)*SURF[st.lie].k;const gx=st.ball.x+Math.sin(yaw)*car,gz=st.ball.z-Math.cos(yaw)*car;
@@ -920,6 +1112,6 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-lastT)
   renderer.render(scene,camera)}
 
 loadHole(0);requestAnimationFrame(loop);
-window.__carry=i=>clubCarry(CLUBS[i])*SURF[st.lie].k;window.__sim={st,HD:()=>HD,H:(x,z)=>H(x,z),shoot,loadHole,run:()=>{let i=0;while(st.fly&&i++<200000)stepBall();return i},skip:()=>{if(st.walk)st.walk.t=1},step:()=>{const f=st.fly;stepBall();return f?{x:f.p.x,y:f.p.y,z:f.p.z,m:f.mode}:null},pen:(x,z)=>penalty(x,z),surf:(x,z)=>surf(x,z),near:(x,z)=>({...near(HD,x,z)})};
+window.__carry=i=>clubCarry(CLUBS[i])*SURF[st.lie].k;window.__sim={SND,AU,AN,setChar:i=>setChar(i),st,HD:()=>HD,H:(x,z)=>H(x,z),shoot,loadHole,run:()=>{let i=0;while(st.fly&&i++<200000)stepBall();return i},skip:()=>{if(st.walk)st.walk.t=1},step:()=>{const f=st.fly;stepBall();return f?{x:f.p.x,y:f.p.y,z:f.p.z,m:f.mode}:null},pen:(x,z)=>penalty(x,z),surf:(x,z)=>surf(x,z),near:(x,z)=>({...near(HD,x,z)})};
 })();
 </script>
