@@ -561,8 +561,8 @@ function ik(A,C,l1,l2,pole,outMid,outEnd){_i1.subVectors(C,A);let L=_i1.length()
 
 // 外見の設定（k=身長の倍率。1.0 で約175cm）
 const LOOK={
-  m:{sex:"m",k:1,sw:.205,skin:0xd2a07e,hair:0x14100c,top:0x1b2230,bottom:0x8e9198,shoe:0xf1f1ee,glasses:1,style:"short",iris:["#6b4a2e","#2a170a"],sleeve:"short"},
-  f:{sex:"f",k:.945,sw:.18,skin:0xe6bfa3,hair:0x0f0b09,top:0x151515,bottom:0xf2f2f0,shoe:0xf4f4f2,glasses:1,style:"pony",cap:0x141414,iris:["#6b4a2e","#2a170a"],sleeve:"long"},
+  m:{sex:"m",k:1,sw:.205,skin:0xd2a07e,hair:0x14100c,top:0x1b2230,bottom:0x8e9198,shoe:0xf1f1ee,glasses:1,glove:1,style:"short",iris:["#6b4a2e","#2a170a"],sleeve:"short"},
+  f:{sex:"f",k:.945,sw:.18,skin:0xe0ad8c,hair:0x5e3219,top:0xf7f7f5,accent:0x8fbde6,bottom:0x1f2a4d,shoe:0xf6f6f4,shoeAcc:0x7fb0e0,glove:1,style:"visor",visor:0xf7f7f5,iris:["#9a6a3c","#3b2010"],sleeve:"short",smile:1,stripe:1},
   c:{sex:"f",k:.92,sw:.175,skin:0xe2b996,hair:0x2a1b12,top:0x86b8dc,bottom:0x283452,shoe:0x5b5b5b,glasses:0,style:"bun",hat:0xeee8da,iris:["#5a3a22","#24140a"],sleeve:"long",towel:1}};
 function buildHuman(S){
   const k=S.k,F=S.sex==="f",root=new THREE.Group();scene.add(root);root.visible=false;
@@ -574,14 +574,18 @@ function buildHuman(S){
   const R={root,S,k,sh:[new THREE.Vector3(),new THREE.Vector3()]};
   const sb=new THREE.Mesh(new THREE.PlaneGeometry(1.5*k,1.5*k),new THREE.MeshBasicMaterial({map:shadowBlob,transparent:true,depthWrite:false,color:0}));sb.rotation.x=-Math.PI/2;sb.position.y=.012;root.add(sb);
   // 脚
-  const LT=F&&S.style!=="bun"?SK:BOT;
-  R.thigh=[cyl(.088,.062,LT),cyl(.088,.062,LT)];R.shin=[cyl(.058,.042,LT),cyl(.058,.042,LT)];
-  R.hipJ=[sph(.088,LT),sph(.088,LT)];R.knee=[sph(.062,LT),sph(.062,LT)];R.ankle=[sph(.044,LT),sph(.044,LT)];
+  const LT=F&&S.style!=="bun"?SK:BOT,ACC=S.accent?mat("knit",S.accent,10,8):TOP;
+  const tr=F&&S.style!=="bun"?.076:.088;R.thigh=[cyl(tr,.058,LT),cyl(tr,.058,LT)];R.shin=[cyl(.058,.042,LT),cyl(.058,.042,LT)];
+  R.hipJ=[sph(tr,LT),sph(tr,LT)];R.knee=[sph(.062,LT),sph(.062,LT)];R.ankle=[sph(.044,LT),sph(.044,LT)];
   R.foot=[0,1].map(()=>{const g=new THREE.Group();root.add(g);const up=M(new THREE.SphereGeometry(1,28,16),SHOE,g);up.scale.set(.048*k,.04*k,.125*k);up.position.set(0,.042*k,.055*k);
-    const so=M(new THREE.SphereGeometry(1,28,10),SOLE,g);so.scale.set(.052*k,.016*k,.13*k);so.position.set(0,.014*k,.055*k);return g});
+    const so=M(new THREE.SphereGeometry(1,28,10),SOLE,g);so.scale.set(.052*k,.016*k,.13*k);so.position.set(0,.014*k,.055*k);
+    if(S.shoeAcc){const a=M(new THREE.SphereGeometry(1,28,10),mat("leather",S.shoeAcc,2,2),g);a.scale.set(.0495*k,.012*k,.1*k);a.position.set(0,.032*k,.045*k)}return g});
   // 骨盤（パンツ／スカート）
   R.pelvis=new THREE.Group();root.add(R.pelvis);
-  if(F&&S.style!=="bun"){const sk=lathe([[.124,.1],[.136,.05],[.158,-.06],[.172,-.2],[.18,-.31]],BOT,R.pelvis);sk.scale.z=.8;
+  if(F&&S.style!=="bun"){const sk=lathe([[.128,.1],[.15,.05],[.182,-.04],[.2,-.16],[.212,-.25]],BOT,R.pelvis);sk.scale.z=.8;
+    {const g=sk.geometry,pa=g.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i),y=pa.getY(i),z=pa.getZ(i),a=Math.atan2(z,x),d=clamp((.05*k-y)/(.3*k),0,1),f=1+.06*d*Math.sin(a*22);pa.setX(i,x*f);pa.setZ(i,z*f)}g.computeVertexNormals()}
+    if(S.stripe){const hem=lathe([[.211,-.235],[.213,-.247]],mat("twill",0xf4f4f4,8,1),R.pelvis);hem.scale.z=.8}
+    for(const sx of [-.02,.02])M(new THREE.SphereGeometry(.006*k,10,8),mat("plastic",0xd8dce2),R.pelvis).position.set(sx*k+.03*k,.085*k,.104*k);
     lathe([[.0,.1],[.124,.1]],BOT,R.pelvis).scale.z=.8}
   else{lathe([[0,.1],[.128,.1],[.142,.03],[.148,-.06],[.13,-.12],[0,-.13]],BOT,R.pelvis).scale.z=.78;
     lathe([[.131,.115],[.133,.082]],mat("leather",0x101010,8,1),R.pelvis).scale.z=.78;
@@ -590,21 +594,26 @@ function buildHuman(S){
   R.spine=new THREE.Group();root.add(R.spine);
   const tp=F?[[0,0],[.118,0],[.11,.1],[.116,.2],[.132,.3],[.128,.37],[.138,.43],[.1,.48],[.045,.51]]:[[0,0],[.135,0],[.14,.12],[.156,.25],[.166,.36],[.166,.43],[.122,.49],[.05,.52]];
   lathe(tp,TOP,R.spine).scale.z=.6;
-  if(F&&S.style!=="bun")lathe([[.048,.5],[.052,.58],[.05,.585]],TOP,R.spine);
-  else{const col=M(new THREE.TorusGeometry(.06*k,.018*k,10,32),TOP,R.spine);col.position.set(0,.505*k,0);col.rotation.x=Math.PI/2;col.scale.set(1,.62,1.4);
-    M(new THREE.BoxGeometry(.035*k,.1*k,.01*k),TOP,R.spine).position.set(0,.44*k,.095*k)}
+  if(F&&S.style==="pony")lathe([[.048,.5],[.052,.58],[.05,.585]],TOP,R.spine);
+  else{const col=M(new THREE.TorusGeometry((F?.055:.06)*k,(F?.012:.018)*k,10,32),TOP,R.spine);col.position.set(0,.505*k,0);col.rotation.x=Math.PI/2;col.scale.set(1,.62,1.4);
+    M(new THREE.BoxGeometry(.035*k,.1*k,.01*k),S.accent?ACC:TOP,R.spine).position.set(0,.44*k,.095*k);
+    if(S.accent){col.material=ACC;for(const y of [.465,.425])M(new THREE.SphereGeometry(.006*k,10,8),mat("plastic",0x6f9ccc),R.spine).position.set(0,y*k,.101*k)}}
   if(S.towel){const tw=M(new THREE.TorusGeometry(.065*k,.024*k,10,32),mat("knit",0xffffff,8,2),R.spine);tw.position.set(0,.515*k,0);tw.rotation.x=Math.PI/2;tw.scale.set(1,.7,1)}
   // 首・頭
   R.neck=cyl(.05,.044,SK);
   const hd=new THREE.Group();root.add(hd);R.head=hd;
-  const sk=M(new THREE.SphereGeometry(1,48,32),SK,hd);sk.scale.set(.094*k,.116*k,.108*k);
-  const jaw=M(new THREE.SphereGeometry(1,40,24),SK,hd);jaw.scale.set(.074*k,.068*k,.086*k);jaw.position.set(0,-.052*k,.022*k);
+  const sk=M(new THREE.SphereGeometry(1,48,32),SK,hd);sk.scale.set(.093*k,.116*k,.104*k);
+  const jaw=M(new THREE.SphereGeometry(1,40,24),SK,hd);jaw.scale.set(.078*k,.074*k,.087*k);jaw.position.set(0,-.044*k,.011*k);
   for(const sx of [-1,1]){const e=M(new THREE.SphereGeometry(1,16,12),SK,hd);e.scale.set(.012*k,.028*k,.02*k);e.position.set(sx*.094*k,-.008*k,-.004*k)}
-  const ns=M(new THREE.ConeGeometry(.015*k,.04*k,14),SK,hd);ns.rotation.x=Math.PI/2;ns.position.set(0,-.018*k,.112*k);
+  const ns=M(new THREE.SphereGeometry(1,20,14),SK,hd);ns.scale.set(.008*k,.017*k,.009*k);ns.position.set(0,-.012*k,.1*k);const nt=M(new THREE.SphereGeometry(1,16,12),SK,hd);nt.scale.set(.009*k,.007*k,.008*k);nt.position.set(0,-.025*k,.104*k);
   const EYE=new THREE.MeshPhysicalMaterial({map:eyeTex(S.iris[0],S.iris[1]),roughness:.1,clearcoat:1,clearcoatRoughness:.03});
-  for(const sx of [-1,1]){const e=M(new THREE.SphereGeometry(1,20,14),EYE,hd);e.scale.set(.013*k,.0085*k,.006*k);e.position.set(sx*.034*k,.012*k,.097*k);
-    const b=M(new THREE.CapsuleGeometry(.5,2,4,8),HAIR,hd);b.rotation.z=Math.PI/2+sx*(F?-.06:.04);b.scale.set(.006*k,.012*k,.006*k);b.position.set(sx*.036*k,.031*k,.104*k)}
-  const lip=M(new THREE.SphereGeometry(1,20,12),new THREE.MeshPhysicalMaterial({color:lin(F?0xb85a5e:0xa86a60),roughness:.38,clearcoat:.4}),hd);lip.scale.set(.021*k,.0055*k,.008*k);lip.position.set(0,-.057*k,.1*k);
+  for(const sx of [-1,1]){const e=M(new THREE.SphereGeometry(1,20,14),EYE,hd);e.scale.set((S.smile?.017:.013)*k,(S.smile?.0115:.0085)*k,.006*k);e.position.set(sx*.034*k,.012*k,.097*k);
+    const b=M(new THREE.CapsuleGeometry(.5,2,4,8),HAIR,hd);b.rotation.z=Math.PI/2+sx*(F?-.06:.04);b.scale.set(.006*k,.012*k,.006*k);b.position.set(sx*.036*k,(S.smile?.027:.031)*k,.104*k)}
+  const LIPM=new THREE.MeshPhysicalMaterial({color:lin(F?0xc8646a:0xa86a60),roughness:.35,clearcoat:.5,clearcoatRoughness:.2});
+  if(S.smile){const lp=M(new THREE.TorusGeometry(.017*k,.003*k,10,24,Math.PI*.9),LIPM,hd);lp.rotation.z=Math.PI*1.05;lp.position.set(0,-.052*k,.096*k);lp.scale.set(1,.5,.7);
+    for(const sx of [-1,1]){const lash=M(new THREE.TorusGeometry(.016*k,.0018*k,6,16,Math.PI*.85),mat("hair",0x140b06),hd);lash.position.set(sx*.034*k,.0125*k,.102*k);lash.rotation.z=Math.PI*.07;lash.scale.set(1,.62,1);
+      const bl=M(new THREE.CircleGeometry(.022*k,20),new THREE.MeshBasicMaterial({color:0xf29a95,transparent:true,opacity:.22,depthWrite:false}),hd);bl.position.set(sx*.056*k,-.028*k,.087*k);bl.rotation.y=sx*.6;bl.material.opacity=.1;bl.scale.setScalar(.75)}}
+  else{const lip=M(new THREE.SphereGeometry(1,20,12),LIPM,hd);lip.scale.set(.021*k,.0055*k,.008*k);lip.position.set(0,-.057*k,.1*k)}
   if(S.glasses){const LENS=mat("lens",0x0b0c10),FR=mat("plastic",0x0b0b0b);
     for(const sx of [-1,1]){const l=M(new THREE.SphereGeometry(1,24,14),LENS,hd);l.scale.set(.027*k,.018*k,.008*k);l.position.set(sx*.034*k,.012*k,.111*k);
       const t=M(new THREE.BoxGeometry(.004*k,.005*k,.1*k),FR,hd);t.position.set(sx*.067*k,.02*k,.06*k);t.rotation.y=sx*-.12;
@@ -620,6 +629,14 @@ function buildHuman(S){
     R.tail=new THREE.Group();R.tail.position.set(0,.03*k,-.112*k);hd.add(R.tail);
     [[.032,0,0],[.03,-.07,-.025],[.027,-.15,-.035],[.023,-.23,-.035],[.017,-.3,-.03]].forEach(([r,y,z])=>{const s=M(new THREE.SphereGeometry(1,20,14),HAIR,R.tail);s.scale.set(r*k,.06*k,r*k);s.position.set(0,y*k,z*k)});
     for(const sx of [-1,1]){const s=M(new THREE.CapsuleGeometry(.012*k,.06*k,6,10),HAIR,hd);s.position.set(sx*.092*k,-.03*k,.06*k)}}
+  else if(S.style==="visor"){
+    const VIS=mat("plastic",S.visor);const bgeo=new THREE.CylinderGeometry(.099*k,.1*k,.026*k,56,1,true,-Math.PI*.62,Math.PI*1.24);const band=M(bgeo,VIS,hd);band.material.side=THREE.DoubleSide;band.position.set(0,.062*k,.002*k);band.scale.set(1,1,1.06);
+    const br=M(new THREE.CylinderGeometry(.105*k,.105*k,.007*k,40,1,false,-Math.PI/2,Math.PI),VIS,hd);br.position.set(0,.05*k,.096*k);br.scale.set(.92,.6,1.05);br.rotation.x=.2;
+    M(new THREE.TorusGeometry(.012*k,.005*k,8,16),mat("plastic",0x8fbde6),hd).position.set(0,.06*k,-.09*k);
+    R.tail=new THREE.Group();R.tail.position.set(0,.085*k,-.09*k);hd.add(R.tail);
+    [[.03,0,0],[.034,-.06,-.04],[.033,-.13,-.06],[.03,-.2,-.07],[.026,-.27,-.07],[.021,-.33,-.06],[.014,-.38,-.05]].forEach(([r,y,z],i)=>{const s2=M(new THREE.SphereGeometry(1,20,14),HAIR,R.tail);s2.scale.set(r*k*(1+.15*Math.sin(i)),.065*k,r*k);s2.position.set(.008*k*Math.sin(i*1.7),y*k,z*k)});
+    for(let i=0;i<6;i++){const a=-.55+i*.22,b=M(new THREE.SphereGeometry(1,16,10),HAIR,hd);b.scale.set(.024*k,.017*k,.008*k);b.position.set(Math.sin(a)*.097*k,.045*k-Math.abs(a)*.01*k,Math.cos(a)*.097*k);b.rotation.set(-.35,a,a*.8)}
+    for(const sx of [-1,1]){for(let j=0;j<3;j++){const s2=M(new THREE.SphereGeometry(1,14,10),HAIR,hd);s2.scale.set(.007*k,.055*k,.016*k);s2.position.set(sx*(.089+j*.003)*k,-.02*k-j*.008*k,(.058-j*.014)*k);s2.rotation.set(0,sx*.3,sx*.08)}}}
   else if(S.style==="bun"){M(new THREE.SphereGeometry(.042*k,20,14),HAIR,hd).position.set(0,-.01*k,-.112*k);
     const HAT=mat("twill",S.hat,8,4);M(new THREE.CylinderGeometry(.098*k,.104*k,.085*k,36),HAT,hd).position.set(0,.085*k,0);
     M(new THREE.CylinderGeometry(.21*k,.21*k,.006*k,48),HAT,hd).position.set(0,.05*k,.01*k);
@@ -627,9 +644,9 @@ function buildHuman(S){
   // 腕
   const AR=S.sleeve==="long"?TOP:SK;
   R.upper=[cyl(.05,.041,AR),cyl(.05,.041,AR)];R.fore=[cyl(.04,.031,AR),cyl(.04,.031,AR)];
-  R.shJ=[sph(.06,TOP),sph(.06,TOP)];R.elbow=[sph(.042,AR),sph(.042,AR)];R.wrist=[sph(.03,SK),sph(.03,SK)];
-  R.sleeve=S.sleeve==="short"?[cyl(.066,.058,TOP),cyl(.066,.058,TOP)]:null;
-  R.hand=[M(new THREE.SphereGeometry(1,20,14),S.glasses?mat("leather",0xf6f6f4,2,2):SK),M(new THREE.SphereGeometry(1,20,14),SK)];
+  R.shJ=[sph(F?.05:.06,ACC),sph(F?.05:.06,ACC)];R.elbow=[sph(.042,AR),sph(.042,AR)];R.wrist=[sph(.03,SK),sph(.03,SK)];
+  R.sleeve=S.sleeve==="short"?[cyl(F?.056:.066,F?.05:.058,ACC),cyl(F?.056:.066,F?.05:.058,ACC)]:null;
+  R.hand=[M(new THREE.SphereGeometry(1,20,14),S.glove?mat("leather",0xf6f6f4,2,2):SK),M(new THREE.SphereGeometry(1,20,14),SK)];
   return R}
 
 // 姿勢：o={alpha,hip,turn,headYaw,headPitch,knee,shift,feetW,heel}（root ローカル。+Z=ボール側、+X=目標方向）
@@ -654,7 +671,7 @@ function poseArms(R,hL,hR,pole){const k=R.k;
   [hL,hR].forEach((t,i)=>{const sh=R.sh[i];_pole.copy(pole);_pole.x*=(i===0?1:-1);ik(sh,t,.3*k,.27*k,_pole,_m,_c);
     segTo(R.upper[i],sh,_m);segTo(R.fore[i],_m,_c);R.elbow[i].position.copy(_m);R.wrist[i].position.copy(_c);
     if(R.sleeve){_d.copy(_m).sub(sh).multiplyScalar(.5).add(sh);segTo(R.sleeve[i],sh,_d)}
-    _d.subVectors(_c,_m).normalize();const h=R.hand[i];h.position.copy(_c).addScaledVector(_d,.045*k);h.quaternion.setFromUnitVectors(_UP,_d);h.scale.set(.03*k,.052*k,.022*k)})}
+    _d.subVectors(_c,_m).normalize();const h=R.hand[i];h.position.copy(_c).addScaledVector(_d,.045*k);h.quaternion.setFromUnitVectors(_UP,_d);h.scale.set(.034*k,.058*k,.024*k)})}
 
 // クラブ（ドライバー：カーボンクラウン＋チタンソール、アイアン：ヘアライン仕上げ＋溝、パター：ブレード）
 function buildClubs(R){const C={shaft:{},grip:null,ferrule:null,head:{}};
