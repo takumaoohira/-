@@ -88,21 +88,51 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
 @keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
 @media (prefers-reduced-motion:reduce){#loading .bar i{animation:none;width:100%}}
 #putGuide{position:absolute;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:6px 12px;font-size:12.5px;white-space:nowrap}
+.mOnly{display:none}
+#app.hud-min #holeCard,#app.hud-min #windBox,#app.hud-min #mini,#app.hud-min #tips,#app.hud-min #infoBox,#app.hud-min #putGuide,#app.hud-min #bMap{display:none!important}
 @media (max-width:760px){
-  #toolbar{top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));transform:none;max-width:none;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding:5px;scrollbar-width:none}
-  #toolbar .btn,#toolbar select{flex:none;font-size:12px;padding:6px 9px}
-  #holeCard{top:calc(58px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));padding:7px 10px;min-width:0}
-  #holeCard .hn b{font-size:22px}
-  #hMeta{font-size:12px}
-  #windBox{top:calc(58px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));padding:6px 9px;gap:6px}
-  #windArrow{width:26px;height:26px}
-  #mini{width:84px;height:124px;top:calc(116px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px))}
+  .mOnly{display:inline-flex;align-items:center;justify-content:center}
+  #bMenu{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));width:40px;height:36px;padding:0;font-size:18px;z-index:4;background:var(--glass);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  #bMenu[aria-expanded="true"]{background:var(--accent);color:#1b1306}
+  #toolbar{display:none;top:calc(50px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));transform:none;max-width:none;flex-wrap:wrap;justify-content:flex-start;padding:8px;gap:6px;z-index:4}
+  #app.menu-open #toolbar{display:flex}
+  #toolbar select{flex:1 1 100%;font-size:14px;padding:8px}
+  #toolbar .btn{flex:1 1 calc(33% - 6px);font-size:12.5px;padding:9px 4px}
+  #holeCard{top:calc(8px + env(safe-area-inset-top,0px));left:calc(56px + env(safe-area-inset-left,0px));padding:4px 10px;min-width:0;display:flex;align-items:center;gap:8px;height:36px;box-sizing:border-box}
+  #holeCard .hn span:first-child{display:none}
+  #holeCard .hn b{font-size:19px}
+  #holeCard .hn{gap:5px}
+  #hPar{font-size:10px}
+  #hMeta{display:none}
+  #hStroke{font-size:11px;margin:0;white-space:nowrap}
+  #windBox{top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));padding:4px 8px;gap:5px;height:36px;box-sizing:border-box}
+  #windArrow{width:22px;height:22px}
+  #windTxt{font-size:10px;line-height:1.2}
+  #windTxt b{font-size:13px}
+  #windTxt span{display:none}
+  #bMap{position:absolute;top:calc(50px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));height:30px;padding:0 10px;font-size:11.5px;background:var(--glass)}
+  #mini{display:none;width:96px;height:140px;top:calc(86px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px))}
+  #app.map-open #mini{display:block}
   #tips{display:none}
-  #infoBox{left:calc(8px + env(safe-area-inset-left,0px));bottom:auto;top:calc(142px + env(safe-area-inset-top,0px));max-width:calc(100% - 110px);font-size:11px;padding:6px 10px;grid-template-columns:auto auto auto auto;gap:0 8px}
-  #infoBox .big .num{font-size:18px}
-  #infoBox dd .num{font-size:14px}
-  #ctrl{left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:8px}
-  #putGuide{bottom:auto;top:calc(214px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));transform:none;white-space:normal;max-width:calc(100% - 110px);font-size:11.5px}
+  #infoBox{left:calc(8px + env(safe-area-inset-left,0px));bottom:auto;top:calc(50px + env(safe-area-inset-top,0px));max-width:calc(100% - 110px);font-size:10.5px;padding:4px 10px;grid-template-columns:auto auto auto auto;gap:0 7px;cursor:pointer}
+  #infoBox:not(.open) dt:nth-of-type(n+3),#infoBox:not(.open) dd:nth-of-type(n+3){display:none}
+  #infoBox::after{content:"▾";position:absolute;right:4px;top:3px;font-size:9px;color:var(--muted)}
+  #infoBox.open::after{content:"▴"}
+  #infoBox .big .num{font-size:16px}
+  #infoBox dd .num{font-size:13px}
+  #ctrl{left:calc(6px + env(safe-area-inset-left,0px));right:calc(6px + env(safe-area-inset-right,0px));width:auto;bottom:calc(6px + env(safe-area-inset-bottom,0px));padding:6px;gap:5px}
+  #ctrl .btn{padding:7px 9px}
+  #clubName{font-size:14px}
+  #clubCarry{font-size:10px}
+  #meterTxt{min-width:0;font-size:10px}
+  #shot{padding:9px 14px;font-size:14px}
+  #putGuide{bottom:calc(112px + env(safe-area-inset-bottom,0px));top:auto;left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));transform:none;white-space:normal;font-size:11px;padding:5px 9px}
+  #bubble{font-size:11.5px;max-width:calc(100% - 24px);width:max-content;padding:5px 10px 6px;pointer-events:auto;left:50%!important;top:auto!important;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%)!important}
+  #bubble::after{display:none}
+  #bubble span{font-size:9.5px}
+  #toast{font-size:22px;top:24%}
+  #app.hud-min #ctrl{opacity:.92}
+}
 }
 </style>
 
@@ -111,6 +141,8 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
   <div id="vig" aria-hidden="true"></div>
   <div id="grain" aria-hidden="true"></div>
 
+  <button class="btn mOnly" id="bMenu" aria-expanded="false" aria-controls="toolbar" aria-label="メニュー">☰</button>
+  <button class="btn mOnly" id="bMap" aria-pressed="false">マップ</button>
   <div class="panel" id="holeCard">
     <div class="hn"><span>HOLE</span><b id="hNo">1</b><span id="hPar">PAR 4</span></div>
     <div id="hMeta">380Y · HDCP 3</div>
@@ -127,6 +159,7 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
     <button class="btn" id="bCard">スコア</button>
     <button class="btn" id="bSet">設定</button>
     <button class="btn" id="bHelp">操作</button>
+    <button class="btn" id="bHud" aria-pressed="false" title="距離や風などの情報を隠して画面を広く使う">情報を隠す</button>
   </div>
 
   <div class="panel" id="windBox">
@@ -1298,7 +1331,19 @@ const rep=(id,fn)=>{let t=null;const b=$(id);b.addEventListener("pointerdown",e=
 rep("bL",()=>turn(-.012));rep("bR",()=>turn(.012));
 $("bClubUp").onclick=()=>clubStep(-1);$("bClubDn").onclick=()=>clubStep(1);
 function toggleFast(){if(st.phase!=="flight")return;st.fast=!st.fast;$("bFast").setAttribute("aria-pressed",st.fast)}
-$("bFast").onclick=toggleFast;$("bPow").onclick=toggleSP;
+$("bFast").onclick=toggleFast;
+// スマホ向け：メニュー・マップ・情報の折りたたみ
+const app=$("app"),isNarrow=()=>matchMedia("(max-width:760px)").matches;
+function setMenu(open){app.classList.toggle("menu-open",open);$("bMenu").setAttribute("aria-expanded",open)}
+$("bMenu").onclick=e=>{e.stopPropagation();setMenu(!app.classList.contains("menu-open"))};
+$("toolbar").addEventListener("click",e=>{if(isNarrow()&&e.target.closest("button"))setTimeout(()=>setMenu(false),150)});
+$("holeSel").addEventListener("change",()=>setMenu(false));
+canvas.addEventListener("pointerdown",()=>setMenu(false));
+$("bMap").onclick=()=>{const o=!app.classList.contains("map-open");app.classList.toggle("map-open",o);$("bMap").setAttribute("aria-pressed",o);drawMini()};
+$("infoBox").addEventListener("click",()=>{if(isNarrow())$("infoBox").classList.toggle("open")});
+$("bubble").addEventListener("click",()=>{$("bubble").hidden=true;bubbleT=0});
+function setHud(min){cfg.hudMin=min;saveCfg();app.classList.toggle("hud-min",min);$("bHud").setAttribute("aria-pressed",min);$("bHud").textContent=min?"情報を表示":"情報を隠す"}
+$("bHud").onclick=()=>setHud(!cfg.hudMin);setHud(!!cfg.hudMin);$("bPow").onclick=toggleSP;
 function toggle(key,id){cfg[key]=!cfg[key];$(id).setAttribute("aria-pressed",cfg[key]);saveCfg();if(key==="aims"&&aimGroup)aimGroup.visible=cfg.aims;drawMini()}
 $("bAims").onclick=()=>toggle("aims","bAims");$("bGuide").onclick=()=>toggle("guide","bGuide");$("bCam").onclick=()=>toggle("cam","bCam");
 ["bAims","bGuide","bCam"].forEach((id,i)=>$(id).setAttribute("aria-pressed",cfg[["aims","guide","cam"][i]]));
@@ -1348,7 +1393,7 @@ function updateHUD(){
   const wa=Math.atan2(st.wind.x,-st.wind.z),view=-camera.rotation.y;const rel=(wa-view)*180/Math.PI;
   $("windArrow").style.transform=`rotate(${rel}deg)`;
   const head=-(st.wind.x*Math.sin(aimYaw())-st.wind.z*Math.cos(aimYaw()))/1.094;
-  $("windTxt").innerHTML=`風 <b class="num">${st.wind.ms.toFixed(1)}</b> m/s<br><span style="color:var(--muted)">${st.wind.ms<.3?"無風":head>.3?"向かい風":head<-.3?"追い風":"横風"}</span>`;
+  $("windTxt").innerHTML=`<b class="num">${st.wind.ms.toFixed(1)}</b> m/s<br><span style="color:var(--muted)">${st.wind.ms<.3?"無風":head>.3?"向かい風":head<-.3?"追い風":"横風"}</span>`;
   // パット・OK・ギブアップ
   const onG=st.lie===S_GR||st.lie===S_FR;
   $("bOK").hidden=!(st.phase==="aim"&&onG&&dp<=1.0);
