@@ -88,6 +88,12 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
 @keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
 @media (prefers-reduced-motion:reduce){#loading .bar i{animation:none;width:100%}}
 #putGuide{position:absolute;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:6px 12px;font-size:12.5px;white-space:nowrap}
+#bMenu{display:inline-flex;align-items:center;justify-content:center;position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));width:42px;height:40px;padding:0;font-size:19px;z-index:4;background:var(--glass);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#bMenu[aria-expanded="true"]{background:var(--accent);color:#1b1306}
+#toolbar{display:none;z-index:4;top:calc(58px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));transform:none;max-width:560px}
+#app.menu-open #toolbar{display:flex}
+#holeCard{left:calc(60px + env(safe-area-inset-left,0px))!important}
+#app.menu-open #tips{display:none}
 .mOnly{display:none}
 #app.hud-min #holeCard,#app.hud-min #windBox,#app.hud-min #mini,#app.hud-min #tips,#app.hud-min #infoBox,#app.hud-min #putGuide,#app.hud-min #bMap{display:none!important}
 @media (max-width:760px){
@@ -141,7 +147,7 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
   <div id="vig" aria-hidden="true"></div>
   <div id="grain" aria-hidden="true"></div>
 
-  <button class="btn mOnly" id="bMenu" aria-expanded="false" aria-controls="toolbar" aria-label="メニュー">☰</button>
+  <button class="btn" id="bMenu" aria-expanded="false" aria-controls="toolbar" aria-label="メニュー">☰</button>
   <button class="btn mOnly" id="bMap" aria-pressed="false">マップ</button>
   <div class="panel" id="holeCard">
     <div class="hn"><span>HOLE</span><b id="hNo">1</b><span id="hPar">PAR 4</span></div>
@@ -150,6 +156,7 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
   </div>
 
   <div class="panel" id="toolbar">
+    <select id="courseSel" aria-label="コース選択"><option value="odawara">小田原城CC</option><option value="world">ワールドヘリテージGC</option></select>
     <select id="holeSel" aria-label="ホール選択"></select>
     <button class="btn" id="bAims" aria-pressed="true" title="攻略の狙い目①②③を表示">狙い目</button>
     <button class="btn" id="bGuide" aria-pressed="true" title="落下予想地点を表示">ガイド</button>
@@ -218,9 +225,12 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
         <li>BGMと効果音はプレー開始で鳴り始めます。音量は「設定」で変えられます。</li>
         <li><kbd>P</kbd> または「⚡SP」でパワーショット（飛距離+15Y）。1ラウンド5回まで、バーディー以上で1回増えます。</li>
         <li>キャディが各ホールの攻め方や残り距離、おすすめのクラブを吹き出しで教えてくれます。</li>
+        <li>「ワールドヘリテージGC」は架空の高難度コースです。世界遺産などの建造物には当たり判定があり、当たると跳ね返ります。引っかかって打てない場合は1打罰で打ち直しです。</li>
         <li>オレンジの①②③は攻略ガイドの狙い目。白いリングは選んだクラブの落下予想地点です。</li>
         <li>OBは1打罰で打ち直し、池・1ペナエリアは1打罰でドロップ。グリーン上1Y以内は「OKパット」が使えます。</li>
       </ul>
+      <div class="row" style="flex-wrap:wrap;margin-top:10px"><span style="font-size:13px;color:var(--muted)">コースを選ぶ</span>
+        <button class="btn" id="cs0" aria-pressed="true">小田原城CC（実在コースの再現）</button><button class="btn" id="cs1" aria-pressed="false">ワールドヘリテージGC（架空・高難度）</button></div>
       <div class="row" style="flex-wrap:wrap;margin-top:10px"><span style="font-size:13px;color:var(--muted)">ゴルファーを選ぶ</span>
         <button class="btn" id="pick0" aria-pressed="true">男性ゴルファー</button><button class="btn" id="pick1" aria-pressed="false">女性ゴルファー</button></div>
       <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="bStart" style="background:var(--accent);color:#1b1306;border-color:var(--accent)">プレー開始</button></div>
@@ -254,7 +264,7 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
 const $=id=>document.getElementById(id);
 
 /* ================= コースデータ（攻略ガイドと同じ模式座標: 200x340, ティー下→グリーン上） ================= */
-const HOLES=[
+const ODAWARA=[
 {n:1,p:4,y:380,hc:3,az:270,pts:[[100,318],[112,205],[86,110],[70,48]],ob:"L",cliffs:[[42,150,22,70]],elev:[[0,0],[.55,6],[1,13]],raised:1.2,
  aims:[[116,200],[70,48]],club:"1W",tips:["FW右サイド：左の角は詰めない。右寄りならグリーンが見える","グリーン手前から：打ち上げなので＋1番手"],danger:"左サイド全域（OB・崖下）"},
 {n:2,p:3,y:192,hc:9,az:90,pts:[[100,318],[100,60]],ob:"L",pen:"R",elev:[[0,0],[1,-12]],raised:.6,
@@ -292,6 +302,7 @@ const HOLES=[
 {n:18,p:5,y:435,hc:2,az:270,pts:[[100,320],[100,215],[100,128],[100,48]],elev:[[0,0],[.5,6],[1,18]],raised:2.6,
  aims:[[100,220],[100,132],[100,48]],club:"1W",tips:["FW：ドラコン以外は飛ばしすぎ不要","3打目を得意距離に残す","砲台グリーン：ショート厳禁、キャリーで乗せる"],danger:"グリーン手前のショート"},
 ];
+let HOLES=ODAWARA;
 
 /* ================= クラブ・物理 ================= */
 const G=10.73, KD=0.0034, DT=1/240, SPIN_T=3.5;          // ヤード・秒
@@ -357,11 +368,19 @@ function buildHole(h){
   const sun=[Math.cos(sunRel)*f0.fx+Math.sin(sunRel)*f0.rx, Math.cos(sunRel)*f0.fz+Math.sin(sunRel)*f0.rz];
   const Gc=C[C.length-1];
   const hd={h,k,C,segs,len:s0,sea,sun,G:{x:Gc[0],z:Gc[1],fx:last.fx,fz:last.fz,rx:last.rx,rz:last.rz,ra:15,rl:12},
-    obD:h.narrow?h.narrow+19:40,penD:38,fwH:h.narrow||18,
-    ponds:(h.ponds||[]).map(([x,y,rx,ry])=>{const c=W([x,y]);return{x:c[0],z:c[1],rx:rx*k,rz:ry*k,lv:0}}),
+    obD:(h.fw||h.narrow)?(h.fw||h.narrow)+19:40,penD:38,fwH:h.fw||h.narrow||18,
+    ponds:(h.ponds||[]).map(([x,y,rx,ry,a=0,isl])=>{const c=W([x,y]),A=a*Math.PI/180;return{x:c[0],z:c[1],rx:rx*k,rz:ry*k,lv:0,a:A,ca:Math.cos(A),sa:Math.sin(A),isl:(isl||[]).map(([ix,iy,ir])=>{const q=W([ix,iy]);return{x:q[0],z:q[1],r:ir*k}})}}),
     cliffs:(h.cliffs||[]).map(([x,y,rx,ry])=>{const c=W([x,y]);return{x:c[0],z:c[1],rx:rx*k,rz:ry*k}}),
     valley:h.valley?(()=>{const [x,y,rx,ry]=h.valley,c=W([x,y]);return{x:c[0],z:c[1],rx:rx*k*.68,rz:ry*k*.62}})():null,
-    aims:h.aims.map(a=>{const c=W(a);return{x:c[0],z:c[1]}}),bunkers:[]};
+    aims:h.aims.map(a=>{const c=W(a);return{x:c[0],z:c[1]}}),bunkers:[],pads:[],cols:[],anim:[]};
+  // 小川（線分ごとに細長い楕円の池として扱う）
+  for(const cr of h.creeks||[])for(let i=1;i<cr.p.length;i++){const A=W(cr.p[i-1]),B=W(cr.p[i]),dx=B[0]-A[0],dz=B[1]-A[1],L2=Math.hypot(dx,dz),a=Math.atan2(dx,dz);
+    hd.ponds.push({x:(A[0]+B[0])/2,z:(A[1]+B[1])/2,rx:cr.w*k/2,rz:L2/2+cr.w*k*.35,lv:0,a,ca:Math.cos(a),sa:Math.sin(a),isl:[],creek:1})}
+  // フェアウェイバンカー・ウェイストエリア（自前の向きを持つ楕円）
+  const addB=(arr,depth)=>{for(const [x,y,rx,ry,a=0] of arr||[]){const c=W([x,y]),A=a*Math.PI/180;hd.bunkers.push({x:c[0],z:c[1],ra:ry*k,rl:rx*k,fx:Math.sin(A),fz:-Math.cos(A),rx:Math.cos(A),rz:Math.sin(A),depth})}};
+  addB(h.bunk,.85);addB(h.waste,.3);
+  // ランドマーク
+  hd.lms=(h.lm||[]).map(o=>{const c=W([o.x,o.y]);return{...o,x:c[0],z:c[1]}});
   hd.fwStart=h.p===3?s0-38:Math.min(150,s0*.32);
   // 平均オフセット（周辺地形の基準）
   let kk=0;for(let i=0;i<=20;i++){const t=i/20;const p=ptAt(hd,t*s0);kk+=prof(hd,t*s0)-genSlope(hd,p[0],p[1])}hd.K=kk/21;
@@ -369,13 +388,14 @@ function buildHole(h){
   SEED=h.n*7919;rs=h.n*48271+11;
   if(!h.nobunker){
     const bl=[[-4,-(hd.G.rl+6),7,4]];if(!(h.pen||"").includes("R")&&!h.ponds)bl.push([-17,9,4,6]);else bl.push([6,hd.G.rl+6,6,3.5]);
-    for(const [u,v,ra,rl] of bl)hd.bunkers.push({x:hd.G.x+hd.G.fx*u+hd.G.rx*v,z:hd.G.z+hd.G.fz*u+hd.G.rz*v,ra,rl});
+    for(const [u,v,ra,rl] of bl)hd.bunkers.push({x:hd.G.x+hd.G.fx*u+hd.G.rx*v,z:hd.G.z+hd.G.fz*u+hd.G.rz*v,ra,rl,fx:hd.G.fx,fz:hd.G.fz,rx:hd.G.rx,rz:hd.G.rz,depth:.75});
   }
   // カップ位置
   hd.cup={x:hd.G.x+hd.G.fx*(rnd()*10-5)+hd.G.rx*(rnd()*8-4),z:0};hd.cup.z=hd.G.z+hd.G.fz*(rnd()*10-5)+hd.G.rz*(rnd()*8-4);
   hd.gH=prof(hd,s0)+h.raised;
+  for(const o of hd.lms){if(o.r==="auto")o.r=Math.atan2(-hd.G.fx,-hd.G.fz);const pr=LM_PAD[o.t]||0;if(pr)hd.pads.push({x:o.x,z:o.z,r:pr,pave:LM_PAVE[o.t]||0,h:Hbase(hd,o.x,o.z)})}
   // 池の水位
-  for(const p of hd.ponds){let mn=1e9;for(let i=0;i<24;i++){const a=i/24*Math.PI*2;mn=Math.min(mn,Hbase(hd,p.x+Math.cos(a)*p.rx,p.z+Math.sin(a)*p.rz))}p.lv=mn-.9}
+  for(const p of hd.ponds){let mn=1e9;for(let i=0;i<24;i++){const a=i/24*Math.PI*2,lx=Math.cos(a)*p.rx,lz=Math.sin(a)*p.rz,ca=p.ca??1,sa=p.sa??0;mn=Math.min(mn,Hbase(hd,p.x+lx*ca+lz*sa,p.z-lx*sa+lz*ca))}p.lv=Math.min(mn-.9,hd.gH-1.2)}
   // 範囲
   let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;for(const c of C){x0=Math.min(x0,c[0]);x1=Math.max(x1,c[0]);z0=Math.min(z0,c[1]);z1=Math.max(z1,c[1])}
   const M=200;hd.box={x0:x0-M,x1:x1+M,z0:z0-M,z1:z1+M+40};
@@ -393,7 +413,8 @@ function gLocal(hd,x,z){const g=hd.G,dx=x-g.x,dz=z-g.z;return[dx*g.fx+dz*g.fz,dx
 function greenR(hd,x,z){const [u,v]=gLocal(hd,x,z);return Math.hypot(u/hd.G.ra,v/hd.G.rl)}
 function greenSurf(hd,x,z){const [u,v]=gLocal(hd,x,z);let y=hd.gH+u*.014-(x*hd.sea[0]+z*hd.sea[1]-(hd.G.x*hd.sea[0]+hd.G.z*hd.sea[1]))*.01+.18*fbm(x*.07,z*.07,2);
   if(hd.h.ridge)y+=.7*Math.max(0,1-(v/hd.G.rl)**2);return y}
-function ell(o,x,z){return Math.hypot((x-o.x)/o.rx,(z-o.z)/o.rz)}
+function ell(o,x,z){const dx=x-o.x,dz=z-o.z;if(o.a){const lx=dx*o.ca-dz*o.sa,lz=dx*o.sa+dz*o.ca;return Math.hypot(lx/o.rx,lz/o.rz)}return Math.hypot(dx/o.rx,dz/o.rz)}
+function inIsland(p,x,z){return p.isl&&p.isl.length&&p.isl.some(q=>Math.hypot(x-q.x,z-q.z)<q.r+1)}
 function Hbase(hd,x,z){
   const n=near(hd,x,z),s=clamp(n.s,0,hd.len),dist=n.dist;
   const corr=prof(hd,s)+1.1*fbm(x*.012,z*.012,3)+.25*fbm(x*.05,z*.05,2)+0.03*n.d*-(hd.sea[0]*hd.segs[n.i].rx+hd.sea[1]*hd.segs[n.i].rz);
@@ -408,14 +429,17 @@ function Hbase(hd,x,z){
   return Math.max(y,SEA_LEVEL-40);
 }
 function H(x,z){const hd=HD;let y=Hbase(hd,x,z);
-  for(const b of hd.bunkers){const r=Math.hypot(...bLocal(hd,b,x,z));if(r<1)y-=.75*(1-r*r)}
-  for(const p of hd.ponds){const r=ell(p,x,z);if(r<1.5){const t=p.lv-.35-1.8*Math.max(0,1-r*r);y=r<1?Math.min(y,t):Math.min(y,lerp(p.lv-.35,y,ss(1,1.5,r)))}}
+  for(const q of hd.pads){const d=Math.hypot(x-q.x,z-q.z);if(d<q.r*1.5)y=lerp(q.h,y,ss(q.r,q.r*1.5,d))}
+  for(const b of hd.bunkers){const r=Math.hypot(...bLocal(hd,b,x,z));if(r<1)y-=(b.depth||.75)*(1-r*r)}
+  for(const p of hd.ponds){const r=ell(p,x,z);let ik=0;if(p.isl&&p.isl.length)for(const q of p.isl){const d=Math.hypot(x-q.x,z-q.z);ik=Math.max(ik,1-ss(q.r-3,q.r+5,d))}
+    if(ik>=1)continue;const y0=y,rb=1+Math.min(.5,9/Math.min(p.rx,p.rz));if(r<rb){const t=p.lv-.35-1.8*Math.max(0,1-r*r);y=r<1?Math.min(y,t):Math.min(y,lerp(p.lv-.35,y,ss(1,rb,r)))}if(ik>0)y=lerp(y,Math.max(y0,p.lv+.5),ik)}
   if(hd.valley){const r=ell(hd.valley,x,z);if(r<1.6)y-=30*(1-ss(.45,1.6,r))}
   for(const c of hd.cliffs){const r=ell(c,x,z);if(r<1.3)y-=11*(1-ss(.6,1.3,r))}
   return y}
-function bLocal(hd,b,x,z){const g=hd.G,dx=x-b.x,dz=z-b.z;return[(dx*g.fx+dz*g.fz)/b.ra,(dx*g.rx+dz*g.rz)/b.rl]}
+function bLocal(hd,b,x,z){const dx=x-b.x,dz=z-b.z;return[(dx*b.fx+dz*b.fz)/b.ra,(dx*b.rx+dz*b.rz)/b.rl]}
 function surf(x,z){const hd=HD;
-  for(const p of hd.ponds)if(ell(p,x,z)<1)return S_WA;
+  for(const p of hd.ponds){const r=ell(p,x,z);if(r<1.5&&!inIsland(p,x,z)&&(r<1||H(x,z)<p.lv-.03)&&greenR(hd,x,z)>1.14)return S_WA}
+  for(const q of hd.pads)if(q.pave&&Math.hypot(x-q.x,z-q.z)<q.pave)return S_PATH;
   const gr=greenR(hd,x,z);if(gr<1)return S_GR;if(gr<1.14)return S_FR;
   for(const b of hd.bunkers)if(Math.hypot(...bLocal(hd,b,x,z))<1)return S_BK;
   if(Math.abs(x)<5&&Math.abs(z)<6)return S_TEE;
@@ -924,6 +948,7 @@ const SND={
     [1046.5,1318.5,1568,2093].forEach((f,i)=>{tone(f,t+.42+i*.09,.5,{v:.11,type:"triangle"});tone(f*2,t+.42+i*.09,.22,{v:.025})})},
   cheer(n){if(!AU.ctx)return;const t=AU.ctx.currentTime+.5;for(let i=0;i<n*45;i++)nz(t+Math.random()*1.8,.03+Math.random()*.03,{v:.06+Math.random()*.07,type:"bandpass",f:1100+Math.random()*1900,q:1.5,pan:Math.random()*1.6-.8})},
   power(){if(!AU.ctx)return;const t=AU.ctx.currentTime;tone(72,t,.65,{v:.55,f2:30});nz(t,.5,{v:.5,type:"lowpass",f:900,f2:120,q:.7});[523,659,784,1047,1319].forEach((f,i)=>tone(f,t+.05+i*.05,.55,{v:.07,type:"triangle"}))},
+  stone(){if(!AU.ctx)return;const t=AU.ctx.currentTime;tone(240,t,.09,{v:.35,type:"triangle",f2:150});nz(t,.05,{v:.4,type:"bandpass",f:1700,q:1.5});nz(t,.12,{v:.12,type:"highpass",f:4000})},
   miss(){if(!AU.ctx)return;const t=AU.ctx.currentTime;tone(523,t,.18,{v:.1,type:"triangle"});tone(392,t+.18,.35,{v:.1,type:"triangle"})}};
 // BGM：ボサノバ風の穏やかなループ（Fメジャー、86BPM、8小節）
 const BPM=86,STEP=60/BPM/4,mf=m=>440*Math.pow(2,(m-69)/12);
@@ -946,6 +971,282 @@ function playStep(i,t){const bar=i>>4,s=i&15,ch=chordAt(bar,s),D=AU.mus;
   if((s&1)===0)nz(t,.035,{v:(s&3)===2?.026:.012,type:"highpass",f:7200,dest:D});
   if(s===0||s===6)tone(68,t,.13,{v:.07,f2:45,dest:D})}
 
+/* ================= 世界遺産コース：素材・ランドマーク ================= */
+// 手続き生成テクスチャ（キャンバス）
+function cvTex(W,Hh,draw,o={}){const c=document.createElement("canvas");c.width=W;c.height=Hh;const x=c.getContext("2d");draw(x,W,Hh);const t=new THREE.CanvasTexture(c);
+  if(!o.linear)t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t}
+function speckle(x,W,Hh,n,amp,sz=1){for(let i=0;i<n;i++){const v=Math.random()<.5?0:255;x.fillStyle=`rgba(${v},${v},${v},${Math.random()*amp})`;x.fillRect(Math.random()*W,Math.random()*Hh,sz+Math.random()*sz,sz+Math.random()*sz)}}
+function grime(x,W,Hh,n,amp){for(let i=0;i<n;i++){const gx=Math.random()*W,gy=Math.random()*Hh,r=8+Math.random()*40,g=x.createRadialGradient(gx,gy,0,gx,gy,r);const d=Math.random()<.6;g.addColorStop(0,d?`rgba(40,32,24,${amp})`:`rgba(255,250,235,${amp*.7})`);g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(gx-r,gy-r,r*2,r*2)}}
+// 石積み（行ごとにずらしたブロック＋目地）
+function blockTex(base,mortar,rows,cols,o={}){return cvTex(512,512,(x,W,Hh)=>{x.fillStyle=mortar;x.fillRect(0,0,W,Hh);const bh=Hh/rows;
+  for(let r=0;r<rows;r++){const off=(r%2)*(W/cols)*.5;for(let c=-1;c<=cols;c++){const bw=W/cols*(.8+Math.random()*.4);const bx=c*W/cols+off,by=r*bh;
+    const vr=o.var??.24,b=base.map(v=>v*(1-vr*.6+Math.random()*vr));x.fillStyle=`rgb(${b[0]|0},${b[1]|0},${b[2]|0})`;x.fillRect(bx+2,by+2,bw-3,bh-3);
+    if(o.chips&&Math.random()<.3){x.fillStyle="rgba(0,0,0,.18)";x.fillRect(bx+Math.random()*bw,by+bh-6,8+Math.random()*14,4)}}}
+  speckle(x,W,Hh,9000,.18);grime(x,W,Hh,o.grime??40,.12)})}
+const MTEX={
+  marble:cvTex(512,512,(x,W,Hh)=>{x.fillStyle="#efebe3";x.fillRect(0,0,W,Hh);for(let i=0;i<26;i++){x.strokeStyle=`rgba(${110+Math.random()*60|0},${110+Math.random()*50|0},${105+Math.random()*50|0},${.08+Math.random()*.22})`;
+    x.lineWidth=.6+Math.random()*2.2;x.beginPath();let px=Math.random()*W,py=Math.random()*Hh;x.moveTo(px,py);for(let k=0;k<8;k++){px+=(Math.random()-.3)*90;py+=(Math.random()-.5)*70;x.quadraticCurveTo(px-20,py+30,px,py)}x.stroke()}
+    speckle(x,W,Hh,6000,.06);grime(x,W,Hh,30,.08)}),
+  patina:cvTex(512,512,(x,W,Hh)=>{x.fillStyle="#6fa593";x.fillRect(0,0,W,Hh);for(let i=0;i<1400;i++){const v=Math.random();x.fillStyle=v<.5?`rgba(40,92,82,${Math.random()*.35})`:`rgba(170,215,195,${Math.random()*.3})`;x.fillRect(Math.random()*W,Math.random()*Hh,2+Math.random()*3,10+Math.random()*60)}
+    grime(x,W,Hh,50,.18);speckle(x,W,Hh,8000,.12)}),
+  sand:blockTex([196,166,118],"#8d7350",18,9,{chips:1,grime:90,var:.08}),
+  lime:blockTex([214,200,170],"#a49a84",16,6,{grime:50}),
+  brickG:blockTex([140,138,128],"#6e6c66",22,9,{chips:1,grime:80}),
+  travertine:blockTex([206,186,148],"#8f7c5c",10,5,{chips:1,grime:90}),
+  granite:cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#a7a39b";x.fillRect(0,0,W,Hh);speckle(x,W,Hh,14000,.35,1.2);grime(x,W,Hh,20,.1)}),
+  tuff:cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#6b6158";x.fillRect(0,0,W,Hh);speckle(x,W,Hh,16000,.4,1.5);grime(x,W,Hh,40,.22);for(let i=0;i<60;i++){x.fillStyle=`rgba(150,160,90,${Math.random()*.25})`;x.beginPath();x.arc(Math.random()*W,Math.random()*Hh,2+Math.random()*7,0,7);x.fill()}}),
+  stone:cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#8f8b80";x.fillRect(0,0,W,Hh);speckle(x,W,Hh,12000,.35,1.4);grime(x,W,Hh,50,.2);for(let i=0;i<90;i++){x.fillStyle=`rgba(${170+Math.random()*40|0},${175+Math.random()*30|0},${110},${Math.random()*.35})`;x.beginPath();x.arc(Math.random()*W,Math.random()*Hh,1+Math.random()*6,0,7);x.fill()}}),
+  roof:cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#3f4446";x.fillRect(0,0,W,Hh);for(let r=0;r<16;r++){for(let c=0;c<32;c++){const v=50+Math.random()*25;x.fillStyle=`rgb(${v},${v+4},${v+7})`;x.fillRect(c*8+1,r*16+1,6,14);x.fillStyle="rgba(0,0,0,.35)";x.fillRect(c*8,r*16+13,8,3)}}speckle(x,W,Hh,4000,.15)}),
+  plaster:cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#f1eee6";x.fillRect(0,0,W,Hh);speckle(x,W,Hh,5000,.06);grime(x,W,Hh,25,.06)}),
+  tile:cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#efebe0";x.fillRect(0,0,W,Hh);for(let r=0;r<16;r++)for(let c=0;c<16;c++){const v=232+Math.random()*16;x.fillStyle=`rgb(${v},${v-3},${v-12})`;x.save();x.translate(c*16+8,r*16+8);x.rotate((r+c)%2?.6:-.6);x.fillRect(-7,-7,14,14);x.restore()}}),
+  wood:cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#6b4a2f";x.fillRect(0,0,W,Hh);for(let i=0;i<220;i++){x.strokeStyle=`rgba(${30+Math.random()*40|0},${20+Math.random()*25|0},10,${Math.random()*.4})`;x.lineWidth=1+Math.random()*2;x.beginPath();const yy=Math.random()*Hh;x.moveTo(0,yy);x.bezierCurveTo(W*.3,yy+6,W*.6,yy-6,W,yy+2);x.stroke()}}),
+  lattice:cvTex(256,256,(x,W,Hh)=>{x.clearRect(0,0,W,Hh);x.strokeStyle="#ffffff";x.lineWidth=10;x.strokeRect(5,5,W-10,Hh-10);
+    for(let k=0;k<4;k++){const o=k*W/4;x.lineWidth=5;x.beginPath();x.moveTo(o,0);x.lineTo(o+W/4,Hh/2);x.lineTo(o,Hh);x.moveTo(o+W/4,0);x.lineTo(o,Hh/2);x.lineTo(o+W/4,Hh);x.stroke()}
+    x.lineWidth=4;for(let r=1;r<4;r++){x.beginPath();x.moveTo(0,r*Hh/4);x.lineTo(W,r*Hh/4);x.stroke()}}),
+  arches:cvTex(512,256,(x,W,Hh)=>{x.fillStyle="#b89a6c";x.fillRect(0,0,W,Hh);speckle(x,W,Hh,8000,.2);grime(x,W,Hh,60,.16);x.globalCompositeOperation="destination-out";
+    for(let i=0;i<4;i++){const cx=W/8+i*W/4;x.beginPath();x.moveTo(cx-34,Hh*.92);x.lineTo(cx-34,Hh*.42);x.arc(cx,Hh*.42,34,Math.PI,0);x.lineTo(cx+34,Hh*.92);x.closePath();x.fill()}x.globalCompositeOperation="source-over";
+    for(let i=0;i<4;i++){const cx=W/8+i*W/4;x.strokeStyle="rgba(70,52,30,.55)";x.lineWidth=7;x.beginPath();x.moveTo(cx-38,Hh*.92);x.lineTo(cx-38,Hh*.42);x.arc(cx,Hh*.42,38,Math.PI,0);x.lineTo(cx+38,Hh*.92);x.stroke();
+      x.fillStyle="rgba(90,70,40,.45)";x.fillRect(cx+44,Hh*.2,14,Hh*.75)}
+    x.fillStyle="rgba(60,48,30,.35)";x.fillRect(0,Hh*.94,W,Hh*.06);x.fillRect(0,0,W,Hh*.08)}),
+  gothic:cvTex(256,512,(x,W,Hh)=>{x.fillStyle="#d6c59a";x.fillRect(0,0,W,Hh);for(let i=0;i<8;i++){const cx=16+i*32;x.fillStyle="rgba(90,74,44,.35)";x.fillRect(cx-6,10,12,Hh-20);x.fillStyle="rgba(255,245,215,.25)";x.fillRect(cx-9,10,3,Hh-20)}
+    for(let r=0;r<12;r++){x.fillStyle="rgba(80,66,40,.3)";x.fillRect(0,r*Hh/12,W,3)}speckle(x,W,Hh,7000,.12);grime(x,W,Hh,40,.12)}),
+  clock:cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#1d2a3a";x.fillRect(0,0,W,Hh);x.fillStyle="#f3ecd2";x.beginPath();x.arc(128,128,112,0,7);x.fill();x.strokeStyle="#c9a64a";x.lineWidth=10;x.stroke();
+    x.fillStyle="#222";for(let i=0;i<12;i++){x.save();x.translate(128,128);x.rotate(i*Math.PI/6);x.fillRect(-4,-100,8,22);x.restore()}x.strokeStyle="#111";x.lineWidth=7;x.beginPath();x.moveTo(128,128);x.lineTo(128,58);x.moveTo(128,128);x.lineTo(184,150);x.stroke()}),
+  sail:cvTex(128,256,(x,W,Hh)=>{x.clearRect(0,0,W,Hh);x.strokeStyle="#3b2a1c";x.lineWidth=6;x.strokeRect(3,3,W-6,Hh-6);for(let i=1;i<10;i++){x.beginPath();x.moveTo(0,i*Hh/10);x.lineTo(W,i*Hh/10);x.stroke()}x.beginPath();x.moveTo(W/2,0);x.lineTo(W/2,Hh);x.stroke();
+    x.fillStyle="rgba(236,230,214,.92)";x.fillRect(W*.52,6,W*.44,Hh-12)})};
+const LMAT=(()=>{const S=(o)=>new THREE.MeshStandardMaterial(o),P=(o)=>new THREE.MeshPhysicalMaterial(o);const rep=(t,a,b)=>{const c=t.clone();c.needsUpdate=true;c.repeat.set(a,b);return c};
+  return{patina:S({map:MTEX.patina,color:0xffffff,roughness:.55,metalness:.35}),
+    granite:S({map:rep(MTEX.granite,4,4),color:lin(0xa39d90),roughness:.85}),marble:P({map:MTEX.marble,color:lin(0xf0eadf),roughness:.38,clearcoat:.15}),marbleOld:S({map:MTEX.marble,color:lin(0xcfbf9f),roughness:.7}),
+    sand:S({map:rep(MTEX.sand,6,4),roughness:.95}),lime:S({map:rep(MTEX.lime,4,6),color:lin(0xbfb196),roughness:.95}),brickG:S({map:rep(MTEX.brickG,4,1),roughness:.95}),
+    travertine:S({map:MTEX.travertine,roughness:.92}),tuff:S({map:rep(MTEX.tuff,3,3),roughness:.95}),stone:S({map:MTEX.stone,roughness:.95}),
+    iron:S({map:MTEX.lattice,color:lin(0x6a4a34),roughness:.55,metalness:.55,alphaTest:.5,side:THREE.DoubleSide}),ironSolid:S({color:lin(0x5b4130),roughness:.5,metalness:.6}),
+    vermilion:P({color:lin(0xd2381f),roughness:.38,clearcoat:.5}),blackWood:S({color:lin(0x1c1a18),roughness:.6}),
+    gold:P({color:lin(0xe0b043),metalness:1,roughness:.22,clearcoat:.3}),roof:S({map:rep(MTEX.roof,3,2),roughness:.7,metalness:.15}),plaster:S({map:MTEX.plaster,roughness:.9}),
+    tile:P({map:rep(MTEX.tile,8,8),roughness:.25,clearcoat:.6}),gothic:S({map:MTEX.gothic,roughness:.85}),clock:S({map:MTEX.clock,roughness:.4,emissive:lin(0x2a2414)}),
+    wood:S({map:MTEX.wood,roughness:.8}),sail:S({map:MTEX.sail,alphaTest:.5,side:THREE.DoubleSide,roughness:.9}),slate:S({color:lin(0x3a4048),roughness:.6,metalness:.2}),
+    arches:S({map:MTEX.arches,color:lin(0xd8c09a),alphaTest:.5,side:THREE.DoubleSide,roughness:.95}),flame:S({color:lin(0xffc34a),emissive:lin(0xff9a20),emissiveIntensity:1.4,roughness:.4}),
+    red:S({color:lin(0x8a3424),roughness:.9}),jade:S({color:lin(0x2f6f4f),roughness:.5})}})();
+// 形の部品
+function LG(){return new THREE.Group()}
+function mk(geo,m,par,x=0,y=0,z=0){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;par.add(o);return o}
+const BOX=(w,h,d)=>new THREE.BoxGeometry(w,h,d),CYL=(r1,r2,h,s=24)=>new THREE.CylinderGeometry(r1,r2,h,s);
+function uvScale(g,s){const uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*s[0],uv.getY(i)*s[1]);return g}
+// 2点の間に角柱（梁・脚）を渡す
+function beam(par,a,b,r1,r2,m,seg=4,rep=[1,1]){const v=new THREE.Vector3().subVectors(b,a),L=v.length();const g=uvScale(new THREE.CylinderGeometry(r2,r1,L,seg,1,true),[rep[0],rep[1]*L/10]);
+  if(seg===4)g.rotateY(Math.PI/4);const o=mk(g,m,par);o.position.copy(a).addScaledVector(v,.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());return o}
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const C={cap:(a,b,r,nm)=>({t:"cap",a,b,r,nm}),box:(c,h,ry=0,nm)=>({t:"box",c,h,ry,nm}),pyr:(c,hb,h,nm)=>({t:"pyr",c,hb,h,nm})};
+
+// ---- 各ランドマーク（単位ヤード。原点＝地面中心）----
+const LM={
+liberty(){const g=LG(),nm="自由の女神";
+  mk(BOX(22,4,22),LMAT.granite,g,0,2,0);mk(CYL(9.5,10.5,10,8).rotateY(Math.PI/8),LMAT.granite,g,0,9,0);
+  mk(uvScale(BOX(11,13,11),[2,2]),LMAT.granite,g,0,20.5,0);mk(BOX(12.5,1.4,12.5),LMAT.granite,g,0,27.6,0);
+  const rob=new THREE.LatheGeometry([[0,0],[4.2,0],[4,4],[3.4,10],[3,15],[3.2,19],[2.6,22],[1.4,24],[0,24.6]].map(([r,y])=>new THREE.Vector2(r,y)),40);mk(rob,LMAT.patina,g,0,28.3,0);
+  for(let i=0;i<9;i++){const fold=mk(CYL(.35,.25,14,6),LMAT.patina,g,Math.cos(i*.7)*3.3,35,Math.sin(i*.7)*3.3);fold.rotation.z=(Math.random()-.5)*.08}
+  mk(CYL(.8,1,2.4,16),LMAT.patina,g,0,53.4,0);const hd=mk(new THREE.SphereGeometry(1.9,32,24),LMAT.patina,g,0,55.9,.2);hd.scale.set(1,1.15,1.05);
+  for(let i=0;i<7;i++){const a=-1.15+i*.38,sp=mk(new THREE.ConeGeometry(.32,3.2,8),LMAT.patina,g,Math.sin(a)*1.9,57.6,Math.cos(a)*1.9+.2);sp.rotation.set(Math.cos(a)*.95,0,-Math.sin(a)*.95)}
+  beam(g,V3(-2.6,50.5,0),V3(-3.4,60.5,.4),.75,.6,LMAT.patina,10);mk(CYL(.5,.7,1.6,12),LMAT.gold,g,-3.45,61.2,.4);const fl=mk(new THREE.ConeGeometry(.75,2.4,12),LMAT.flame,g,-3.45,63.1,.4);fl.castShadow=false;
+  const tab=mk(BOX(1.6,4,.6),LMAT.patina,g,2.9,47,1.1);tab.rotation.z=-.3;beam(g,V3(2.5,50.5,0),V3(2.9,46.5,1),.7,.6,LMAT.patina,10);
+  return{g,pad:14,pave:13,cols:[C.box(V3(0,14,0),V3(11,14,11),0,nm),C.cap(V3(0,30,0),V3(0,57,0),4.2,nm),C.cap(V3(-2.6,50,0),V3(-3.4,62,.4),1,nm)]}},
+pisa(){const g=LG(),t=LG(),nm="ピサの斜塔";g.add(t);t.rotation.x=.07;const R=7,levels=[0,8.5,15.5,22.5,29.5,36.5,43.5,50.5];
+  mk(uvScale(CYL(R-.6,R-.6,50.5,48),[3,6]),LMAT.marble,t,0,25.25,0);
+  for(let i=0;i<levels.length-1;i++){const y0=levels[i],h=levels[i+1]-y0,n=i===0?16:28;
+    mk(CYL(R+.55,R+.55,.7,48),LMAT.marble,t,0,y0+h-.35,0);
+    const col=new THREE.InstancedMesh(new THREE.CylinderGeometry(.28,.3,h-1.2,10),LMAT.marble,n);col.castShadow=true;const M=new THREE.Matrix4();
+    for(let k=0;k<n;k++){const a=k/n*Math.PI*2;M.makeTranslation(Math.cos(a)*(R+.2),y0+(h-1.2)/2+.3,Math.sin(a)*(R+.2));col.setMatrixAt(k,M)}t.add(col)}
+  mk(uvScale(CYL(4.6,4.6,6,32),[2,1]),LMAT.marble,t,0,53.5,0);mk(CYL(5,5,.6,32),LMAT.marble,t,0,56.8,0);mk(CYL(R+.8,R+1,1.2,48),LMAT.marble,t,0,.6,0);
+  return{g,pad:12,pave:12,cols:[C.cap(V3(0,0,0),V3(0,57*Math.cos(.07),57*Math.sin(.07)),R+.6,nm)]}},
+eiffel(){const g=LG(),nm="エッフェル塔",cols=[];
+  // 脚の断面の中心と幅（高さごと）。反りのあるシルエットにする
+  const prof=[[0,17,7],[9,13.8,6.2],[17,11.2,5.4],[28,8.4,4.4],[42,5.8,3.4],[60,3.6,2.6],[80,2.3,2],[104,1.2,1.3]];
+  const GIRD=LMAT.ironSolid;
+  for(const [sx,sz] of [[1,1],[1,-1],[-1,1],[-1,-1]]){
+    for(let i=1;i<prof.length;i++){const [y0,c0,w0]=prof[i-1],[y1,c1,w1]=prof[i];if(y0>=42)break;
+      const a=V3(sx*c0,y0,sz*c0),b=V3(sx*c1,y1,sz*c1);beam(g,a,b,w0*.72,w1*.72,LMAT.iron,4,[1,2]);
+      for(const [ox,oz] of [[1,1],[1,-1],[-1,1],[-1,-1]])beam(g,V3(a.x+ox*w0*.5,y0,a.z+oz*w0*.5),V3(b.x+ox*w1*.5,y1,b.z+oz*w1*.5),.32,.28,GIRD,6)}
+    mk(BOX(9,1.6,9),LMAT.granite,g,sx*17,.8,sz*17);cols.push(C.cap(V3(sx*17,0,sz*17),V3(sx*5.8,42,sz*5.8),4,nm))}
+  // 上部の塔（4本の柱が寄り合う）
+  for(let i=1;i<prof.length;i++){const [y0,c0,w0]=prof[i-1],[y1,c1,w1]=prof[i];if(y0<42)continue;
+    const a=V3(0,y0,0),b=V3(0,y1,0);const m=beam(g,a,b,c0*1.42,c1*1.42,LMAT.iron,4,[2,2]);
+    for(const [ox,oz] of [[1,1],[1,-1],[-1,1],[-1,-1]])beam(g,V3(ox*c0,y0,oz*c0),V3(ox*c1,y1,oz*c1),.36,.26,GIRD,6)}
+  // アーチと展望台
+  for(const [sx,sz,ry] of [[0,1,0],[0,-1,0],[1,0,Math.PI/2],[-1,0,Math.PI/2]]){const ar=mk(new THREE.TorusGeometry(10.5,.7,8,40,Math.PI),GIRD,g,sx*14.6,6.5,sz*14.6);ar.rotation.y=ry}
+  mk(BOX(25,2.4,25),GIRD,g,0,17.2,0);mk(uvScale(BOX(25.6,1.6,25.6),[5,1]),LMAT.iron,g,0,19.2,0);cols.push(C.box(V3(0,17.8,0),V3(12.8,1.8,12.8),0,nm));
+  mk(BOX(12,2,12),GIRD,g,0,42,0);mk(uvScale(BOX(12.4,1.4,12.4),[3,1]),LMAT.iron,g,0,43.6,0);
+  mk(BOX(3.6,4.2,3.6),GIRD,g,0,106,0);mk(CYL(.35,.2,16,8),GIRD,g,0,116,0);cols.push(C.cap(V3(0,42,0),V3(0,110,0),5,nm));
+  return{g,pad:0,pave:0,cols}},
+pyramid(){const g=LG(),nm="ピラミッド";const s=uvScale(new THREE.ConeGeometry(45*Math.SQRT2,58,4,1),[1,1]);s.rotateY(Math.PI/4);mk(s,LMAT.sand,g,0,29,0);
+  const c2=new THREE.ConeGeometry(22*Math.SQRT2,28,4,1);c2.rotateY(Math.PI/4);mk(c2,LMAT.sand,g,-62,14,30);
+  return{g,pad:0,pave:0,cols:[C.pyr(V3(0,0,0),45,58,nm),C.pyr(V3(-62,0,30),22,28,nm)]}},
+sphinx(){const g=LG(),nm="スフィンクス";mk(BOX(8,5.5,22),LMAT.sand,g,0,2.75,0);mk(BOX(7,6,7),LMAT.sand,g,0,7.5,8.5);mk(BOX(7.6,3.5,5),LMAT.sand,g,0,10.6,8);
+  for(const sx of [-1,1])mk(BOX(2.2,2,10),LMAT.sand,g,sx*2.6,1,15.5);mk(BOX(9,1.2,26),LMAT.sand,g,0,.6,1);
+  return{g,pad:16,pave:0,cols:[C.box(V3(0,5,3),V3(4.5,6,14),0,nm)]}},
+stonehenge(o,hAt){const g=LG(),nm="ストーンヘンジ",cols=[];const R=25,N=30;
+  for(let i=0;i<N;i++){const a=i/N*Math.PI*2;if(Math.abs(Math.atan2(Math.sin(a),Math.cos(a)))<.2)continue;const x=Math.sin(a)*R,z=Math.cos(a)*R,y=hAt(x,z);
+    const st=mk(uvScale(BOX(3,8,1.8),[1,2]),LMAT.stone,g,x,y+4-.4,z);st.rotation.y=a+(Math.random()-.5)*.05;st.rotation.z=(Math.random()-.5)*.06;cols.push(C.box(V3(x,y+4,z),V3(1.6,4,1.1),a,nm));
+    if(i%2===0&&Math.random()<.75){const a2=(i+1)/N*Math.PI*2,mx=(x+Math.sin(a2)*R)/2,mz=(z+Math.cos(a2)*R)/2;const l=mk(BOX(6,1.4,1.8),LMAT.stone,g,mx,y+8.3,mz);l.rotation.y=(a+a2)/2+Math.PI/2}}
+  for(let i=0;i<5;i++){const a=Math.PI+(i-2)*.55,x=Math.sin(a)*13,z=Math.cos(a)*13,y=hAt(x,z);for(const d of [-1.8,1.8]){const px=x+Math.cos(a)*d,pz=z-Math.sin(a)*d;
+    const s=mk(BOX(2.6,10,1.8),LMAT.stone,g,px,y+5-.4,pz);s.rotation.y=a;cols.push(C.box(V3(px,y+5,pz),V3(1.4,5,1.1),a,nm))}
+    const l=mk(BOX(6.6,1.5,2),LMAT.stone,g,x,y+10.4,z);l.rotation.y=a}
+  return{g,pad:0,pave:0,cols}},
+torii(){const g=LG(),nm="大鳥居",cols=[];for(const sx of [-1,1]){mk(CYL(.95,1.05,16,24),LMAT.vermilion,g,sx*6,8,0);cols.push(C.cap(V3(sx*6,-2,0),V3(sx*6,17,0),1.1,nm));
+    for(const sz of [-1,1]){mk(CYL(.55,.6,9,16),LMAT.vermilion,g,sx*6,4.5,sz*3.6);beam(g,V3(sx*6,7.5,sz*3.6),V3(sx*6,7.5,0),.3,.3,LMAT.vermilion,4)}
+    mk(CYL(1.3,1.3,1.2,16),LMAT.blackWood,g,sx*6,.4,0)}
+  mk(BOX(17,1.1,1.4),LMAT.vermilion,g,0,12.6,0);mk(BOX(1.2,3.3,.9),LMAT.vermilion,g,0,14.3,0);
+  const k1=mk(BOX(24,1.3,2),LMAT.vermilion,g,0,16.6,0);const k2=mk(BOX(25.5,.8,2.4),LMAT.blackWood,g,0,17.6,0);
+  for(const sx of [-1,1]){const e=mk(BOX(3,.8,2.4),LMAT.blackWood,g,sx*13.6,18,0);e.rotation.z=sx*.25}
+  cols.push(C.box(V3(0,16.8,0),V3(13,1.2,1.2),0,nm));return{g,pad:0,pave:0,cols}},
+greatwall(o,hAt){const g=LG(),nm="万里の長城",cols=[];const L=o.len||200,seg=8;
+  for(let x=-L/2;x<L/2;x+=seg){const cx=x+seg/2,y=hAt(cx,0);mk(uvScale(BOX(seg+.05,8,6),[seg/8,1]),LMAT.brickG,g,cx,y+3,0);mk(BOX(seg,.4,4.6),LMAT.stone,g,cx,y+7.05,0);
+    for(const sz of [-1,1])for(let k=0;k<2;k++)mk(BOX(1.6,1.4,.8),LMAT.brickG,g,cx-2+k*4,y+7.9,sz*2.6);
+    cols.push(C.box(V3(cx,y+3.2,0),V3(seg/2,4.8,3),0,nm))}
+  for(const tx of [-L/2+20,0,L/2-25]){const y=hAt(tx,0);mk(uvScale(BOX(11,13,11),[1.4,1.6]),LMAT.brickG,g,tx,y+5.5,0);mk(BOX(12,.6,12),LMAT.stone,g,tx,y+12.3,0);
+    const r=mk(new THREE.ConeGeometry(6.4,3,4).rotateY(Math.PI/4),LMAT.roof,g,tx,y+14.1,0);cols.push(C.box(V3(tx,y+6,0),V3(5.6,7,5.6),0,nm))}
+  return{g,pad:0,pave:0,cols}},
+moai(o,hAt){const g=LG(),nm="モアイ像",cols=[];const n=o.n||7,sp=9;mk(uvScale(BOX(n*sp+6,3,8),[3,1]),LMAT.tuff,g,0,hAt(0,0)+.8,0);
+  cols.push(C.box(V3(0,hAt(0,0)+1,0),V3((n*sp+6)/2,2,4),0,nm));
+  for(let i=0;i<n;i++){const x=(i-(n-1)/2)*sp,y=hAt(0,0)+2.3,f=LG();f.position.set(x,y,0);f.rotation.y=(Math.random()-.5)*.15;g.add(f);
+    mk(CYL(1.9,2.3,6,16),LMAT.tuff,f,0,3,0).scale.set(1,1,.75);const hg=new THREE.CylinderGeometry(1.45,1.7,6.4,16);const hp=hg.attributes.position;for(let q=0;q<hp.count;q++){if(hp.getZ(q)>0)hp.setZ(q,hp.getZ(q)*.75)}hg.computeVertexNormals();mk(hg,LMAT.tuff,f,0,8.7,.1);
+    mk(BOX(3.1,1,1.5),LMAT.tuff,f,0,10.6,1.05);for(const sx of [-1,1]){const ey=mk(BOX(1,.8,.6),LMAT.blackWood,f,sx*.75,9.8,1.25);ey.material=LMAT.slate}
+    const ns=mk(new THREE.ConeGeometry(.6,3.6,4).rotateY(Math.PI/4),LMAT.tuff,f,0,8.4,1.45);ns.scale.set(1,1,1.2);mk(BOX(1.8,.5,.7),LMAT.tuff,f,0,6.5,1.3);mk(BOX(2.2,1.6,1.1),LMAT.tuff,f,0,5.4,.95);for(const sx of [-1,1])mk(BOX(.45,3.6,.9),LMAT.tuff,f,sx*1.6,8.6,0);
+    if(i%3===1)mk(CYL(1.6,1.7,1.6,16),LMAT.red,f,0,12.4,0);cols.push(C.box(V3(x,y+6,0),V3(1.8,6,1.6),0,nm))}
+  return{g,pad:0,pave:0,cols}},
+colosseum(o,hAt){const g=LG(),nm="コロッセオ",cols=[];const A=36,B=30,N=72,gap=.42;
+  for(let i=0;i<N;i++){const a0=i/N*Math.PI*2,a1=(i+1)/N*Math.PI*2,am=(a0+a1)/2;let d=Math.atan2(Math.sin(am),Math.cos(am));if(Math.abs(d)<gap)continue;
+    const ruin=Math.abs(d)<gap+.7?.45+(Math.abs(d)-gap)/1.4:1;const hgt=20*Math.min(1,ruin)+(i%3===0?-1.5:0);
+    for(const [ra,rb,hh] of [[A,B,hgt],[A-6,B-6,hgt*.75]]){const p0=V3(Math.sin(a0)*ra,0,Math.cos(a0)*rb),p1=V3(Math.sin(a1)*ra,0,Math.cos(a1)*rb);const w=p0.distanceTo(p1),c=p0.clone().add(p1).multiplyScalar(.5),y=hAt(c.x,c.z);
+      const pl=mk(uvScale(new THREE.PlaneGeometry(w+.05,hh),[w/14,hh/9]),LMAT.arches,g,c.x,y+hh/2-.3,c.z);pl.rotation.y=Math.atan2(p1.x-p0.x,p1.z-p0.z)-Math.PI/2;
+      if(ra===A){mk(BOX(w,.8,6.4),LMAT.travertine,g,c.x,y+hh-.2,c.z).rotation.y=pl.rotation.y;cols.push(C.box(V3(c.x,y+hh/2,c.z-0),V3(w/2+.3,hh/2,3.4),pl.rotation.y,nm))}}}
+  return{g,pad:0,pave:0,cols}},
+taj(){const g=LG(),nm="タージ・マハル",cols=[];mk(uvScale(BOX(46,4,46),[6,1]),LMAT.marble,g,0,2,0);cols.push(C.box(V3(0,2,0),V3(23,2,23),0,nm));
+  const body=mk(uvScale(CYL(15,15,19,8),[4,2]).rotateY(Math.PI/8),LMAT.marble,g,0,13.5,0);cols.push(C.cap(V3(0,4,0),V3(0,40,0),14,nm));
+  for(let i=0;i<4;i++){const a=i*Math.PI/2;mk(BOX(7,13,.6),LMAT.blackWood,g,Math.sin(a)*13.9,11.5,Math.cos(a)*13.9).rotation.y=a}
+  mk(CYL(8.2,8.2,5,40),LMAT.marble,g,0,25.5,0);
+  const dome=new THREE.LatheGeometry([[0,0],[8.6,0],[10,3],[10.2,6],[9.2,9.5],[6.6,13],[3.2,16],[1,18],[0,18.6]].map(([r,y])=>new THREE.Vector2(r,y)),48);mk(dome,LMAT.marble,g,0,28,0);
+  mk(CYL(.25,.35,4,8),LMAT.gold,g,0,48.5,0);mk(new THREE.SphereGeometry(.6,12,8),LMAT.gold,g,0,47,0);
+  for(const [sx,sz] of [[1,1],[1,-1],[-1,1],[-1,-1]]){mk(CYL(2.6,2.6,3,8),LMAT.marble,g,sx*9,24.5,sz*9);mk(new THREE.SphereGeometry(2.7,16,10,0,Math.PI*2,0,Math.PI/2),LMAT.marble,g,sx*9,26,sz*9);
+    const mx=sx*21,mz=sz*21;mk(uvScale(CYL(1.5,1.9,34,16),[1,4]),LMAT.marble,g,mx,21,mz);for(const by of [14,26,37])mk(CYL(2.4,2.4,.6,16),LMAT.marble,g,mx,by,mz);
+    mk(new THREE.SphereGeometry(1.9,16,10,0,Math.PI*2,0,Math.PI/2),LMAT.marble,g,mx,39,mz);cols.push(C.cap(V3(mx,4,mz),V3(mx,40,mz),2,nm))}
+  return{g,pad:30,pave:30,cols}},
+kinkaku(){const g=LG(),nm="金閣",cols=[];mk(BOX(15,.8,12),LMAT.stone,g,0,.4,0);mk(BOX(13,5,10),LMAT.wood,g,0,3.3,0);
+  const roof=(w,d,y,h)=>{mk(BOX(w,.5,d),LMAT.roof,g,0,y,0);const r=mk(new THREE.ConeGeometry(Math.hypot(w,d)/2*.92,h,4).rotateY(Math.PI/4),LMAT.roof,g,0,y+h/2+.2,0);r.scale.set(1,1,d/w)};
+  roof(17,14,6.1,.01);mk(BOX(11,4.4,8.4),LMAT.gold,g,0,8.6,0);roof(15,12,11,.01);mk(BOX(7.6,4,7.6),LMAT.gold,g,0,13.4,0);roof(11,11,15.6,3.4);
+  const ph=mk(new THREE.ConeGeometry(.5,1.6,6),LMAT.gold,g,0,20,0);cols.push(C.box(V3(0,9,0),V3(7.5,9,6.5),0,nm));
+  return{g,pad:11,pave:0,cols}},
+parthenon(){const g=LG(),nm="パルテノン神殿",cols=[];mk(BOX(50,1.2,24),LMAT.marbleOld,g,0,.6,0);mk(BOX(48,1.2,22),LMAT.marbleOld,g,0,1.8,0);mk(BOX(46,1.2,20),LMAT.marbleOld,g,0,3,0);
+  const cm=new THREE.InstancedMesh(new THREE.CylinderGeometry(.85,1,11,16),LMAT.marbleOld,46);cm.castShadow=true;const M=new THREE.Matrix4();let n=0;
+  for(let i=0;i<8;i++)for(const z of [-9,9]){M.makeTranslation(-20+i*40/7,9.1,z);cm.setMatrixAt(n++,M)}
+  for(let i=1;i<16;i++)for(const x of [-20,20]){if(n>=46)break;M.makeTranslation(x,9.1,-9+i*18/16);cm.setMatrixAt(n++,M)}cm.count=n;g.add(cm);
+  mk(BOX(44,2.6,19.5),LMAT.marbleOld,g,0,15.9,0);
+  const tri=new THREE.Shape();tri.moveTo(-9.75,0);tri.lineTo(9.75,0);tri.lineTo(0,4);tri.closePath();for(const x of [-21.5,21.5]){const pd=mk(new THREE.ExtrudeGeometry(tri,{depth:1.2,bevelEnabled:false}),LMAT.marbleOld,g,x,17.2,0);pd.rotation.y=Math.PI/2;pd.position.x+=x<0?-.6:-.6}
+  cols.push(C.box(V3(0,8.5,0),V3(23,8.5,10),0,nm));return{g,pad:28,pave:26,cols}},
+chichen(){const g=LG(),nm="ククルカンのピラミッド",cols=[];let y=0;for(let i=0;i<9;i++){const w=52-i*4.2,h=2.9;mk(uvScale(BOX(w,h,w),[w/10,1]),LMAT.lime,g,0,y+h/2,0);cols.push(C.box(V3(0,y+h/2,0),V3(w/2,h/2,w/2),0,nm));y+=h}
+  for(let i=0;i<4;i++){const a=i*Math.PI/2,st=LG();st.rotation.y=a;g.add(st);const s=mk(uvScale(BOX(8,.1,Math.hypot(y,21.5)),[1,12]),LMAT.lime,st,0,y/2,21.5/2+5.2);s.rotation.x=-Math.atan2(y,21.5);
+    for(const sx of [-1,1]){const b=mk(BOX(1.1,1.4,Math.hypot(y,21.5)),LMAT.lime,st,sx*4.5,y/2+.6,21.5/2+5.2);b.rotation.x=s.rotation.x}}
+  mk(uvScale(BOX(13,7,13),[2,1]),LMAT.lime,g,0,y+3.5,0);mk(BOX(3,4.4,.4),LMAT.blackWood,g,0,y+2.4,6.55);cols.push(C.box(V3(0,y+3.5,0),V3(6.5,3.5,6.5),0,nm));
+  return{g,pad:34,pave:0,cols}},
+opera(){const g=LG(),nm="オペラハウス",cols=[];mk(uvScale(BOX(46,5,30),[4,1]),LMAT.granite,g,0,2.5,0);cols.push(C.box(V3(0,2.5,0),V3(23,2.5,15),0,nm));
+  const shell=(x,z,s,ry)=>{const sh=new THREE.SphereGeometry(14,40,20,0,Math.PI*.55,0,Math.PI*.5);const m=mk(sh,LMAT.tile,g,x,5,z);m.scale.set(s*.55,s,s);m.rotation.y=ry;m.material.side=THREE.DoubleSide;return m};
+  shell(-10,0,1.15,-.25);shell(1,0,.95,-.25);shell(10,0,.75,-.25);shell(-6,-9,.7,2.9);shell(4,-9,.55,2.9);
+  cols.push(C.cap(V3(-12,5,0),V3(10,5,0),9,nm));return{g,pad:0,pave:0,cols}},
+bigben(){const g=LG(),nm="ビッグ・ベン",cols=[];mk(uvScale(BOX(12,44,12),[1,1]),LMAT.gothic,g,0,22,0);mk(BOX(14,10,14),LMAT.gothic,g,0,49,0);
+  for(let i=0;i<4;i++){const a=i*Math.PI/2,c=mk(new THREE.CircleGeometry(5.2,40),LMAT.clock,g,Math.sin(a)*7.06,49,Math.cos(a)*7.06);c.rotation.y=a;c.castShadow=false}
+  mk(uvScale(BOX(12,8,12),[1,.5]),LMAT.gothic,g,0,58,0);const sp=mk(new THREE.ConeGeometry(8.6,20,4).rotateY(Math.PI/4),LMAT.slate,g,0,72,0);
+  for(const [sx,sz] of [[1,1],[1,-1],[-1,1],[-1,-1]])mk(new THREE.ConeGeometry(.6,6,8),LMAT.gold,g,sx*6,65,sz*6);mk(CYL(.2,.2,6,8),LMAT.gold,g,0,84,0);
+  cols.push(C.box(V3(0,30,0),V3(7,30,7),0,nm));return{g,pad:12,pave:10,cols}},
+windmill(){const g=LG(),nm="風車";mk(uvScale(CYL(4.6,6.2,4,24),[4,1]),LMAT.brickG,g,0,2,0);mk(CYL(3.2,5.2,17,8),LMAT.tuff,g,0,12.5,0);mk(CYL(5.8,5.8,.5,8),LMAT.wood,g,0,8,0);
+  const cap=mk(BOX(5.4,3.2,6.2),LMAT.roof,g,0,22.2,0);const hub=LG();hub.position.set(0,21.6,3.6);hub.rotation.x=-.12;g.add(hub);const rot=LG();hub.add(rot);
+  for(let i=0;i<4;i++){const arm=LG();arm.rotation.z=i*Math.PI/2;rot.add(arm);mk(BOX(.45,15,.45),LMAT.wood,arm,0,7.5,0);const s=mk(new THREE.PlaneGeometry(2.6,13),LMAT.sail,arm,1.4,8.5,.1);s.castShadow=true}
+  mk(CYL(.6,.6,1.6,12),LMAT.blackWood,hub,0,0,0).rotation.x=Math.PI/2;
+  return{g,pad:8,pave:0,cols:[C.cap(V3(0,0,0),V3(0,24,0),5.5,nm)],anim:dt=>{rot.rotation.z-=dt*.9}}},
+himeji(){const g=LG(),nm="姫路城",cols=[];const base=new THREE.CylinderGeometry(15*Math.SQRT2*.82,18*Math.SQRT2,9,4,1);base.rotateY(Math.PI/4);mk(base,LMAT.granite,g,0,4.5,0);
+  let y=9;const tiers=[[24,18,5.5],[20,15,5],[16,12,4.6],[12,9,4.2],[8.5,7,4]];
+  for(const [w,d,h] of tiers){mk(BOX(w,h,d),LMAT.plaster,g,0,y+h/2,0);mk(BOX(w+3.2,.5,d+3.2),LMAT.roof,g,0,y+h+.1,0);const r=mk(new THREE.ConeGeometry(Math.hypot(w+3,d+3)/2*.98,2.6,4).rotateY(Math.PI/4),LMAT.roof,g,0,y+h+1.5,0);r.scale.set(1,1,(d+3)/(w+3));
+    const gb=new THREE.Shape();gb.moveTo(-3,0);gb.lineTo(3,0);gb.lineTo(0,2.4);gb.closePath();mk(new THREE.ExtrudeGeometry(gb,{depth:.6,bevelEnabled:false}),LMAT.plaster,g,0,y+h+.3,d/2+1);y+=h+1.2}
+  for(const sx of [-1,1])mk(new THREE.ConeGeometry(.5,1.6,6),LMAT.gold,g,sx*3.4,y+2.6,0).rotation.z=sx*.4;
+  cols.push(C.box(V3(0,4.5,0),V3(16,4.5,16),Math.PI/4*0,nm),C.box(V3(0,20,0),V3(12,12,9),0,nm));return{g,pad:22,pave:0,cols}},
+pagoda(){const g=LG(),nm="五重塔",cols=[];let y=0;mk(BOX(10,1.2,10),LMAT.stone,g,0,.6,0);y=1.2;
+  for(let i=0;i<5;i++){const w=7.4-i*.7,h=3.1;mk(BOX(w,h,w),LMAT.vermilion,g,0,y+h/2,0);mk(BOX(w*.72,h*.6,w+.05),LMAT.plaster,g,0,y+h/2,0);
+    const r=mk(new THREE.ConeGeometry((w+3.4)*.75,1.6,4).rotateY(Math.PI/4),LMAT.roof,g,0,y+h+.6,0);y+=h+.9}
+  mk(CYL(.3,.3,8,8),LMAT.gold,g,0,y+4,0);for(let k=0;k<7;k++)mk(new THREE.TorusGeometry(.7,.12,6,16),LMAT.gold,g,0,y+1.5+k*.8,0).rotation.x=Math.PI/2;
+  cols.push(C.box(V3(0,y/2,0),V3(4.5,y/2,4.5),0,nm));return{g,pad:9,pave:7,cols}},
+};
+// 富士山（遠景・当たり判定なし）
+function buildFuji(dirx,dirz,dist=7600,base=-120){const geo=new THREE.ConeGeometry(3400,1500,96,24,true);const p=geo.attributes.position,col=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){const y=p.getY(i)+575,a=Math.atan2(p.getZ(i),p.getX(i));const snow=y>1020+70*Math.sin(a*9)+45*Math.sin(a*23);const r=Math.hypot(p.getX(i),p.getZ(i));
+    if(y<1450){const k=1+.035*Math.sin(a*31)*(1-y/1500);p.setX(i,p.getX(i)*k);p.setZ(i,p.getZ(i)*k)}
+    const c0=snow?[.93,.95,.98]:[.24+.05*Math.sin(a*13),.29,.36],hz=[.62,.7,.78],k=.42;const c=c0.map((v,j)=>new THREE.Color().setRGB(v*(1-k)+hz[j]*k,0,0).convertSRGBToLinear().r);col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2]}
+  geo.setAttribute("color",new THREE.BufferAttribute(col,3));geo.computeVertexNormals();const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9,fog:false}));
+  m.position.set(dirx*dist,base+750,dirz*dist);m.renderOrder=-.5;return m}
+// ティーの看板
+function teeSign(h){const c=document.createElement("canvas");c.width=512;c.height=256;const x=c.getContext("2d");x.fillStyle="#24382e";x.fillRect(0,0,512,256);x.strokeStyle="#c9a64a";x.lineWidth=8;x.strokeRect(10,10,492,236);
+  x.fillStyle="#f3ead2";x.font="900 46px 'Zen Kaku Gothic New',sans-serif";x.textAlign="center";x.fillText(`HOLE ${h.n}  PAR ${h.p}`,256,78);x.font="900 54px 'Zen Kaku Gothic New',sans-serif";x.fillStyle="#ffd36a";x.fillText(h.name||"",256,152);
+  x.font="700 34px 'JetBrains Mono',monospace";x.fillStyle="#f3ead2";x.fillText(`${h.y} YARDS · HDCP ${h.hc}`,256,212);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;
+  const g=LG();mk(BOX(3.6,1.8,.12),new THREE.MeshStandardMaterial({map:t,roughness:.6}),g,0,1.6,0);for(const sx of [-1.5,1.5])mk(CYL(.07,.07,1.6,8),LMAT.wood,g,sx,.8,-.08);return g}
+
+const LM_PAD={liberty:14,pisa:12,sphinx:26,pyramid:62,kinkaku:11,taj:30,parthenon:28,chichen:34,bigben:12,windmill:8,himeji:22,pagoda:9};
+const LM_PAVE={liberty:13,pisa:12,taj:30,parthenon:26,bigben:10,pagoda:7};
+const LM_CLEAR={eiffel:30,pyramid:75,sphinx:36,stonehenge:32,colosseum:44,moai:52,opera:30,taj:60,parthenon:40,chichen:50,himeji:36,bigben:40,windmill:26,kinkaku:22,pagoda:16,liberty:22,greatwall:0,torii:0};
+/* ================= 世界遺産コースのホール（模式座標 200x340、ティー下→グリーン上） ================= */
+const WORLD=[
+{n:1,p:4,y:415,hc:7,az:20,name:"自由の女神",pts:[[100,318],[106,200],[94,55]],ob:"R",fw:15,elev:[[0,0],[1,4]],raised:.8,
+ ponds:[[64,192,20,64,0,[[60,192,9]]]],bunk:[[124,212,7,11,10],[120,166,6,9,-10],[78,72,8,6,30],[114,46,7,5,-20]],lm:[{t:"liberty",x:60,y:192,r:.6}],
+ aims:[[110,215],[96,56]],club:"3W",tips:["右のバンカーと左の湖の間、FWセンターへ","2打目は左の湖とバンカーを避けて右半分へ"],danger:"左の湖（自由の女神の島）・右OB"},
+{n:2,p:4,y:395,hc:11,az:60,name:"ピサの斜塔",pts:[[100,318],[98,60]],ob:"LR",fw:19,elev:[[0,0],[1,-6]],raised:.8,
+ ponds:[[138,70,14,22,0]],bunk:[[74,168,7,12,0],[124,162,7,12,0],[82,82,8,5,0]],lm:[{t:"pisa",x:99,y:192,r:0}],
+ aims:[[80,205],[98,62]],club:"UT",tips:["斜塔の左を抜くのが安全。右は池に近づく","塔の先の左右バンカーに届くなら手前に刻む"],danger:"斜塔への直撃・左右OB・グリーン右の池"},
+{n:3,p:5,y:560,hc:3,az:110,name:"エッフェル塔",pts:[[100,322],[100,180],[110,40]],ob:"L",fw:15,elev:[[0,0],[.5,3],[1,-2]],raised:.8,
+ creeks:[{p:[[20,120],[100,106],[180,96]],w:9}],bunk:[[126,204,7,10,15],[78,142,6,10,-10],[132,74,7,6,0],[90,52,6,5,0]],lm:[{t:"eiffel",x:100,y:176,r:0}],
+ aims:[[100,214],[98,132],[110,42]],club:"3W",tips:["エッフェル塔の脚の間を低い球で抜くか、手前に置く","2打目は小川の手前まで。無理に越えない","3打目は小川越え。グリーン右手前のバンカーに注意"],danger:"塔の脚・小川・左OB"},
+{n:4,p:4,y:440,hc:5,az:160,name:"ギザのピラミッド",pts:[[100,318],[110,190],[100,58]],ob:"R",fw:14,elev:[[0,0],[1,2]],raised:.6,
+ ponds:[[134,138,10,14,0]],waste:[[52,200,26,95,0]],bunk:[[78,80,7,6,0],[124,52,6,5,0]],lm:[{t:"pyramid",x:22,y:150,r:.2},{t:"sphinx",x:140,y:76,r:-1.9}],
+ aims:[[118,200],[100,60]],club:"3W",tips:["左は一面の砂漠（ウェイストエリア）。FW右寄りへ","2打目はオアシスの池を避けて左から"],danger:"左の砂漠・右のオアシスの池・右OB"},
+{n:5,p:3,y:195,hc:15,az:200,name:"ストーンヘンジ",pts:[[100,318],[100,62]],ob:"L",fw:12,elev:[[0,0],[1,-8]],raised:.6,nobunker:1,
+ bunk:[[68,96,8,10,0],[134,92,8,10,0]],lm:[{t:"stonehenge",x:100,y:62,r:"auto"}],
+ aims:[[100,70]],tips:["石の輪の切れ目（正面）から高い球で","奥は石に当たると大きく跳ねる。手前から"],danger:"ストーンヘンジの石・左右のバンカー"},
+{n:6,p:4,y:365,hc:9,az:250,name:"厳島神社の大鳥居",pts:[[100,318],[96,190],[104,62]],fw:15,elev:[[0,0],[1,0]],raised:1,
+ ponds:[[102,106,40,20,0]],bunk:[[72,200,7,10,0],[128,60,6,5,0]],lm:[{t:"torii",x:102,y:104,r:0}],
+ aims:[[96,200],[104,62]],club:"1W",tips:["2打目は池越え。大鳥居の左右どちらを通すか決める","グリーン奥は下り傾斜。手前のカラーから"],danger:"グリーン手前の池・大鳥居"},
+{n:7,p:5,y:575,hc:1,az:300,name:"万里の長城",pts:[[100,322],[96,200],[112,120],[100,40]],ob:"LR",fw:14,elev:[[0,0],[.6,5],[1,8]],raised:1,
+ bunk:[[80,232,7,10,0],[124,216,7,10,0],[86,70,7,6,0],[118,52,6,5,0]],lm:[{t:"greatwall",x:100,y:164,r:-.12,len:230}],
+ aims:[[96,222],[110,122],[100,42]],club:"3W",tips:["1打目は左右のバンカーの間へ","2打目で長城（高さ約8Y）を越える。届かなければ手前に刻む","3打目は打ち上げ。1番手大きく"],danger:"万里の長城・左右OB"},
+{n:8,p:4,y:405,hc:13,az:340,name:"モアイ像",pts:[[100,318],[100,190],[90,56]],ob:"R",fw:14,elev:[[0,0],[1,-3]],raised:.6,
+ ponds:[[52,170,20,112,0]],bunk:[[110,140,6,8,0]],lm:[{t:"moai",x:124,y:186,r:-Math.PI/2+.05,n:8}],
+ aims:[[100,205],[92,58]],club:"3W",tips:["左は海、右はモアイ像の列。FWセンターを外さない","グリーン左は海に向かって下る"],danger:"左の海・右のモアイ像"},
+{n:9,p:4,y:425,hc:17,az:30,name:"コロッセオ",pts:[[100,318],[100,180],[100,58]],ob:"LR",fw:15,elev:[[0,0],[1,2]],raised:.6,nobunker:1,
+ bunk:[[78,192,7,10,0],[122,176,7,10,0]],lm:[{t:"colosseum",x:100,y:58,r:"auto"}],
+ aims:[[100,190],[100,64]],club:"1W",tips:["グリーンはコロッセオの中。正面の崩れた入口から狙う","高い球なら壁越えも可。届かないと壁に当たって跳ね返る"],danger:"コロッセオの壁（高さ約20Y）"},
+{n:10,p:4,y:445,hc:6,az:80,name:"タージ・マハル",pts:[[100,318],[100,58]],ob:"LR",fw:22,elev:[[0,0],[1,0]],raised:.6,
+ ponds:[[100,168,5,74,0]],bunk:[[70,110,7,10,0],[130,110,7,10,0]],lm:[{t:"taj",x:100,y:6,r:0}],
+ aims:[[80,200],[100,60]],club:"1W",tips:["中央に細長い水路。左右どちらかのFWを選ぶ","グリーン奥はタージ・マハルの基壇。オーバー厳禁"],danger:"中央の水路・グリーン奥の基壇"},
+{n:11,p:3,y:175,hc:14,az:130,name:"金閣寺",pts:[[100,318],[100,64]],fw:12,elev:[[0,0],[1,0]],raised:.8,nobunker:1,
+ ponds:[[96,172,52,72,0]],bunk:[[134,60,8,6,0]],lm:[{t:"kinkaku",x:60,y:96,r:.3}],
+ aims:[[104,66]],tips:["池越えのパー3。金閣の右、グリーン中央へ","手前ショートは池。迷ったら大きめ"],danger:"鏡湖池・金閣（左）"},
+{n:12,p:4,y:395,hc:4,az:180,name:"パルテノン神殿",pts:[[100,318],[94,180],[104,58]],ob:"L",fw:15,elev:[[0,0],[.5,6],[.8,18],[1,24]],raised:1.2,
+ bunk:[[80,110,8,6,0],[124,100,8,6,0],[104,86,10,4,0]],lm:[{t:"parthenon",x:104,y:16,r:0}],
+ aims:[[94,200],[104,60]],club:"3W",tips:["2打目は強烈な打ち上げ。2番手大きく","グリーン手前の斜面のバンカーに捕まると大叩き"],danger:"打ち上げ・斜面のバンカー・左OB"},
+{n:13,p:5,y:530,hc:2,az:220,name:"チチェン・イッツァ",pts:[[100,322],[96,200],[150,130],[150,46]],ob:"L",fw:14,elev:[[0,0],[1,-4]],raised:.8,
+ ponds:[[178,68,10,22,0]],bunk:[[78,168,7,10,0],[162,152,7,8,0],[128,60,6,6,0]],lm:[{t:"chichen",x:122,y:192,r:.15}],
+ aims:[[92,214],[146,136],[150,48]],club:"3W",tips:["コーナーにピラミッド。越えられないので左へ","2打目で右に曲がる。ピラミッドの左側を回る","グリーン右は池"],danger:"ピラミッド・密林・グリーン右の池"},
+{n:14,p:3,y:210,hc:12,az:260,name:"シドニー・オペラハウス",pts:[[100,318],[104,64]],fw:12,elev:[[0,0],[1,0]],raised:1,nobunker:1,
+ ponds:[[98,206,70,78,0]],bunk:[[96,88,9,4,0]],lm:[{t:"opera",x:158,y:72,r:-1.4}],
+ aims:[[102,66]],tips:["全面海越えのパー3。キャリーで届く番手を","右のオペラハウスの屋根に当たると海へ"],danger:"シドニー湾（全面池）・右のオペラハウス"},
+{n:15,p:4,y:420,hc:8,az:320,name:"ビッグ・ベン",pts:[[100,318],[104,190],[96,58]],ob:"R",fw:15,elev:[[0,0],[1,0]],raised:.8,
+ creeks:[{p:[[20,122],[100,110],[180,114]],w:12}],bunk:[[126,204,7,10,0],[80,182,6,9,0],[118,60,6,5,0]],lm:[{t:"bigben",x:68,y:64,r:0}],
+ aims:[[104,200],[96,60]],club:"3W",tips:["テムズ川（クリーク）の手前まで。2打目は川越え","グリーン左のビッグ・ベンに当たると跳ね返る"],danger:"川・左のビッグ・ベン・右OB"},
+{n:16,p:5,y:515,hc:10,az:10,name:"キンデルダイクの風車",pts:[[100,322],[100,40]],ob:"R",fw:15,elev:[[0,0],[1,0]],raised:.6,
+ creeks:[{p:[[18,244],[182,236]],w:7},{p:[[18,124],[182,116]],w:7}],bunk:[[120,272,6,9,0],[84,150,6,9,0],[118,56,6,5,0]],
+ lm:[{t:"windmill",x:72,y:200,r:.4},{t:"windmill",x:130,y:168,r:-.5},{t:"windmill",x:74,y:90,r:.8}],
+ aims:[[100,254],[100,140],[100,42]],club:"UT",tips:["2本の運河が横切る。1打目は手前の運河の手前へ","2打目は2本目の運河の手前まで刻む","3打目は風車を避けてグリーンへ"],danger:"2本の運河・風車"},
+{n:17,p:3,y:165,hc:16,az:90,name:"姫路城",pts:[[100,318],[100,62]],fw:12,elev:[[0,0],[1,0]],raised:2,nobunker:1,
+ ponds:[[100,62,44,38,0,[[100,62,24]]]],lm:[{t:"himeji",x:100,y:-2,r:0}],
+ aims:[[100,64]],tips:["お堀に囲まれたアイランドグリーン","奥に外すと石垣、手前は堀"],danger:"お堀（池）・アイランドグリーン"},
+{n:18,p:5,y:575,hc:18,az:140,name:"富士山と五重塔",pts:[[100,322],[90,190],[112,110],[102,40]],ob:"R",fw:15,elev:[[0,0],[.5,-6],[1,-10]],raised:.8,
+ ponds:[[68,88,16,26,0]],bunk:[[118,206,7,10,0],[70,168,6,9,0],[130,70,7,6,0]],lm:[{t:"pagoda",x:58,y:48,r:.3}],
+ aims:[[92,210],[112,114],[102,42]],club:"3W",tips:["富士山に向かって打つ最終ホール。FW左寄りへ","2打目は右バンカーの左","グリーン左は池と五重塔"],danger:"グリーン左の池・五重塔・右OB"},
+];
+
 /* ================= ホールのシーン生成 ================= */
 let world=null;     // ホールごとのオブジェクト群
 let trees=[],treeGrid=new Map();
@@ -961,6 +1262,7 @@ function paintTexture(hd,TW,TH,shade,SG){
     const sf=surf(wx,wz);let r,g,bb,br=1,sp=SPV[sf];
     const nn=hash(i,j)-.5,lf=fbm(wx*.035,wz*.035,3),mf=fbm(wx*.008,wz*.008,3);
     const mix=(A,B,t)=>{r=A[0]+(B[0]-A[0])*t;g=A[1]+(B[1]-A[1])*t;bb=A[2]+(B[2]-A[2])*t};
+    if(sf===S_BK&&hd.bunkers.some(b=>b.depth<.5&&Math.hypot(...bLocal(hd,b,wx,wz))<1)){r=176;g=150;bb=108;br=.92+lf*.5+nn*.22}else
     switch(sf){
       case S_FW:{mix(COL.fw,COL.dry,ss(.25,.7,mf)*.25);const s=near(hd,wx,wz).s;br=((Math.floor(s/9)&1)?1.04:.96)+lf*.06+nn*.04;break}
       case S_GR:{mix(COL.gr,COL.fw,.15+lf*.15);const [u]=gLocal(hd,wx,wz);br=((Math.floor((u+40)/2.4)&1)?1.025:.975)+nn*.02;break}
@@ -1063,7 +1365,7 @@ function buildScene(){
     const hgt=cedar?(16+rnd()*14):(10+rnd()*8);const wd=cedar?hgt*(.36+rnd()*.12):hgt*(.95+rnd()*.3);trees.push({x,z,y,cedar,kind,hgt,wd,inner})};
   const area=w*d,N1=Math.round(area/(cfg.q?55:90));
   for(let i=0;i<N1;i++){const x=b.x0+rnd()*w,z=b.z0+rnd()*d;const sf=surf(x,z);if(sf!==S_DEEP&&sf!==S_VA)continue;
-    const n=near(hd,x,z);if(n.dist<37+rnd()*6&&sf!==S_VA)continue;if(greenR(hd,x,z)<3.3)continue;if(Math.hypot(x,z)<22)continue;if(hd.ponds.some(p=>ell(p,x,z)<1.4))continue;place(x,z,true)}
+    const n=near(hd,x,z);if(n.dist<37+rnd()*6&&sf!==S_VA)continue;if(greenR(hd,x,z)<3.3)continue;if(Math.hypot(x,z)<22)continue;if(hd.ponds.some(p=>ell(p,x,z)<1.4))continue;if(hd.pads.some(q=>Math.hypot(x-q.x,z-q.z)<q.r+6))continue;if(hd.lms.some(o=>Math.hypot(x-o.x,z-o.z)<(LM_CLEAR[o.t]||0)))continue;place(x,z,true)}
   const N2=cfg.q?14000:6000;
   for(let i=0;i<N2;i++){const a=rnd()*Math.PI*2,r=Math.sqrt(rnd())*2600;const x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;if(x>b.x0&&x<b.x1&&z>b.z0&&z<b.z1)continue;place(x,z,false)}
   // 樹冠の影グリッド
@@ -1094,13 +1396,24 @@ function buildScene(){
   seaMesh.position.y=SEA_LEVEL;
   // 池
   const waterMat=new THREE.MeshStandardMaterial({color:lin(0x1c3029),roughness:.04,metalness:0,normalMap:seaMat.normalMap,normalScale:new THREE.Vector2(.06,.06),transparent:true,opacity:.96});
-  for(const p of hd.ponds){const m=new THREE.Mesh(new THREE.CircleGeometry(1,64),waterMat);m.rotation.x=-Math.PI/2;m.scale.set(p.rx*1.03,p.rz*1.03,1);m.position.set(p.x,p.lv,p.z);m.receiveShadow=true;world.add(m)}
+  for(const p of hd.ponds){const m=new THREE.Mesh(new THREE.CircleGeometry(1,64),waterMat);m.rotation.set(-Math.PI/2,0,p.a||0);m.scale.set(p.rx*1.03,p.rz*1.03,1);m.position.set(p.x,p.lv,p.z);m.receiveShadow=true;world.add(m)}
   // 樹木メッシュ
   const mk=(list,T,shadow)=>{if(!list.length)return;const m=new THREE.InstancedMesh(T.geo,T.mat,list.length);m.customDepthMaterial=T.dep;const M=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),c=new THREE.Color();
     list.forEach((t,i)=>{e.set(0,rnd()*6.28,0);q.setFromEuler(e);M.compose(new THREE.Vector3(t.x,t.y-.4,t.z),q,new THREE.Vector3(t.wd,t.hgt,t.wd));m.setMatrixAt(i,M);const v=.8+rnd()*.32;c.setRGB(v*(.96+rnd()*.08),v,v*(.92+rnd()*.1));m.setColorAt(i,c)});
     m.castShadow=shadow;m.receiveShadow=true;world.add(m)};
   for(let k=0;k<3;k++){mk(trees.filter(t=>t.inner&&t.kind===k),TREE_T[k],true);mk(trees.filter(t=>!t.inner&&t.kind===k),TREE_T[k],false)}
   for(const t of trees)if(t.inner){const key=Math.floor(t.x/12)+","+Math.floor(t.z/12);(treeGrid.get(key)||treeGrid.set(key,[]).get(key)).push(t)}
+  // ランドマーク・看板・富士山
+  for(const o of hd.lms){const y0=hd.pads.find(q=>q.x===o.x&&q.z===o.z)?.h??H(o.x,o.z),rot=o.r||0,s=o.s||1,cr=Math.cos(rot),sr=Math.sin(rot);
+    const hAt=(lx,lz)=>H(o.x+(lx*cr+lz*sr)*s,o.z+(-lx*sr+lz*cr)*s)-y0;
+    const L=LM[o.t](o,hAt);L.g.position.set(o.x,y0,o.z);L.g.rotation.y=rot;L.g.scale.setScalar(s);world.add(L.g);if(L.anim)hd.anim.push(L.anim);
+    const tw=v=>({x:o.x+(v.x*cr+v.z*sr)*s,y:y0+v.y*s,z:o.z+(-v.x*sr+v.z*cr)*s});
+    for(const c of L.cols){let w;if(c.t==="cap"){const a=tw(c.a),b=tw(c.b);w={t:"cap",a,b,r:c.r*s,bx:(a.x+b.x)/2,bz:(a.z+b.z)/2,br:Math.hypot(a.x-b.x,a.z-b.z)/2+c.r*s+1}}
+      else if(c.t==="box"){const q=tw(c.c);w={t:"box",c:q,h:{x:c.h.x*s,y:c.h.y*s,z:c.h.z*s},ry:(c.ry||0)+rot,bx:q.x,bz:q.z,br:Math.hypot(c.h.x,c.h.z)*s+1}}
+      else{const q=tw(c.c);w={t:"pyr",c:q,hb:c.hb*s,h:c.h*s,ry:rot,bx:q.x,bz:q.z,br:c.hb*s*1.5+1}}
+      w.nm=c.nm;hd.cols.push(w)}}
+  if(hd.h.name){const sg=teeSign(hd.h);sg.position.set(-7.5,H(-7.5,2),2);sg.rotation.y=.35;world.add(sg)}
+  if(HOLES===WORLD){const last=hd.segs[hd.segs.length-1],f18=hd.h.n===18;world.add(buildFuji(f18?last.fx:-hd.sea[0],f18?last.fz:-hd.sea[1]))}
   // OB杭・1ペナ杭
   const ob=hd.h.ob||"",pen=hd.h.pen||"";const obs=[],pens=[];
   for(let s=10;s<hd.len+30;s+=13){for(const sd of [-1,1]){const lab=sd<0?"L":"R";const p=lateralPt(hd,s,sd*(hd.obD));if(ob.includes(lab))obs.push(p);if(pen.includes(lab))pens.push(lateralPt(hd,s,sd*hd.penD))}}
@@ -1159,7 +1472,7 @@ function loadHole(i){
     $("bNext").hidden=true;$("bOK").hidden=true;$("bGive").hidden=true;
     $("loading").hidden=true;
     toast(`HOLE ${HD.h.n}  PAR ${HD.h.p}`,`${HD.h.y}Y · HDCP ${HD.h.hc}`,2200);updateSP();
-    caddieSay(`${HD.h.n}番、${HD.h.y}ヤードのパー${HD.h.p}です。${HD.h.tips[0].split("：")[0]}を狙いましょう。${HD.h.danger}に注意してください。`,6000);
+    caddieSay(HD.h.name?`${HD.h.n}番「${HD.h.name}」、${HD.h.y}ヤードのパー${HD.h.p}です。${HD.h.tips[0]}。${HD.h.danger}に注意！`:`${HD.h.n}番、${HD.h.y}ヤードのパー${HD.h.p}です。${HD.h.tips[0].split("：")[0]}を狙いましょう。${HD.h.danger}に注意してください。`,6500);
   },30)}
 
 function nextTarget(){ // 攻略の狙い目のうち、現在地より先で届く範囲の最初の地点
@@ -1220,6 +1533,7 @@ function stepBall(){
     // 木
     if(!f.tree){const lst=treeGrid.get(Math.floor(p.x/12)+","+Math.floor(p.z/12));if(lst)for(const t of lst){const dy=p.y-t.y;if(dy<t.hgt*.12||dy>t.hgt)continue;
       const rr=t.cedar?t.wd*.46*(1-(dy-t.hgt*.3)/(t.hgt*.7)):t.wd*.4;if(Math.hypot(p.x-t.x,p.z-t.z)<Math.max(.3,rr)){f.tree=true;v.x*=-.15+Math.random()*.2;v.z*=-.15+Math.random()*.2;v.y*=.1;sfx("木に当たった！");SND.tree();break}}}
+    if(HD.cols.length){const hc=hitCols(p,v,false);if(hc){if(!f.lmHit){f.lmHit=1;sfx(`${hc.nm}に当たった！`);SND.stone()}if(f.t>14||(Math.hypot(v.x,v.y,v.z)<1.2&&p.y-H(p.x,p.z)>.5))return end("unplay")}}
     const gy=H(p.x,p.z);
     if(p.y<=gy){p.y=gy;const sfc=surf(p.x,p.z);if(f.bounces===0&&sfc!==S_WA)SND.land(sfc,Math.hypot(v.x,v.y,v.z));
       if(sfc===S_WA){return end("water")}
@@ -1235,7 +1549,7 @@ function stepBall(){
     v.x+=-G*hx/q*DT;v.z+=-G*hz/q*DT;
     let sp=Math.hypot(v.x,v.z);const dec=mu*G/Math.sqrt(q)*DT;
     if(sp<=dec){v.x=0;v.z=0;sp=0}else{v.x-=v.x/sp*dec;v.z-=v.z/sp*dec;sp-=dec}
-    p.x+=v.x*DT;p.z+=v.z*DT;p.y=H(p.x,p.z);
+    p.x+=v.x*DT;p.z+=v.z*DT;if(HD.cols.length)hitCols(p,v,true);p.y=H(p.x,p.z);
     const dc=Math.hypot(p.x-HD.cup.x,p.z-HD.cup.z);
     if(dc<.06&&sp<1.45)return end("holed");
     if(dc<.07&&sp>=1.45){const a=(Math.random()-.5)*.8;const c=Math.cos(a),s2=Math.sin(a);const vx=v.x*c-v.z*s2;v.z=v.x*s2+v.z*c;v.x=vx*.8;v.z*=.8}
@@ -1245,6 +1559,19 @@ function stepBall(){
   }
   if(((f.t/DT)|0)%4===0)f.pts.push(new THREE.Vector3(p.x,p.y,p.z));
 }
+function hitCols(p,v,rolling){let hit=null;
+  for(const c of HD.cols){if(Math.abs(p.x-c.bx)>c.br||Math.abs(p.z-c.bz)>c.br)continue;let nx=0,ny=0,nz=0,pen=0;
+    if(c.t==="cap"){const ax=c.a.x,ay=c.a.y,az=c.a.z,bx=c.b.x-ax,by=c.b.y-ay,bz=c.b.z-az,t=clamp(((p.x-ax)*bx+(p.y-ay)*by+(p.z-az)*bz)/(bx*bx+by*by+bz*bz),0,1);
+      let dx=p.x-(ax+bx*t),dy=p.y-(ay+by*t),dz=p.z-(az+bz*t);const d=Math.hypot(dx,dy,dz);if(d>=c.r+.05)continue;if(d<1e-4){dx=1;dy=dz=0}else{dx/=d;dy/=d;dz/=d}nx=dx;ny=dy;nz=dz;pen=c.r+.05-d}
+    else if(c.t==="box"){const cs=Math.cos(c.ry),sn=Math.sin(c.ry),dx=p.x-c.c.x,dz=p.z-c.c.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs,ly=p.y-c.c.y;
+      const ox=c.h.x+.05-Math.abs(lx),oy=c.h.y+.05-Math.abs(ly),oz=c.h.z+.05-Math.abs(lz);if(ox<=0||oy<=0||oz<=0)continue;let lnx=0,lnz=0;
+      if(oy<ox&&oy<oz){ny=Math.sign(ly)||1;pen=oy}else if(ox<oz){lnx=Math.sign(lx)||1;pen=ox}else{lnz=Math.sign(lz)||1;pen=oz}nx=lnx*cs+lnz*sn;nz=-lnx*sn+lnz*cs}
+    else{const ly=p.y-c.c.y;if(ly<0||ly>c.h)continue;const half=c.hb*(1-ly/c.h),dx=p.x-c.c.x,dz=p.z-c.c.z;if(Math.abs(dx)>half||Math.abs(dz)>half)continue;
+      const sl=c.hb/c.h;if(Math.abs(dx)>Math.abs(dz)){nx=Math.sign(dx);ny=sl}else{nz=Math.sign(dz);ny=sl}const l=Math.hypot(nx,ny,nz);nx/=l;ny/=l;nz/=l;pen=(half-Math.max(Math.abs(dx),Math.abs(dz)))/l+.05}
+    if(rolling){ny=0;const l=Math.hypot(nx,nz)||1;nx/=l;nz/=l}
+    p.x+=nx*pen;p.y+=ny*pen;p.z+=nz*pen;const vn=v.x*nx+v.y*ny+v.z*nz;if(vn<0){v.x-=1.45*vn*nx;v.y-=1.45*vn*ny;v.z-=1.45*vn*nz;v.x*=.86;v.z*=.86}
+    hit=c}
+  return hit}
 function normal(x,z){const e=.3,hx=(H(x+e,z)-H(x-e,z))/(2*e),hz=(H(x,z+e)-H(x,z-e))/(2*e);const l=Math.hypot(hx,1,hz);return{x:-hx/l,y:1/l,z:-hz/l}}
 let sfxT=0;function sfx(t){toast(t,"",1100)}
 
@@ -1259,7 +1586,7 @@ function end(kind){
     caddieSay(st.strokes===1?"ホールインワン！信じられません！":({"-2":"イーグルです！すごい！","-1":"ナイスバーディー！","0":"ナイスパー！","1":"ボギーです。次で取り返しましょう。"}[diff]||"お疲れさまでした。次のホールへ行きましょう。"),4000);
     if(diff<=0)AN.clap=1.8;if(diff<0){st.sp.stock=Math.min(9,st.sp.stock+1);updateSP();setTimeout(()=>caddieSay("バーディーのごほうびにパワーショットが1回増えました！",3500),4200)}
     $("bNext").hidden=false;$("bNext").textContent=st.hole<17?"次のホールへ ▶":"スコアカード ▶";updateHoleUI();drawMini();return}
-  let pen=kind==="water"?(()=>{const pd=HD.ponds.find(q=>ell(q,p.x,p.z)<1.02)||HD.ponds[0];return{t:"WATER",p:pd}})():penalty(p.x,p.z);
+  let pen=kind==="unplay"?{t:"RE"}:kind==="water"?(()=>{const pd=HD.ponds.find(q=>ell(q,p.x,p.z)<1.02)||HD.ponds[0];return{t:"WATER",p:pd}})():penalty(p.x,p.z);
   if(pen){
     st.strokes++;if(kind==="water")SND.splash();else SND.miss();
     if(pen.t==="OB"||pen.t==="RE"){newPos={...st.prev};msg=pen.t==="OB"?"OB":"ペナルティ";sub="1打罰・元の位置から打ち直し"}
@@ -1336,7 +1663,7 @@ $("bFast").onclick=toggleFast;
 const app=$("app"),isNarrow=()=>matchMedia("(max-width:760px)").matches;
 function setMenu(open){app.classList.toggle("menu-open",open);$("bMenu").setAttribute("aria-expanded",open)}
 $("bMenu").onclick=e=>{e.stopPropagation();setMenu(!app.classList.contains("menu-open"))};
-$("toolbar").addEventListener("click",e=>{if(isNarrow()&&e.target.closest("button"))setTimeout(()=>setMenu(false),150)});
+$("toolbar").addEventListener("click",e=>{const b=e.target.closest("button");if(b&&(isNarrow()||["bCard","bSet","bHelp"].includes(b.id)))setTimeout(()=>setMenu(false),150)});
 $("holeSel").addEventListener("change",()=>setMenu(false));
 canvas.addEventListener("pointerdown",()=>setMenu(false));
 $("bMap").onclick=()=>{const o=!app.classList.contains("map-open");app.classList.toggle("map-open",o);$("bMap").setAttribute("aria-pressed",o);drawMini()};
@@ -1350,7 +1677,14 @@ $("bAims").onclick=()=>toggle("aims","bAims");$("bGuide").onclick=()=>toggle("gu
 $("bOK").onclick=()=>{if(st.phase!=="aim")return;st.strokes++;st.scores[st.hole]=st.strokes;st.phase="holed";toast("OK！",`${st.strokes}打 · ${totalTxt()}`,2500);$("bOK").hidden=true;$("bGive").hidden=true;$("bNext").hidden=false;$("bNext").textContent=st.hole<17?"次のホールへ ▶":"スコアカード ▶";updateHoleUI()};
 $("bGive").onclick=()=>{if(st.phase!=="aim")return;st.strokes=HD.h.p*2;st.scores[st.hole]=st.strokes;st.phase="holed";toast("ギブアップ",`ダブルパー ${st.strokes}打で記録`,2500);$("bGive").hidden=true;$("bOK").hidden=true;$("bNext").hidden=false;updateHoleUI()};
 $("bNext").onclick=()=>{if(st.hole<17)loadHole(st.hole+1);else openCard()};
-const sel=$("holeSel");HOLES.forEach((h,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${h.n}番 PAR${h.p} ${h.y}Y`;sel.appendChild(o)});
+const sel=$("holeSel");
+function fillHoleSel(){sel.innerHTML="";HOLES.forEach((h,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${h.n}番 PAR${h.p} ${h.y}Y`+(h.name?` ${h.name}`:"");sel.appendChild(o)})}
+function setCourse(id,load){cfg.course=id;saveCfg();HOLES=id==="world"?WORLD:ODAWARA;st.scores=Array(18).fill(null);fillHoleSel();$("courseSel").value=id;
+  ["cs0","cs1"].forEach((b,i)=>$(b).setAttribute("aria-pressed",(i===1)===(id==="world")));if(load)loadHole(0)}
+HOLES=cfg.course==="world"?WORLD:ODAWARA;fillHoleSel();$("courseSel").value=cfg.course||"odawara";
+$("courseSel").onchange=()=>{setCourse($("courseSel").value,true);$("courseSel").blur()};
+$("cs0").onclick=()=>setCourse("odawara",HOLES!==ODAWARA);$("cs1").onclick=()=>setCourse("world",HOLES!==WORLD);
+["cs0","cs1"].forEach((b,i)=>$(b).setAttribute("aria-pressed",(i===1)===(HOLES===WORLD)));
 sel.onchange=()=>{loadHole(+sel.value);sel.blur()};
 $("bHelp").onclick=()=>{$("mHelp").hidden=false};$("bStart").onclick=()=>{$("mHelp").hidden=true;auInit()};
 addEventListener("pointerdown",()=>auInit(),{once:true});
@@ -1411,7 +1745,8 @@ function w2m(x,z){const b=HD.box,W=mini.width,Hh=mini.height,sc=Math.min(W/(b.x1
 function drawMini(){if(!HD||!texCanvas)return;const W=mini.width,Hh=mini.height;mx.fillStyle="#22341f";mx.fillRect(0,0,W,Hh);
   const [ox,oy,sc]=w2m(HD.box.x0,HD.box.z0);mx.drawImage(texCanvas,ox,oy,(HD.box.x1-HD.box.x0)*sc,(HD.box.z1-HD.box.z0)*sc);
   // 池
-  mx.fillStyle="#3d8fb8";for(const p of HD.ponds){const [x,y]=w2m(p.x,p.z);mx.beginPath();mx.ellipse(x,y,p.rx*sc,p.rz*sc,0,0,7);mx.fill()}
+  mx.fillStyle="#3d8fb8";for(const p of HD.ponds){const [x,y]=w2m(p.x,p.z);mx.beginPath();mx.ellipse(x,y,p.rx*sc,p.rz*sc,-(p.a||0),0,7);mx.fill();for(const q of p.isl||[]){const [ix,iy]=w2m(q.x,q.z);mx.fillStyle="#3f6a35";mx.beginPath();mx.arc(ix,iy,q.r*sc,0,7);mx.fill();mx.fillStyle="#3d8fb8"}}
+  for(const o of HD.lms||[]){const [x,y]=w2m(o.x,o.z);mx.fillStyle="#f2e6c9";mx.strokeStyle="#3a2c18";mx.lineWidth=1.5;mx.beginPath();mx.moveTo(x,y-6);mx.lineTo(x+5,y+4);mx.lineTo(x-5,y+4);mx.closePath();mx.fill();mx.stroke()}
   if(cfg.aims){HD.aims.forEach((a,i)=>{const [x,y]=w2m(a.x,a.z);mx.fillStyle="#ff9a2a";mx.beginPath();mx.arc(x,y,8,0,7);mx.fill();mx.fillStyle="#fff";mx.font="700 11px JetBrains Mono,monospace";mx.textAlign="center";mx.textBaseline="middle";mx.fillText(i+1,x,y+1)})}
   const [bx,by]=w2m(st.ball.x,st.ball.z),[ax,ay]=w2m(st.aim.x,st.aim.z),[px,py]=w2m(HD.cup.x,HD.cup.z);
   mx.strokeStyle="rgba(255,255,255,.9)";mx.setLineDash([5,4]);mx.lineWidth=2;mx.beginPath();mx.moveTo(bx,by);mx.lineTo(ax,ay);mx.stroke();mx.setLineDash([]);
@@ -1464,6 +1799,7 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-lastT)
     for(let i=0;i<a.count;i++){const x=base[i*3];a.setZ(i,Math.sin(x*9-t*6)*.05*x*wv*2)}a.needsUpdate=true;
     flag.rotation.y=Math.atan2(-st.wind.z,st.wind.x)}
   seaMat.normalMap.offset.set(now*.0000025,now*.0000015);
+  if(HD&&HD.anim)for(const a of HD.anim)a(dt);
   sky.position.copy(camera.position);skyU.uTime.value=now/1000;grassU.uT.value=now/1000;
   // 影
   const sd=sunL.userData.dir;if(sd){camera.getWorldDirection(tmpV);const fx=camera.position.x+tmpV.x*90,fz=camera.position.z+tmpV.z*90;sunL.target.position.set(fx,camera.position.y-5,fz);sunL.position.set(fx+sd.x*600,camera.position.y-5+sd.y*600,fz+sd.z*600);sunL.target.updateMatrixWorld()}
@@ -1471,6 +1807,6 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-lastT)
   renderer.render(scene,camera)}
 
 loadHole(0);requestAnimationFrame(loop);
-window.__carry=i=>clubCarry(CLUBS[i])*SURF[st.lie].k;window.__sim={GOLFERS,CADDIE,toggleSP,SND,AU,AN,setChar:i=>setChar(i),st,HD:()=>HD,H:(x,z)=>H(x,z),shoot,loadHole,run:()=>{let i=0;while(st.fly&&i++<200000)stepBall();return i},skip:()=>{if(st.walk)st.walk.t=1},step:()=>{const f=st.fly;stepBall();return f?{x:f.p.x,y:f.p.y,z:f.p.z,m:f.mode}:null},pen:(x,z)=>penalty(x,z),surf:(x,z)=>surf(x,z),near:(x,z)=>({...near(HD,x,z)})};
+window.__carry=i=>clubCarry(CLUBS[i])*SURF[st.lie].k;window.__sim={setCourse:(id)=>setCourse(id,false),GOLFERS,CADDIE,toggleSP,SND,AU,AN,setChar:i=>setChar(i),st,HD:()=>HD,H:(x,z)=>H(x,z),shoot,loadHole,run:()=>{let i=0;while(st.fly&&i++<200000)stepBall();return i},skip:()=>{if(st.walk)st.walk.t=1},step:()=>{const f=st.fly;stepBall();return f?{x:f.p.x,y:f.p.y,z:f.p.z,m:f.mode}:null},pen:(x,z)=>penalty(x,z),surf:(x,z)=>surf(x,z),near:(x,z)=>({...near(HD,x,z)})};
 })();
 </script>
