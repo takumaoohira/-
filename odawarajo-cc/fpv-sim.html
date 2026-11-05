@@ -370,7 +370,7 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 
 /* ================= ホール幾何 ================= */
 let HD=null; // 現在ホールの幾何
-const SEA_LEVEL=-250;
+let SEA_LEVEL=-250;
 function buildHole(h){
   const P=h.pts;let L=0;for(let i=1;i<P.length;i++)L+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);
   const k=h.y/L,T=P[0];
@@ -385,6 +385,7 @@ function buildHole(h){
   const sunRel=(220-h.az)*Math.PI/180;
   const sun=[Math.cos(sunRel)*f0.fx+Math.sin(sunRel)*f0.rx, Math.cos(sunRel)*f0.fz+Math.sin(sunRel)*f0.rz];
   const Gc=C[C.length-1];
+  THEME=HOLES===WORLD?THEMES[WORLD_THEME[h.n-1]]:THEMES.odawara;SEA_LEVEL=-250;
   const hd={h,k,C,segs,len:s0,sea,sun,G:{x:Gc[0],z:Gc[1],fx:last.fx,fz:last.fz,rx:last.rx,rz:last.rz,ra:15,rl:12},
     obD:(h.fw||h.narrow)?(h.fw||h.narrow)+19:40,penD:38,fwH:h.fw||h.narrow||18,
     ponds:(h.ponds||[]).map(([x,y,rx,ry,a=0,isl])=>{const c=W([x,y]),A=a*Math.PI/180;return{x:c[0],z:c[1],rx:rx*k,rz:ry*k,lv:0,a:A,ca:Math.cos(A),sa:Math.sin(A),isl:(isl||[]).map(([ix,iy,ir])=>{const q=W([ix,iy]);return{x:q[0],z:q[1],r:ir*k}})}}),
@@ -402,6 +403,8 @@ function buildHole(h){
   hd.fwStart=h.p===3?s0-38:Math.min(150,s0*.32);
   // 平均オフセット（周辺地形の基準）
   let kk=0;for(let i=0;i<=20;i++){const t=i/20;const p=ptAt(hd,t*s0);kk+=prof(hd,t*s0)-genSlope(hd,p[0],p[1])}hd.K=kk/21;
+  hd.obS=THEME.g==="city"?"LR":(h.ob||"");
+  if(THEME.coast){let mn=1e9;for(let i=0;i<=20;i++)mn=Math.min(mn,prof(hd,i/20*s0));SEA_LEVEL=Math.min(mn,hd.K)-7}
   // バンカー（グリーン周り・想定）
   SEED=h.n*7919;rs=h.n*48271+11;
   if(!h.nobunker){
@@ -421,7 +424,7 @@ function buildHole(h){
 }
 function ptAt(hd,s){for(const S of hd.segs){if(s<=S.s0+S.len)return[S.ax+S.fx*(s-S.s0),S.az+S.fz*(s-S.s0)]}const S=hd.segs[hd.segs.length-1];return[S.ax+S.fx*S.len,S.az+S.fz*S.len]}
 function prof(hd,s){const e=hd.h.elev,t=clamp(s/hd.len,0,1);for(let i=1;i<e.length;i++){if(t<=e[i][0]){const u=(t-e[i-1][0])/(e[i][0]-e[i-1][0]);const w=u*u*(3-2*u);return lerp(e[i-1][1],e[i][1],w)}}return e[e.length-1][1]}
-function genSlope(hd,x,z){return -0.15*(x*hd.sea[0]+z*hd.sea[1])}
+function genSlope(hd,x,z){return -0.15*THEME.far[1]*(x*hd.sea[0]+z*hd.sea[1])}
 const NR={s:0,d:0,dist:0,i:0};
 function near(hd,x,z){let best=1e18;for(let i=0;i<hd.segs.length;i++){const S=hd.segs[i];const t=(x-S.ax)*S.fx+(z-S.az)*S.fz;const tc=t<0?0:t>S.len?S.len:t;
   const dx=x-S.ax-S.fx*tc,dz=z-S.az-S.fz*tc,dd=dx*dx+dz*dz;
@@ -438,7 +441,8 @@ function Hbase(hd,x,z){
   const corr=prof(hd,s)+1.1*fbm(x*.012,z*.012,3)+.25*fbm(x*.05,z*.05,2)+0.03*n.d*-(hd.sea[0]*hd.segs[n.i].rx+hd.sea[1]*hd.segs[n.i].rz);
   const sd=x*hd.sea[0]+z*hd.sea[1];
   const amp=10+Math.min(70,Math.abs(sd)*.035);
-  let far=genSlope(hd,x,z)+hd.K+amp*fbm(x*.0032,z*.0032,5)+5*fbm(x*.02,z*.02,2)+Math.max(0,-sd-450)*.16;
+  const TF=THEME.far;let far=genSlope(hd,x,z)+hd.K+amp*TF[0]*fbm(x*.0032,z*.0032,5)+5*Math.min(1,TF[0])*fbm(x*.02,z*.02,2)+Math.max(0,-sd-450)*.16*TF[2];
+  if(THEME.coast){const sl=n.d*(hd.sea[0]*hd.segs[n.i].rx+hd.sea[1]*hd.segs[n.i].rz);far-=45*ss(THEME.coast,THEME.coast+110,sl)}
   let y=lerp(corr,far,ss(32,150,dist));
   // ティー
   const tl=Math.max(Math.abs(x)-5,Math.abs(z)-6);if(tl<5)y=lerp(prof(hd,0)+.7,y,ss(0,5,tl));
@@ -468,8 +472,8 @@ function surf(x,z){const hd=HD;
   const fwOK=n.s>hd.fwStart&&n.s<hd.len+8;
   if(fwOK&&ad<hd.fwH+wob&&n.dist<hd.fwH+6)return S_FW;
   if(gr<2.2&&ad<hd.fwH+wob)return S_FW;
-  const pathSide=(hd.h.ob||"").includes("R")?-1:1;
-  const pd=n.d*pathSide;if(n.s>-6&&n.s<hd.len-6&&pd>29&&pd<31.6&&!(hd.h.ob||"").includes(pathSide>0?"R":"L"))return S_PATH;
+  const pathSide=hd.obS.includes("R")?-1:1;
+  const pd=n.d*pathSide;if(n.s>-6&&n.s<hd.len-6&&pd>29&&pd<31.6&&!hd.obS.includes(pathSide>0?"R":"L"))return S_PATH;
   if(n.dist<34+3*wob||gr<2.6||(Math.abs(x)<16&&z>-30&&z<12))return S_ROUGH;
   return S_DEEP}
 function lateralPt(hd,s,d){const p=ptAt(hd,clamp(s,0,hd.len));const S=hd.segs[segIdx(hd,s)];return[p[0]+S.rx*d,p[1]+S.rz*d]}
@@ -477,7 +481,8 @@ function segIdx(hd,s){for(let i=0;i<hd.segs.length;i++)if(s<=hd.segs[i].s0+hd.se
 // 罰則判定: null | {t:"OB"} | {t:"PEN",x,z} | {t:"RE"}(打ち直し)
 function penalty(x,z){const hd=HD,b=hd.box;
   if(x<b.x0+15||x>b.x1-15||z<b.z0+15||z>b.z1-15)return{t:"OB"};
-  const n=near(hd,x,z),ob=hd.h.ob||"",pen=hd.h.pen||"";
+  const n=near(hd,x,z),ob=hd.obS,pen=hd.h.pen||"";
+  if(THEME.coast&&Hbase(hd,x,z)<SEA_LEVEL+.2)return{t:"OB"};
   if(n.s>-25&&n.s<hd.len+45){
     if((ob.includes("L")&&n.d<-hd.obD)||(ob.includes("R")&&n.d>hd.obD))return{t:"OB"};
     if(pen.includes("L")&&n.d<-hd.penD){const p=lateralPt(hd,n.s,-hd.penD+4);return{t:"PEN",x:p[0],z:p[1]}}
@@ -547,9 +552,12 @@ const seaMat=new THREE.MeshStandardMaterial({color:lin(0x17384b),roughness:.07,m
 const seaMesh=new THREE.Mesh(new THREE.PlaneGeometry(40000,40000),seaMat);seaMesh.rotation.x=-Math.PI/2;scene.add(seaMesh);
 
 // 樹木（手続き生成の葉テクスチャ × 交差ビルボード）
-function treeCanvas(kind){const R=Math.random,W=kind?512:256,Hh=512,S=cfg.q?1.6:1.2,c=document.createElement("canvas");c.width=W*S;c.height=Hh*S;const x=c.getContext("2d");x.scale(S,S);
+function treeCanvas(kind){const R=Math.random,W=kind?512:256,PAL={1:[[22,34,18],[104,128,58]],2:[[22,34,18],[128,128,58]],4:[[176,104,124],[255,222,230]],5:[[110,26,18],[236,116,44]]},Hh=512,S=cfg.q?1.6:1.2,c=document.createElement("canvas");c.width=W*S;c.height=Hh*S;const x=c.getContext("2d");x.scale(S,S);
   const rgb=(a,b,f)=>`rgb(${a[0]+(b[0]-a[0])*f|0},${a[1]+(b[1]-a[1])*f|0},${a[2]+(b[2]-a[2])*f|0})`;
-  if(kind===0){ // スギ・ヒノキ
+  if(kind===3){ // ヤシ
+    x.strokeStyle="#7a6248";x.lineCap="round";for(let k=0;k<14;k++){const t=k/14;x.lineWidth=13-t*5;x.beginPath();x.moveTo(256+Math.sin(t*1.4)*30,512-t*370);x.lineTo(256+Math.sin((t+.07)*1.4)*30,512-(t+.07)*370);x.stroke()}
+    const tx=256+Math.sin(1.4)*30,ty=142;for(let f=0;f<13;f++){const a=f/13*Math.PI*2,L=150+R()*40;for(let k=0;k<60;k++){const t=k/60,px=tx+Math.cos(a)*L*t,py=ty+Math.sin(a)*L*.45*t+t*t*L*.55,g=70+R()*60;x.strokeStyle=`rgb(${g*.55|0},${g|0},${g*.4|0})`;x.lineWidth=2;x.beginPath();x.moveTo(px,py);x.lineTo(px+Math.cos(a+1.4)*16*(1-t),py+10*(1-t)+6);x.moveTo(px,py);x.lineTo(px+Math.cos(a-1.4)*16*(1-t),py+10*(1-t)+6);x.stroke()}}
+  }else if(kind===0){ // スギ・ヒノキ
     x.fillStyle="#3b2b1f";x.fillRect(W/2-4,Hh*.45,8,Hh*.55);
     const dk=[16,28,19],lt=[74,98,60];
     for(let k=0;k<(cfg.q?20000:13000);k++){const t=Math.pow(R(),.75),y=8+t*Hh*.88;const tier=.68+.32*((t*15+R()*.15)%1);
@@ -561,7 +569,7 @@ function treeCanvas(kind){const R=Math.random,W=kind?512:256,Hh=512,S=cfg.q?1.6:
     for(let b=0;b<7;b++){x.lineWidth=3+R()*4;x.beginPath();x.moveTo(254,360+R()*60);x.quadraticCurveTo(256+(R()-.5)*200,250,256+(R()-.5)*360,120+R()*170);x.stroke()}
     const cl=[];for(let k=0;k<18;k++){const a=R()*6.283,r=Math.sqrt(R());cl.push({x:256+Math.cos(a)*r*175,y:225+Math.sin(a)*r*150,r:55+R()*45,t:R()})}
     cl.sort((a,b)=>b.y-a.y);
-    const dk=[22,34,18],lt=kind===2?[128,128,58]:[104,128,58];
+    const [dk,lt]=PAL[kind];
     for(const q of cl)for(let k=0;k<(cfg.q?1500:1000);k++){const rr=q.r*Math.sqrt(R()),a=R()*6.283,dx=Math.cos(a)*rr,dy=Math.sin(a)*rr;
       let f=.32+.38*(-(dx+dy*1.3)/(q.r*1.6))+.18*(1-q.y/450)+(R()-.5)*.35;f=Math.max(0,Math.min(1,f));
       let col=rgb(dk,lt,f);if(kind===2&&R()<.22)col=rgb([90,46,20],R()<.5?[196,120,40]:[178,64,32],f);
@@ -572,10 +580,10 @@ function crossGeo(n){const pos=[],nor=[],uv=[];const U=[[0,0],[1,0],[1,1],[0,1]]
     for(const tri of [[0,1,2],[0,2,3],[0,2,1],[0,3,2]])for(const i of tri){const p=P[i];pos.push(...p);uv.push(...U[i]);
       const nx=p[0]*1.6,ny=p[1]-.35,nz=p[2]*1.6,l=Math.hypot(nx,ny,nz)||1;nor.push(nx/l,ny/l,nz/l)}}
   const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setAttribute("normal",new THREE.Float32BufferAttribute(nor,3));g.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));return g}
-const TREE_T=[0,1,2].map(k=>{const map=treeCanvas(k);
+const TREE_T=[0,1,2,3,4,5].map(k=>{const map=treeCanvas(k);
   const mat=new THREE.MeshStandardMaterial({map,alphaTest:.42,alphaToCoverage:true,roughness:.92,metalness:0,envMapIntensity:.7});mat.userData.keep=1;
   const dep=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map,alphaTest:.42});dep.userData.keep=1;
-  const geo=crossGeo(k?3:2);geo.userData.keep=1;return{mat,dep,geo}});
+  const geo=crossGeo(k===0?2:3);geo.userData.keep=1;return{mat,dep,geo}});
 
 // 芝の葉（プレーヤー周辺だけに生やす）
 const grassU={uT:{value:0}};
@@ -1273,6 +1281,149 @@ const WORLD=[
  aims:[[92,210],[112,114],[102,42]],club:"3W",tips:["富士山に向かって打つ最終ホール。FW左寄りへ","2打目は右バンカーの左","グリーン左は池と五重塔"],danger:"グリーン左の池・五重塔・右OB"},
 ];
 
+/* ================= 景観テーマ（ホールごとの街並み・自然） ================= */
+// far:[起伏, 海への傾き, 奥の山] の倍率。td=木の密度。dens=建物の密度。cityMin=フェアウェイ中心から建物までの最小距離
+const THEMES={
+ odawara:{g:"forest",trees:[["cedar",.6],["broad",.26],["autumn",.14]],td:1,far:[1,1,1]},
+ ny:{g:"city",style:"ny",dens:.8,trees:[["broad",1]],td:.14,far:[.15,.25,0],coast:120,skyline:1,cars:1,taxi:1},
+ italy:{g:"city",style:"italy",dens:.75,trees:[["cypress",.6],["broad",.4]],td:.25,far:[.5,.4,.3],cars:1},
+ paris:{g:"city",style:"paris",dens:.85,trees:[["broad",1]],td:.22,far:[.12,.2,0],cars:1},
+ desert:{g:"desert",style:"cairo",dens:.14,cityMin:420,trees:[["palm",1]],td:.06,far:[.6,.15,0]},
+ farm:{g:"farm",trees:[["broad",.8],["autumn",.2]],td:.16,far:[.35,.3,0],hedge:1},
+ jpsea:{g:"forest",style:"jp",dens:.16,cityMin:240,trees:[["pine",.5],["cedar",.25],["maple",.25]],td:.8,far:[1,1,1],coast:110,fuji:1},
+ wall:{g:"forest",trees:[["cedar",.45],["broad",.35],["autumn",.2]],td:1,far:[2.2,1.6,1.8]},
+ moai:{g:"meadow",trees:[["palm",1]],td:.03,far:[.7,.6,.3],coast:90},
+ rome:{g:"city",style:"rome",dens:.8,trees:[["cypress",.5],["pine",.5]],td:.2,far:[.3,.3,.2],cars:1},
+ agra:{g:"city",style:"agra",dens:.55,cityMin:110,trees:[["cypress",.7],["palm",.3]],td:.3,far:[.2,.2,0],coast:200,cars:1},
+ kyoto:{g:"forest",style:"jp",dens:.2,cityMin:200,trees:[["maple",.45],["pine",.35],["sakura",.2]],td:.9,far:[1,.8,1],fuji:1},
+ athens:{g:"city",style:"athens",dens:.7,trees:[["cypress",.5],["broad",.5]],td:.15,far:[.8,.6,.4],cars:1},
+ jungle:{g:"jungle",trees:[["jungle",.75],["palm",.25]],td:1.5,far:[.4,.3,0]},
+ sydney:{g:"city",style:"sydney",dens:.55,cityMin:140,trees:[["palm",.4],["broad",.6]],td:.15,far:[.3,.3,0],coast:110,skyline:1,cars:1},
+ london:{g:"city",style:"london",dens:.85,trees:[["broad",1]],td:.18,far:[.12,.2,0],coast:150,cars:1,bus:1},
+ polder:{g:"polder",style:"dutch",dens:.14,cityMin:220,trees:[["broad",1]],td:.08,far:[.08,.1,0]},
+ himeji:{g:"city",style:"jp",dens:.6,trees:[["sakura",.7],["pine",.3]],td:.35,far:[.5,.4,.6],cars:1},
+ fuji:{g:"forest",style:"jp",dens:.15,cityMin:240,trees:[["sakura",.35],["pine",.35],["cedar",.3]],td:.8,far:[1,1,1],fuji:1},
+};
+const WORLD_THEME=["ny","italy","paris","desert","farm","jpsea","wall","moai","rome","agra","kyoto","athens","jungle","sydney","london","polder","himeji","fuji"];
+let THEME=THEMES.odawara;
+// 木の種類：t=テクスチャ番号, h=高さ範囲, w=幅/高さ, tint=色味
+const TREE_SPEC={cedar:{t:0,h:[16,30],w:[.36,.48]},broad:{t:1,h:[10,18],w:[.95,1.25]},autumn:{t:2,h:[10,17],w:[.95,1.25]},
+  palm:{t:3,h:[10,17],w:[.62,.8]},sakura:{t:4,h:[7,11],w:[1.15,1.45]},maple:{t:5,h:[7,12],w:[1.05,1.3]},
+  cypress:{t:0,h:[13,21],w:[.15,.2],tint:[.82,.92,.78]},pine:{t:1,h:[8,13],w:[1.25,1.55],tint:[.58,.68,.55]},jungle:{t:1,h:[15,26],w:[1.1,1.5],tint:[.7,.86,.66]}};
+function pickTree(){const L=THEME.trees;let r=rnd(),acc=0;for(const [k,w] of L){acc+=w;if(r<=acc)return k}return L[0][0]}
+
+// 道路網（1番目の区間の向きにそろえた格子）
+const ROAD={B:64,RW:8.5};
+function roadUV(hd,x,z){const f=hd.segs[0];return[x*f.fx+z*f.fz,x*f.rx+z*f.rz]}
+function roadAt(hd,x,z){if(!THEME.cars)return 0;const [u,v]=roadUV(hd,x,z),B=ROAD.B,RW=ROAD.RW;const uu=((u%B)+B)%B,vv=((v%B)+B)%B;
+  const a=Math.min(uu,B-uu),b=Math.min(vv,B-vv);if(a<RW/2||b<RW/2)return a<RW/2&&b<RW/2?2:1;return 0}
+function roadLine(hd,x,z){const [u,v]=roadUV(hd,x,z),B=ROAD.B;const uu=((u%B)+B)%B,vv=((v%B)+B)%B;const a=Math.min(uu,B-uu),b=Math.min(vv,B-vv);return Math.min(a,b)}
+function cityMin(hd){return THEME.cityMin||hd.obD+16}
+
+// 建物の様式
+const BSTYLE={
+ ny:{h:[28,110],w:[16,30],walls:[[168,160,150],[120,110,104],[190,190,196],[96,112,132],[150,98,80]],roof:"flat",win:"grid",rc:[96,98,102]},
+ sydney:{h:[24,95],w:[16,30],walls:[[200,206,212],[150,170,188],[220,214,200],[120,140,160]],roof:"flat",win:"grid",rc:[110,112,116]},
+ paris:{h:[17,23],w:[14,26],walls:[[232,220,196],[222,208,180],[236,226,206]],roof:"mansard",win:"paris",rc:[92,98,108]},
+ italy:{h:[9,17],w:[10,18],walls:[[222,168,104],[204,128,84],[234,200,146],[214,182,128],[196,156,120]],roof:"hip",win:"shutter",rc:[178,84,52]},
+ rome:{h:[13,22],w:[12,22],walls:[[214,150,96],[226,186,132],[196,120,80],[232,206,160]],roof:"hip",win:"shutter",rc:[172,82,52]},
+ london:{h:[13,21],w:[10,20],walls:[[156,82,62],[172,104,74],[206,196,176],[140,74,58]],roof:"gable",win:"sash",rc:[70,74,82]},
+ cairo:{h:[8,20],w:[12,22],walls:[[206,176,126],[186,156,114],[218,196,156],[170,140,104]],roof:"flat",win:"small",rc:[170,150,120]},
+ athens:{h:[8,15],w:[10,18],walls:[[238,234,224],[228,222,208],[240,236,228]],roof:"flat",win:"small",rc:[214,208,196]},
+ agra:{h:[8,16],w:[10,18],walls:[[214,164,122],[226,196,156],[204,124,104],[232,206,186],[190,170,140]],roof:"flat",win:"small",rc:[180,150,120]},
+ jp:{h:[6,9],w:[9,14],walls:[[120,88,60],[232,228,218],[150,118,84]],roof:"jp",win:"jp",rc:[62,66,72]},
+ dutch:{h:[9,13],w:[6,9],walls:[[142,62,46],[118,52,40],[96,74,62],[150,90,64]],roof:"gable",win:"sash",rc:[60,52,48]},
+};
+function facadeTex(kind){return cvTex(256,256,(x,W,Hh)=>{x.fillStyle="#f2f0ec";x.fillRect(0,0,W,Hh);speckle(x,W,Hh,4000,.08);
+  const win=(wx,wy,ww,wh,glass,frame)=>{x.fillStyle=frame;x.fillRect(wx-4,wy-4,ww+8,wh+8);const g=x.createLinearGradient(wx,wy,wx+ww,wy+wh);g.addColorStop(0,glass[0]);g.addColorStop(1,glass[1]);x.fillStyle=g;x.fillRect(wx,wy,ww,wh)};
+  if(kind==="grid"){for(let i=0;i<4;i++)for(let j=0;j<2;j++){const g=x.createLinearGradient(0,j*128,0,j*128+128);g.addColorStop(0,"#3c5268");g.addColorStop(1,"#6d8aa4");x.fillStyle=g;x.fillRect(i*64+3,j*128+10,58,108)}
+    x.fillStyle="#c9cdd2";for(let j=0;j<2;j++)x.fillRect(0,j*128,W,8)}
+  else if(kind==="paris"){for(let i=0;i<2;i++){win(i*128+38,40,52,150,["#2e3a46","#56687a"],"#efe6d4");x.fillStyle="#2a2a2a";x.fillRect(i*128+30,160,68,6);for(let k=0;k<9;k++)x.fillRect(i*128+32+k*8,166,2,24)}
+    x.fillStyle="rgba(120,100,70,.25)";x.fillRect(0,232,W,10)}
+  else if(kind==="shutter"){for(let i=0;i<2;i++){win(i*128+44,52,40,110,["#2c2a28","#4a463f"],"#e8e0cc");x.fillStyle="#3f6b4a";x.fillRect(i*128+18,48,22,118);x.fillRect(i*128+88,48,22,118);
+    x.strokeStyle="rgba(0,0,0,.35)";x.lineWidth=2;for(let k=0;k<10;k++){x.beginPath();x.moveTo(i*128+18,56+k*11);x.lineTo(i*128+40,56+k*11);x.moveTo(i*128+88,56+k*11);x.lineTo(i*128+110,56+k*11);x.stroke()}}grime(x,W,Hh,20,.12)}
+  else if(kind==="sash"){for(let i=0;i<2;i++){win(i*128+40,46,48,130,["#28323c","#4c5c6a"],"#f4f4f2");x.fillStyle="#f4f4f2";x.fillRect(i*128+40,108,48,5);x.fillRect(i*128+62,46,4,130);x.fillStyle="rgba(230,226,216,.9)";x.fillRect(i*128+34,178,60,8)}}
+  else if(kind==="jp"){x.fillStyle="#3b2a1e";for(let i=0;i<W;i+=32)x.fillRect(i,0,6,Hh);x.fillRect(0,0,W,10);x.fillRect(0,Hh-14,W,14);for(let i=0;i<4;i++){x.fillStyle="#2a1e16";for(let k=0;k<6;k++)x.fillRect(i*64+10+k*8,70,3,90);x.fillRect(i*64+8,70,48,3);x.fillRect(i*64+8,157,48,3)}}
+  else{for(let i=0;i<2;i++)win(i*128+46,70,36,62,["#2a2622","#463e36"],"#d8d0c0");grime(x,W,Hh,30,.14)}})}
+const BMATS={};
+function bMat(style){if(BMATS[style])return BMATS[style];const S=BSTYLE[style],glass=S.win==="grid";
+  const m=new THREE.MeshStandardMaterial({map:facadeTex(S.win),vertexColors:true,roughness:glass?.35:.88,metalness:glass?.25:0,envMapIntensity:glass?1.1:.6});m.userData.keep=1;
+  const r=new THREE.MeshStandardMaterial({map:MTEX.roof,vertexColors:true,roughness:.75,metalness:.05});r.userData.keep=1;return BMATS[style]={m,r}}
+// 頂点配列へ箱・屋根を追加
+function pushQuad(A,p,n,uv,c){const idx=[0,1,2,0,2,3];for(const i of idx){A.p.push(...p[i]);A.n.push(...n);A.u.push(...uv[i]);A.c.push(...c)}}
+function addBuilding(A,R,b){const {x,z,y,w,d,h,ry,col,rc,roof}=b,cs=Math.cos(ry),sn=Math.sin(ry);const T=(lx,ly,lz)=>[x+lx*cs+lz*sn,y+ly,z-lx*sn+lz*cs];const N=(nx,nz)=>[nx*cs+nz*sn,0,-nx*sn+nz*cs];
+  const hw=w/2,hd_=d/2,fu=7,fv=3.6;
+  const sides=[[[-hw,hd_],[hw,hd_],[0,1],w],[[hw,hd_],[hw,-hd_],[1,0],d],[[hw,-hd_],[-hw,-hd_],[0,-1],w],[[-hw,-hd_],[-hw,hd_],[-1,0],d]];
+  const lc=lin2(col);
+  for(const [a,b2,nn,L] of sides)pushQuad(A,[T(a[0],0,a[1]),T(b2[0],0,b2[1]),T(b2[0],h,b2[1]),T(a[0],h,a[1])],N(nn[0],nn[1]),[[0,0],[L/fu,0],[L/fu,h/fv],[0,h/fv]],lc);
+  const rl=lin2(rc);
+  if(roof==="flat"){pushQuad(R,[T(-hw,h,hd_),T(hw,h,hd_),T(hw,h,-hd_),T(-hw,h,-hd_)],[0,1,0],[[0,0],[w/6,0],[w/6,d/6],[0,d/6]],rl);
+    const ph=.9;for(const [a,b2,nn,L] of sides)pushQuad(A,[T(a[0],h,a[1]),T(b2[0],h,b2[1]),T(b2[0],h+ph,b2[1]),T(a[0],h+ph,a[1])],N(nn[0],nn[1]),[[0,.02],[.01,.02],[.01,.03],[0,.03]],lc)}
+  else{const ov=roof==="jp"?1.6:.5,rh=roof==="mansard"?3.6:roof==="hip"?Math.min(w,d)*.22:roof==="jp"?Math.min(w,d)*.32:Math.min(w,d)*.38,ew=hw+ov,ed=hd_+ov;
+    if(roof==="gable"){const tri=(p1,p2,p3,nn)=>{for(const q of [p1,p2,p3]){R.p.push(...q);R.n.push(...nn);R.u.push(0,0);R.c.push(...rl)}};
+      const s1=N(0,1),s2=N(0,-1);const up=Math.hypot(ed,rh);const nA=[s1[0]*rh/up,ed/up,s1[2]*rh/up],nB=[s2[0]*rh/up,ed/up,s2[2]*rh/up];
+      pushQuad(R,[T(-ew,h,ed),T(ew,h,ed),T(ew,h+rh,0),T(-ew,h+rh,0)],nA,[[0,0],[w/4,0],[w/4,1.5],[0,1.5]],rl);
+      pushQuad(R,[T(ew,h,-ed),T(-ew,h,-ed),T(-ew,h+rh,0),T(ew,h+rh,0)],nB,[[0,0],[w/4,0],[w/4,1.5],[0,1.5]],rl);
+      tri(T(-hw,h,hd_),T(-hw,h+rh,0),T(-hw,h,-hd_),N(-1,0));tri(T(hw,h,-hd_),T(hw,h+rh,0),T(hw,h,hd_),N(1,0))}
+    else{const top=roof==="mansard"?.62:roof==="jp"?.18:.05,tw=ew*top,td=ed*top;
+      const qs=[[[-ew,ed],[ew,ed],[tw,td],[-tw,td],[0,1]],[[ew,ed],[ew,-ed],[tw,-td],[tw,td],[1,0]],[[ew,-ed],[-ew,-ed],[-tw,-td],[tw,-td],[0,-1]],[[-ew,-ed],[-ew,ed],[-tw,td],[-tw,-td],[-1,0]]];
+      for(const [a,b2,c2,d2,nn] of qs){const nv=N(nn[0],nn[1]),k=rh/Math.hypot(rh,ew-tw);pushQuad(R,[T(a[0],h,a[1]),T(b2[0],h,b2[1]),T(c2[0],h+rh,c2[1]),T(d2[0],h+rh,d2[1])],[nv[0]*k,Math.sqrt(1-k*k),nv[2]*k],[[0,0],[2,0],[2,1],[0,1]],rl)}
+      if(top>.1)pushQuad(R,[T(-tw,h+rh,td),T(tw,h+rh,td),T(tw,h+rh,-td),T(-tw,h+rh,-td)],[0,1,0],[[0,0],[1,0],[1,1],[0,1]],rl)}}}
+function lin2(c){const q=new THREE.Color(c[0]/255,c[1]/255,c[2]/255).convertSRGBToLinear();return[q.r,q.g,q.b]}
+function meshFrom(A,mat){if(!A.p.length)return null;const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(A.p,3));g.setAttribute("normal",new THREE.Float32BufferAttribute(A.n,3));
+  g.setAttribute("uv",new THREE.Float32BufferAttribute(A.u,2));g.setAttribute("color",new THREE.Float32BufferAttribute(A.c,3));const m=new THREE.Mesh(g,mat);m.castShadow=true;m.receiveShadow=true;return m}
+
+// 街を作る：区画ごとに建物を並べる。返り値は建物の足元リスト（木を避けるため）
+function buildCity(hd,cx,cz,box){const out=[];if(!THEME.style)return out;const S=BSTYLE[THEME.style],M=bMat(THEME.style),A={p:[],n:[],u:[],c:[]},R={p:[],n:[],u:[],c:[]};
+  const f=hd.segs[0],B=ROAD.B,RW=ROAD.RW,cm=cityMin(hd),Rmax=THEME.g==="city"?1500:1100,dens=THEME.dens;
+  const toW=(u,v)=>[u*f.fx+v*f.rx,u*f.fz+v*f.rz];
+  const ok=(x,z,r)=>{const n=near(hd,x,z);if(n.dist<cm+r)return false;if(Math.hypot(x,z)<60)return false;if(greenR(hd,x,z)<4)return false;
+    if(hd.ponds.some(p=>ell(p,x,z)<1.25))return false;if(hd.lms.some(o=>Math.hypot(x-o.x,z-o.z)<(LM_CLEAR[o.t]||20)+r))return false;
+    if(Hbase(hd,x,z)<SEA_LEVEL+1.5)return false;return true};
+  const [uc,vc]=roadUV(hd,cx,cz),cityCut=THEME.g==="city"?0:1;let count=0;
+  for(let bu=Math.floor((uc-Rmax)/B);bu<=Math.ceil((uc+Rmax)/B);bu++)for(let bv=Math.floor((vc-Rmax)/B);bv<=Math.ceil((vc+Rmax)/B);bv++){
+    const u0=bu*B+RW/2+2,v0=bv*B+RW/2+2,inner=B-RW-4,[mx,mz]=toW(u0+inner/2,v0+inner/2);if(Math.hypot(mx-cx,mz-cz)>Rmax)continue;
+    // 郊外は建物の数を減らす（自然系テーマでは集落として点在）
+    if(cityCut&&fbm(mx*.004,mz*.004,2)<.15)continue;
+    const far=!(mx>box.x0&&mx<box.x1&&mz>box.z0&&mz<box.z1);
+    const pw=Math.max(S.w[0],S.w[0]+rnd()*(S.w[1]-S.w[0]))*(far?1.3:1),nu=Math.max(1,Math.floor(inner/pw)),nv=Math.max(1,Math.floor(inner/pw));const cu=inner/nu,cv=inner/nv;
+    for(let i=0;i<nu;i++)for(let j=0;j<nv;j++){if(rnd()>dens)continue;if(i>0&&i<nu-1&&j>0&&j<nv-1&&rnd()<.5)continue;
+      const w=cu*(.82+rnd()*.16),d=cv*(.82+rnd()*.16),[x,z]=toW(u0+cu*(i+.5),v0+cv*(j+.5));if(!ok(x,z,Math.max(w,d)*.6))continue;
+      let h=S.h[0]+Math.pow(rnd(),1.6)*(S.h[1]-S.h[0]);if(far)h*=.85;
+      const y=Math.min(Hbase(hd,x-w/3,z),Hbase(hd,x+w/3,z),Hbase(hd,x,z-d/3),Hbase(hd,x,z+d/3))-.6;
+      const b={x,z,y,w,d,h,ry:Math.atan2(f.fx,f.fz)+Math.PI,col:S.walls[(rnd()*S.walls.length)|0].map(v=>v*(.92+rnd()*.14)),rc:S.rc.map(v=>v*(.9+rnd()*.2)),roof:S.roof};
+      addBuilding(A,R,b);out.push(b);if(++count>2600)break}}
+  // 摩天楼（遠景のスカイライン）
+  if(THEME.skyline){const g=hd.G,dir=[g.fx+hd.sea[0]*.6,g.fz+hd.sea[1]*.6],l=Math.hypot(...dir);for(let k=0;k<46;k++){const dist=700+rnd()*700,sp=(rnd()-.5)*900;
+    const x=g.x+dir[0]/l*dist-dir[1]/l*sp,z=g.z+dir[1]/l*dist+dir[0]/l*sp,w=22+rnd()*26,h=90+Math.pow(rnd(),1.4)*240;
+    const b={x,z,y:Math.max(SEA_LEVEL,Hbase(hd,x,z))-1,w,d:w*(.8+rnd()*.4),h,ry:rnd()*.3,col:S.walls[(rnd()*S.walls.length)|0],rc:S.rc,roof:"flat"};addBuilding(A,R,b)}}
+  const m1=meshFrom(A,M.m),m2=meshFrom(R,M.r);if(m1)world.add(m1);if(m2)world.add(m2);
+  // 近くの建物は当たり判定あり
+  for(const b of out){const inBox=b.x>box.x0&&b.x<box.x1&&b.z>box.z0&&b.z<box.z1;if(!inBox)continue;
+    hd.cols.push({t:"box",c:{x:b.x,y:b.y+b.h/2,z:b.z},h:{x:b.w/2,y:b.h/2+1,z:b.d/2},ry:b.ry,bx:b.x,bz:b.z,br:Math.hypot(b.w,b.d)/2+1,nm:"建物"})}
+  return out}
+
+// 車（道路を走る）
+function buildTraffic(hd,cx,cz){if(!THEME.cars)return;const f=hd.segs[0],B=ROAD.B,cm=cityMin(hd),R=900,lines=[];const [uc,vc]=roadUV(hd,cx,cz);
+  const toW=(u,v)=>[u*f.fx+v*f.rx,u*f.fz+v*f.rz];
+  for(const axis of [0,1])for(let k=Math.floor(((axis?uc:vc)-R)/B);k<=Math.ceil(((axis?uc:vc)+R)/B);k++){const c=k*B,s0=(axis?vc:uc)-R,n=Math.ceil(2*R/4);const ok=new Uint8Array(n),ys=new Float32Array(n);let any=0;
+    for(let i=0;i<n;i++){const s=s0+i*4,[x,z]=axis?toW(c,s):toW(s,c);const nn=near(hd,x,z);const y=Hbase(hd,x,z);ys[i]=y;ok[i]=nn.dist>cm-4&&y>SEA_LEVEL+.5&&Math.hypot(x-cx,z-cz)<R&&!hd.lms.some(o=>Math.hypot(x-o.x,z-o.z)<(LM_CLEAR[o.t]||20));any+=ok[i]}
+    if(any>20)lines.push({axis,c,s0,n,ok,ys})}
+  if(!lines.length)return;
+  const body=new THREE.BoxGeometry(4.4,1.1,1.95);body.translate(0,.75,0);const cab=new THREE.BoxGeometry(2.4,.85,1.75);cab.translate(-.2,1.7,0);
+  const parts=[body,cab].map(g=>g.toNonIndexed());let n=0;for(const g of parts)n+=g.attributes.position.count;const P=new Float32Array(n*3),Nn=new Float32Array(n*3);let o=0;for(const g of parts){P.set(g.attributes.position.array,o*3);Nn.set(g.attributes.normal.array,o*3);o+=g.attributes.position.count}
+  const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(P,3));geo.setAttribute("normal",new THREE.BufferAttribute(Nn,3));
+  const NC=Math.min(160,lines.length*6),cars=[];const im=new THREE.InstancedMesh(geo,new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.25,metalness:.5,clearcoat:1,clearcoatRoughness:.1}),NC);im.castShadow=true;
+  const pal=THEME.taxi?[[.95,.75,.1],[.95,.75,.1],[.15,.15,.16],[.8,.8,.82]]:THEME.bus?[[.75,.06,.05],[.15,.15,.16],[.8,.8,.82],[.2,.25,.4]]:[[.8,.8,.82],[.15,.15,.16],[.55,.08,.06],[.18,.25,.45],[.55,.56,.58],[.92,.92,.9]];
+  const col=new THREE.Color();
+  for(let i=0;i<NC;i++){const L=lines[(rnd()*lines.length)|0],dir=rnd()<.5?1:-1;const bus=THEME.bus&&rnd()<.3;cars.push({L,s:rnd()*L.n*4,dir,v:10+rnd()*8,bus});const c=pal[(rnd()*pal.length)|0];if(bus){col.setRGB(.72,.05,.04)}else col.setRGB(c[0],c[1],c[2]);im.setColorAt(i,col)}
+  const M=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),pv=new THREE.Vector3(),yax=new THREE.Vector3(0,1,0);
+  const upd=dt=>{for(let i=0;i<NC;i++){const c=cars[i],L=c.L;c.s+=c.v*c.dir*dt;const len=L.n*4;if(c.s<0)c.s+=len;if(c.s>len)c.s-=len;const idx=Math.min(L.n-1,(c.s/4)|0);
+      if(!L.ok[idx]){M.makeScale(0,0,0);im.setMatrixAt(i,M);continue}const lane=2.2*c.dir,sAbs=L.s0+c.s;const [x,z]=L.axis?toW(L.c+lane,sAbs):toW(sAbs,L.c-lane);
+      const ddx=(L.axis?f.rx:f.fx)*c.dir,ddz=(L.axis?f.rz:f.fz)*c.dir;q.setFromAxisAngle(yax,Math.atan2(-ddz,ddx));pv.set(x,L.ys[idx]+.05,z);sc.set(c.bus?2.5:1,c.bus?2.3:1,c.bus?1.25:1);M.compose(pv,q,sc);im.setMatrixAt(i,M)}
+    im.instanceMatrix.needsUpdate=true};
+  upd(0);world.add(im);hd.anim.push(upd)}
+
 /* ================= ホールのシーン生成 ================= */
 let world=null;     // ホールごとのオブジェクト群
 let trees=[],treeGrid=new Map();
@@ -1299,7 +1450,17 @@ function paintTexture(hd,TW,TH,shade,SG){
       case S_WA:mix(COL.wa,COL.wa,0);break;
       case S_CL:mix(COL.cl,COL.deep,.3+lf*.4);br=1+nn*.2+lf*.3;break;
       case S_PATH:mix(COL.path,COL.path,0);br=1+nn*.06;break;
-      default:mix(COL.deep,COL.moss,ss(-.2,.3,lf));br=1+nn*.18+lf*.15}
+      default:{const tg=THEME.g;
+        if(tg==="city"){const nd=near(hd,wx,wz).dist,rd=roadAt(hd,wx,wz),ln=roadLine(hd,wx,wz);
+          if(nd<cityMin(hd)-6){mix(COL.rough,COL.dry,.25);br=1+lf*.1+nn*.08}
+          else if(rd){mix([58,60,63],[58,60,63],0);br=1+nn*.07+lf*.05;if(rd===1&&ln<.28&&(Math.floor((wx+wz)/3)&1)){r=226;g=214;bb=150;br=1}}
+          else if(ln<ROAD.RW/2+2.6){mix([196,192,184],[196,192,184],0);br=1+nn*.06}
+          else{mix([170,166,156],[148,144,136],ss(-.2,.3,lf));br=1+nn*.1}}
+        else if(tg==="desert"){mix([212,182,132],[196,164,116],ss(-.3,.3,lf));br=1+.06*Math.sin((wx*.9+wz*.35)*1.1)+nn*.1+lf*.2}
+        else if(tg==="meadow"||tg==="farm"){mix([108,136,64],[150,148,86],ss(-.1,.4,mf+lf*.3)*.6);br=1+nn*.12+lf*.15}
+        else if(tg==="polder"){const nd=near(hd,wx,wz).dist,[,vv]=roadUV(hd,wx,wz);if(nd>hd.obD+24){const k=((Math.floor(vv/6)%5)+5)%5;const C5=[[196,40,46],[236,196,60],[226,120,170],[96,140,60],[244,244,236]];mix(C5[k],C5[k],0);br=1+nn*.15}else{mix([104,140,66],[124,150,72],ss(-.2,.3,lf));br=1+nn*.1}}
+        else if(tg==="jungle"){mix([36,52,28],[50,64,34],ss(-.2,.3,lf));br=1+nn*.2+lf*.15}
+        else{mix(COL.deep,COL.moss,ss(-.2,.3,lf));br=1+nn*.18+lf*.15}}}
     // バンカーの縁の影、池のまわりのぬかるみ、フェアウェイ・ティーのディボット跡
     if(hd.bunkers.length){let bR=9;for(const bk of hd.bunkers){const q=Math.hypot(...bLocal(hd,bk,wx,wz));if(q<bR)bR=q}
       if(sf===S_BK)br*=1-.25*ss(.72,1,bR);else if(bR<1.15)br*=.88+.12*ss(1,1.15,bR)}
@@ -1353,9 +1514,18 @@ function addDetail(mat,w,d,s1,s2,k1,k2){mat.onBeforeCompile=sh=>{sh.uniforms.dMa
 function farTexture(hd,fp,FS,FW,cx,cz){const N=cfg.q?1024:640,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d"),im=x.createImageData(N,N),D=im.data;
   const hAt=(X,Z)=>{const gx=clamp((X-cx+FW/2)/FW*FS,0,FS-1e-3),gz=clamp((Z-cz+FW/2)/FW*FS,0,FS-1e-3);const i=Math.floor(gx),j=Math.floor(gz);return fp.getY(j*(FS+1)+i)};
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){const X=cx-FW/2+(i+.5)/N*FW,Z=cz-FW/2+(j+.5)/N*FW;const y=hAt(X,Z);let r,g,b;
-    if(y<SEA_LEVEL+3){r=118;g=110;b=96}else{const pt=fbm(X*.0025,Z*.0025,4),au=fbm(X*.006+40,Z*.006,3);const t=ss(-.15,.3,pt);
+    const tg=THEME.g;
+    if(y<SEA_LEVEL+3){r=118;g=110;b=96}
+    else if(tg==="city"){const rd=roadAt(hd,X,Z);if(rd){r=r=66;g=68;b=70}else{const [uu,vv]=roadUV(hd,X,Z),hb=hash(Math.floor(uu/ROAD.B)+7,Math.floor(vv/ROAD.B)+3);const S=BSTYLE[THEME.style];const c0=hb<.12?[86,112,62]:(hb<.55?S.rc:S.walls[(hb*97|0)%S.walls.length]);r=c0[0];g=c0[1];b=c0[2]}const cr=.8+.35*hash(i,j);r*=cr;g*=cr;b*=cr}
+    else if(tg==="desert"){const t=fbm(X*.003,Z*.003,4);r=214+30*t;g=184+26*t;b=134+18*t;const cr=.9+.2*hash(i,j);r*=cr;g*=cr;b*=cr}
+    else if(tg==="farm"||tg==="meadow"){const [uu,vv]=roadUV(hd,X,Z),cu=Math.floor(uu/90),cv=Math.floor(vv/130),hb=hash(cu+11,cv+5);const P=tg==="meadow"?[[112,136,70],[128,140,78],[98,122,62]]:[[96,132,56],[178,160,82],[120,148,64],[150,120,74],[110,140,60]];
+      const c0=P[(hb*P.length)|0];r=c0[0];g=c0[1];b=c0[2];const eu=((uu%90)+90)%90,ev=((vv%130)+130)%130;if(tg==="farm"&&(eu<3||ev<3)){r=44;g=62;b=34}const cr=.88+.24*hash(i,j);r*=cr;g*=cr;b*=cr}
+    else if(tg==="polder"){const [uu,vv]=roadUV(hd,X,Z),k=((Math.floor(vv/26)%7)+7)%7;const P=[[96,136,58],[196,44,50],[110,146,62],[236,198,64],[60,96,116],[104,142,60],[226,122,170]];const c0=P[k];r=c0[0];g=c0[1];b=c0[2];const cr=.9+.2*hash(i,j);r*=cr;g*=cr;b*=cr}
+    else if(tg==="jungle"){const t=fbm(X*.006,Z*.006,3);r=26+12*t;g=50+18*t;b=24+8*t;const cr=.6+.8*Math.pow(hash(i,j),1.3);r*=cr;g*=cr;b*=cr}
+    else{const pt=fbm(X*.0025,Z*.0025,4),au=fbm(X*.006+40,Z*.006,3);const t=ss(-.15,.3,pt);
       r=34+(64-34)*t;g=48+(78-48)*t;b=32+(42-32)*t;if(au>.25){const k=Math.min(.35,(au-.25)*1.2);r+=(118-r)*k;g+=(96-g)*k;b+=(50-b)*k}
-      const cr=.62+.75*Math.pow(hash(i,j),1.4);r*=cr;g*=cr;b*=cr;if(y<SEA_LEVEL+14){r=r*.6+60;g=g*.6+58;b=b*.6+46}}
+      const cr=.62+.75*Math.pow(hash(i,j),1.4);r*=cr;g*=cr;b*=cr}
+    if(y>=SEA_LEVEL+3&&y<SEA_LEVEL+14){r=r*.6+60;g=g*.6+58;b=b*.6+46}
     const o=(j*N+i)*4;D[o]=r;D[o+1]=g;D[o+2]=b;D[o+3]=255}
   x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t}
 function buildGrass(px,pz){
@@ -1387,12 +1557,15 @@ function buildScene(){
   const sd=new THREE.Vector3(hd.sun[0],.85,hd.sun[1]).normalize();sunL.userData.dir=sd;skyU.uSun.value.copy(sd);bakeEnv();
   // 樹木の配置（地表の影を描くため先に決める）
   trees=[];treeGrid=new Map();
-  const place=(x,z,inner)=>{const y=H(x,z);if(y<SEA_LEVEL+4)return;const r0=rnd();const kind=r0<.6?0:(r0<.86?1:2);const cedar=kind===0;
-    const hgt=cedar?(16+rnd()*14):(10+rnd()*8);const wd=cedar?hgt*(.36+rnd()*.12):hgt*(.95+rnd()*.3);trees.push({x,z,y,cedar,kind,hgt,wd,inner})};
-  const area=w*d,N1=Math.round(area/(cfg.q?55:90));
+  // 街並み（建物は木より先に置く）
+  const city=buildCity(hd,cx,cz,b),bgrid=new Map();for(const q of city){const k=Math.floor(q.x/40)+","+Math.floor(q.z/40);(bgrid.get(k)||bgrid.set(k,[]).get(k)).push(q)}
+  const onBuilding=(x,z)=>{for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const L=bgrid.get((Math.floor(x/40)+i)+","+(Math.floor(z/40)+j));if(L)for(const q of L)if(Math.hypot(x-q.x,z-q.z)<Math.max(q.w,q.d)*.75+3)return true}return false};
+  const place=(x,z,inner)=>{const y=H(x,z);if(y<SEA_LEVEL+4)return;if(roadAt(hd,x,z)||(city.length&&onBuilding(x,z)))return;const sp=pickTree(),S=TREE_SPEC[sp],kind=S.t,cedar=kind===0;
+    const hgt=S.h[0]+rnd()*(S.h[1]-S.h[0]);const wd=hgt*(S.w[0]+rnd()*(S.w[1]-S.w[0]));trees.push({x,z,y,cedar,kind,hgt,wd,inner,tint:S.tint})};
+  const area=w*d,N1=Math.round(area/(cfg.q?55:90)*THEME.td);
   for(let i=0;i<N1;i++){const x=b.x0+rnd()*w,z=b.z0+rnd()*d;const sf=surf(x,z);if(sf!==S_DEEP&&sf!==S_VA)continue;
     const n=near(hd,x,z);if(n.dist<37+rnd()*6&&sf!==S_VA)continue;if(greenR(hd,x,z)<3.3)continue;if(Math.hypot(x,z)<22)continue;if(hd.ponds.some(p=>ell(p,x,z)<1.4))continue;if(hd.pads.some(q=>Math.hypot(x-q.x,z-q.z)<q.r+6))continue;if(hd.lms.some(o=>Math.hypot(x-o.x,z-o.z)<(LM_CLEAR[o.t]||0)))continue;place(x,z,true)}
-  const N2=cfg.q?14000:6000;
+  const N2=Math.round((cfg.q?14000:6000)*Math.min(1.3,THEME.td*(THEME.g==="city"?2:1)));
   for(let i=0;i<N2;i++){const a=rnd()*Math.PI*2,r=Math.sqrt(rnd())*2600;const x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;if(x>b.x0&&x<b.x1&&z>b.z0&&z<b.z1)continue;place(x,z,false)}
   // 樹冠の影グリッド
   const SG=1.5,shade={w:Math.ceil(w/SG)+1,h:Math.ceil(d/SG)+1};shade.a=new Float32Array(shade.w*shade.h);
@@ -1418,16 +1591,16 @@ function buildScene(){
   const fmat=new THREE.MeshStandardMaterial({map:farTexture(hd,fp,FS,FW,cx,cz),roughness:1,metalness:0,envMapIntensity:.5});addDetail(fmat,FW,FW,14,90,".5",".3");
   const farT=new THREE.Mesh(fg,fmat);farT.position.set(cx,0,cz);farT.receiveShadow=true;world.add(farT);
   // 伊豆大島（遠景）
-  {const a=Math.atan2(hd.sea[1],hd.sea[0])+.45;const isl=new THREE.Mesh(new THREE.SphereGeometry(1,32,12,0,6.283,0,1.2),new THREE.MeshStandardMaterial({color:lin(0x3e4c3c),roughness:1}));isl.position.set(Math.cos(a)*8600,SEA_LEVEL-120,Math.sin(a)*8600);isl.scale.set(2600,330,1500);world.add(isl)}
+  if(HOLES===ODAWARA){const a=Math.atan2(hd.sea[1],hd.sea[0])+.45;const isl=new THREE.Mesh(new THREE.SphereGeometry(1,32,12,0,6.283,0,1.2),new THREE.MeshStandardMaterial({color:lin(0x3e4c3c),roughness:1}));isl.position.set(Math.cos(a)*8600,SEA_LEVEL-120,Math.sin(a)*8600);isl.scale.set(2600,330,1500);world.add(isl)}
   seaMesh.position.y=SEA_LEVEL;
   // 池
   const waterMat=new THREE.MeshStandardMaterial({color:lin(0x1c3029),roughness:.04,metalness:0,normalMap:seaMat.normalMap,normalScale:new THREE.Vector2(.06,.06),transparent:true,opacity:.96});
   for(const p of hd.ponds){const m=new THREE.Mesh(new THREE.CircleGeometry(1,64),waterMat);m.rotation.set(-Math.PI/2,0,p.a||0);m.scale.set(p.rx*1.03,p.rz*1.03,1);m.position.set(p.x,p.lv,p.z);m.receiveShadow=true;world.add(m)}
   // 樹木メッシュ
   const mk=(list,T,shadow)=>{if(!list.length)return;const m=new THREE.InstancedMesh(T.geo,T.mat,list.length);m.customDepthMaterial=T.dep;const M=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),c=new THREE.Color();
-    list.forEach((t,i)=>{e.set(0,rnd()*6.28,0);q.setFromEuler(e);M.compose(new THREE.Vector3(t.x,t.y-.4,t.z),q,new THREE.Vector3(t.wd,t.hgt,t.wd));m.setMatrixAt(i,M);const v=.8+rnd()*.32;c.setRGB(v*(.96+rnd()*.08),v,v*(.92+rnd()*.1));m.setColorAt(i,c)});
+    list.forEach((t,i)=>{e.set(0,rnd()*6.28,0);q.setFromEuler(e);M.compose(new THREE.Vector3(t.x,t.y-.4,t.z),q,new THREE.Vector3(t.wd,t.hgt,t.wd));m.setMatrixAt(i,M);const v=.8+rnd()*.32,tn=t.tint||[1,1,1];c.setRGB(v*(.96+rnd()*.08)*tn[0],v*tn[1],v*(.92+rnd()*.1)*tn[2]);m.setColorAt(i,c)});
     m.castShadow=shadow;m.receiveShadow=true;world.add(m)};
-  for(let k=0;k<3;k++){mk(trees.filter(t=>t.inner&&t.kind===k),TREE_T[k],true);mk(trees.filter(t=>!t.inner&&t.kind===k),TREE_T[k],false)}
+  for(let k=0;k<TREE_T.length;k++){mk(trees.filter(t=>t.inner&&t.kind===k),TREE_T[k],true);mk(trees.filter(t=>!t.inner&&t.kind===k),TREE_T[k],false)}
   for(const t of trees)if(t.inner){const key=Math.floor(t.x/12)+","+Math.floor(t.z/12);(treeGrid.get(key)||treeGrid.set(key,[]).get(key)).push(t)}
   // ランドマーク・看板・富士山
   for(const o of hd.lms){const y0=hd.pads.find(q=>q.x===o.x&&q.z===o.z)?.h??H(o.x,o.z),rot=o.r||0,s=o.s||1,cr=Math.cos(rot),sr=Math.sin(rot);
@@ -1439,9 +1612,10 @@ function buildScene(){
       else{const q=tw(c.c);w={t:"pyr",c:q,hb:c.hb*s,h:c.h*s,ry:rot,bx:q.x,bz:q.z,br:c.hb*s*1.5+1}}
       w.nm=c.nm;hd.cols.push(w)}}
   if(hd.h.name){const sg=teeSign(hd.h);sg.position.set(-7.5,H(-7.5,2),2);sg.rotation.y=.35;world.add(sg)}
-  if(HOLES===WORLD){const last=hd.segs[hd.segs.length-1],f18=hd.h.n===18;world.add(buildFuji(f18?last.fx:-hd.sea[0],f18?last.fz:-hd.sea[1]))}
+  buildTraffic(hd,cx,cz);
+  if(HOLES===WORLD&&THEME.fuji){const last=hd.segs[hd.segs.length-1],f18=hd.h.n===18;world.add(buildFuji(f18?last.fx:-hd.sea[0],f18?last.fz:-hd.sea[1]))}
   // OB杭・1ペナ杭
-  const ob=hd.h.ob||"",pen=hd.h.pen||"";const obs=[],pens=[];
+  const ob=hd.obS,pen=hd.h.pen||"";const obs=[],pens=[];
   for(let s=10;s<hd.len+30;s+=13){for(const sd of [-1,1]){const lab=sd<0?"L":"R";const p=lateralPt(hd,s,sd*(hd.obD));if(ob.includes(lab))obs.push(p);if(pen.includes(lab))pens.push(lateralPt(hd,s,sd*hd.penD))}}
   if(hd.h.obBack)for(let v=-34;v<=34;v+=11){obs.push([hd.G.x+hd.G.fx*24+hd.G.rx*v,hd.G.z+hd.G.fz*24+hd.G.rz*v])}
   if(obs.length)world.add(stakeMesh(obs,0xf4f4f4));if(pens.length)world.add(stakeMesh(pens,0xd8322b));
