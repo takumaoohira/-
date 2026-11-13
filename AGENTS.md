@@ -12,6 +12,7 @@ Codex は `AGENTS.md`、Claude Code は `CLAUDE.md`（このファイルを参�
 |---|---|
 | `rakuspa-menu/` | RAKU SPA 1010 神田 ドリンク＆スナックセットメニュー（A4、HTML / PDF / PNG） |
 | `rakuspa-campaign/` | RAKU SPA 1010 神田 キャンペーン告知ページ |
+| `rakuspa-inspection/` | RAKU SPA 1010 神田 館内巡回の指摘事項一覧（xlsx） |
 | `odawarajo-cc/` | 小田原城カントリー倶楽部 攻略ガイド・3D シミュレーター・コース管理 xlsx |
 | `tokyo-skytree/` | 東京スカイツリー関連ページ（`data/`, `docs/`, `tools/` あり） |
 | `mont-saint-michel/` | モン・サン・ミシェル ゲーム |
