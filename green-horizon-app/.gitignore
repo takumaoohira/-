@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+.dev.vars
+# build.py で生成されるファイル（デプロイ時に毎回作り直す）
+public/index.html
+public/sw.js
+public/manifest.webmanifest
+public/legal/
+functions/_data/

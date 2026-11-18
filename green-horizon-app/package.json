@@ -1,0 +1,14 @@
+{
+  "name": "green-horizon-app",
+  "private": true,
+  "scripts": {
+    "build": "python3 build.py",
+    "dev": "wrangler pages dev public --port 8788",
+    "db:local": "wrangler d1 execute green-horizon --local --file schema.sql",
+    "db:remote": "wrangler d1 execute green-horizon --remote --file schema.sql",
+    "deploy": "python3 build.py && wrangler pages deploy public"
+  },
+  "devDependencies": {
+    "wrangler": "4.20.0"
+  }
+}

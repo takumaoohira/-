@@ -1,0 +1,8 @@
+# ローカル確認用（.dev.vars にコピーして使う。.dev.vars はGitに入れない）
+# 本物の Stripe テストキーを使う場合は、Stripe の管理画面からコピーした値を書く
+STRIPE_SECRET_KEY=（Stripeのテスト用シークレットキー）
+STRIPE_WEBHOOK_SECRET=（Webhookの署名シークレット）
+# にせStripe（test/mock-stripe.js）で確かめる場合は上の2行の代わりに：
+# STRIPE_SECRET_KEY=sk_test_mock
+# STRIPE_WEBHOOK_SECRET=whsec_testsecret
+# STRIPE_API_BASE=http://127.0.0.1:12111

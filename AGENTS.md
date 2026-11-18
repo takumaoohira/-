@@ -15,6 +15,7 @@ Codex は `AGENTS.md`、Claude Code は `CLAUDE.md`（このファイルを参�
 | `odawarajo-cc/` | 小田原城カントリー倶楽部 攻略ガイド・3D シミュレーター・コース管理 xlsx |
 | `tokyo-skytree/` | 東京スカイツリー関連ページ（`data/`, `docs/`, `tools/` あり） |
 | `mont-saint-michel/` | モン・サン・ミシェル ゲーム |
+| `green-horizon-app/` | ゴルフゲームの公開版（Webアプリ・コース販売）。Cloudflare Pages + D1 + Stripe。`build.py` で `odawarajo-cc/fpv-sim.html` から生成 |
 
 ## 作業ルール
 - 各成果物は **単一の `index.html`（または独立した `.html`）で完結** させる。ビルド工程はなし。

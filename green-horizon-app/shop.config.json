@@ -1,0 +1,15 @@
+{
+  "_説明": "公開版の設定です。【要記入】の項目を埋めてから python3 build.py を実行してください。",
+  "site_name": "GREEN HORIZON",
+  "site_url": "https://【要記入：公開URL 例 green-horizon.pages.dev】",
+  "free_courses": ["odawara"],
+  "price_yen": { "world": 100, "tenrei": 100 },
+  "seller": {
+    "name": "【要記入：販売事業者名（氏名）】",
+    "manager": "【要記入：運営責任者（氏名）】",
+    "address": "請求があった場合には遅滞なく開示いたします",
+    "phone": "請求があった場合には遅滞なく開示いたします",
+    "email": "【要記入：お問い合わせ用メールアドレス】"
+  },
+  "effective_date": "【要記入：施行日 例 2026年12月1日】"
+}

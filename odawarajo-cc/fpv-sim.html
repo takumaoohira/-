@@ -199,6 +199,32 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
 .t-foot{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));text-align:center;font-size:10.5px;color:rgba(255,255,255,.7);letter-spacing:.08em;text-shadow:0 1px 3px rgba(0,0,0,.7);padding:0 16px}
 #tFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .5s}
 
+/* コース購入（ショップ） */
+.t-lock{font-style:normal;justify-self:start;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:20px;background:#ffd77a;color:#2a1a08}
+.t-lock.own{background:rgba(127,224,168,.2);color:#9ff0c2}
+#mShop .box{max-width:440px}
+#mShop .sh-course{display:grid;gap:4px;padding:12px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--line);margin:8px 0 12px}
+#mShop .sh-course b{font-size:17px}#mShop .sh-price{font-size:22px;font-weight:900;color:var(--accent)}#mShop .sh-price small{font-size:12px;color:var(--muted);font-weight:700;margin-left:6px}
+#mShop .sh-act{display:grid;gap:8px;margin-top:12px}
+#mShop .sh-act .btn{justify-content:center;padding:12px;font-size:15px}
+#mShop .btn.pri{background:var(--accent);color:#2a1a08;border-color:transparent;font-weight:900}
+#mShop .sh-code{font-family:var(--f-num);font-size:22px;font-weight:700;letter-spacing:.08em;text-align:center;padding:12px;border-radius:10px;background:#0b1410;border:1px dashed var(--accent);user-select:all;-webkit-user-select:all}
+#mShop input{all:unset;box-sizing:border-box;width:100%;padding:12px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-family:var(--f-num);font-size:18px;letter-spacing:.06em;text-transform:uppercase}
+#mShop input:focus{border-color:var(--accent)}
+#mShop .sh-note{font-size:12px;color:var(--muted);line-height:1.65}
+#mShop .sh-terms{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 8px;font-size:12.5px}#mShop .sh-terms dt{color:var(--muted)}#mShop .sh-terms dd{margin:0}
+#mShop .sh-err{color:var(--bad);font-size:13px;font-weight:700}
+#mShop .sh-legal{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:12px;font-size:11.5px}
+#mShop .sh-legal a,.t-legal a{color:var(--muted)}
+.t-legal{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.t-legal a{color:rgba(255,255,255,.75);pointer-events:auto}
+#tInApp{position:absolute;left:0;right:0;margin-inline:auto;width:max-content;max-width:calc(100% - 24px);top:calc(10px + env(safe-area-inset-top,0px));padding:7px 12px;border-radius:10px;background:rgba(10,16,14,.8);color:#fff;font-size:12px;line-height:1.5;text-align:center;box-sizing:border-box}
+#title.st-sub #tInApp,#title.st-sub .t-foot,#title.st-sub .t-logo{display:none}
+#title.st-sub .t-inner{justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+#title.inapp:not(.st-sub) .t-inner{padding-top:calc(64px + env(safe-area-inset-top,0px))}
+#tInApp{font-size:11.5px;padding:6px 10px}
+#tInApp button{all:unset;cursor:pointer;margin-left:8px;padding:0 6px;font-size:14px;opacity:.8}
+
 /* 対戦モード */
 #mtBar{position:absolute;left:0;right:0;margin-inline:auto;width:max-content;top:calc(10px + env(safe-area-inset-top,0px));display:flex;gap:6px;z-index:6;pointer-events:none;max-width:calc(100% - 640px)}
 .mt-p{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:5px 10px 5px 8px;border-radius:9px;background:rgba(12,20,16,.72);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:12px;line-height:1.25;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:.25s;min-width:84px;position:relative;padding-left:16px}
@@ -368,6 +394,7 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
     </div>
   </div>
 
+  <div class="modal" id="mShop" hidden role="dialog" aria-modal="true" aria-labelledby="shH"><div class="box" id="shBox"></div></div>
   <div class="modal" id="mCard" hidden><div class="box"><h2>スコアカード</h2><div class="sc" id="scBody"></div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="bCardClose">閉じる</button></div></div></div>
 
   <div class="modal" id="mSet" hidden><div class="box"><h2>設定</h2>
@@ -399,6 +426,7 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
         <button class="t-btn" data-act="course"><b>コース選択</b><small id="tCourseSub">小田原城CC</small></button>
         <button class="t-btn" data-act="golfer"><b>ゴルファー選択</b><small id="tGolferSub">男性ゴルファー</small></button>
         <div class="t-row"><button class="t-btn t-sm" data-act="set"><b>設定</b></button><button class="t-btn t-sm" data-act="help"><b>操作説明</b></button></div>
+        <button class="t-btn t-sm" data-act="shop" id="tShop" hidden><b>購入・復元</b><small>復元コードの確認・入力</small></button>
       </nav>
       <section class="t-pick" id="tPickCourse" hidden aria-label="コース選択">
         <h2>コースを選ぶ</h2>
@@ -423,7 +451,8 @@ kbd{font-family:var(--f-num);font-size:11px;border:1px solid var(--line);border-
         <button class="t-btn t-back" data-act="back"><b>もどる</b></button>
       </section>
     </div>
-    <div class="t-foot">© GREEN HORIZON · コースは公開情報から再現した想定図を含みます</div>
+    <div class="t-foot">© GREEN HORIZON · コースは公開情報から再現した想定図を含みます<div class="t-legal" id="tLegal" hidden></div></div>
+    <div id="tInApp" hidden></div>
   </div>
   <div id="loading"><div id="ldTxt">コースを生成中…</div><div class="bar"><i></i></div></div>
 </div>
@@ -1486,7 +1515,69 @@ THEMES.alpine={g:"forest",trees:[["cedar",.45],["pine",.2],["broad",.2],["autumn
 // コースの登録：組み込みの2コース＋ <script type="application/json" data-course> で埋め込んだコース
 COURSES={odawara:{id:"odawara",name:"小田原城CC",desc:"相模湾を望む山岳コース。実在コースの再現。PAR72 · 6,080Y",holes:ODAWARA,themeOf:()=>"odawara",card:"linear-gradient(180deg,#7fb6e8 0,#cfe4f0 45%,#2e5a3a 46%,#4f8a3e 70%,#6aa64a 100%)"},
   world:{id:"world",name:"ワールドヘリテージGC",desc:"世界遺産を巡る架空の高難度コース。PAR72 · 7,830Y",holes:WORLD,themeOf:h=>WORLD_THEME[h.n-1],card:"radial-gradient(circle at 70% 30%,#fff3c4 0,transparent 18%),linear-gradient(180deg,#e9a85a 0,#f4d38e 46%,#3f6a3a 47%,#76a84e 100%)"}};
-for(const el of document.querySelectorAll('script[type="application/json"][data-course]')){try{const c=JSON.parse(el.textContent);COURSES[c.id]={...c,themeOf:h=>h.theme||c.theme||"odawara"}}catch(e){console.error("コースデータを読めません",e)}}
+for(const el of document.querySelectorAll('script[type="application/json"][data-course]')){try{const c=JSON.parse(el.textContent);COURSES[c.id]={...c,holes:c.holes||[],themeOf:h=>h.theme||c.theme||"odawara"}}catch(e){console.error("コースデータを読めません",e)}}
+
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+/* ================= コースの購入（公開版のみ。window.GH_SHOP があるときだけ有効） ================= */
+const SHOP=window.GH_SHOP||null;
+const LIC={code:"",courses:[]};
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}
+function isPaid(id){return !!(SHOP&&SHOP.paid&&SHOP.paid[id])}
+function isLocked(id){const c=COURSES[id];return !c||!c.holes||!c.holes.length}
+function priceTxt(id){return `税込${(SHOP&&SHOP.paid[id])||100}円`}
+// 購入済みコースのデータを登録（ホール情報は購入後にサーバーから届く）
+function installCourse(id,data){const old=COURSES[id]||{};COURSES[id]={...old,...data,id,holes:data.holes,themeOf:old.themeOf||(h=>h.theme||data.theme||old.theme||"odawara")}}
+async function shopApi(path,body){const r=await fetch((SHOP.api||"/api")+path,body?{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)}:{cache:"no-store"});
+  let j=null;try{j=await r.json()}catch(e){}if(!r.ok)throw new Error((j&&j.error)||`通信エラー（${r.status}）`);return j}
+function licSave(){lsSet("gh-license",JSON.stringify({code:LIC.code,courses:LIC.courses}))}
+async function licApply(code,courses){LIC.code=code||LIC.code;LIC.courses=courses||[];licSave();
+  for(const id of Object.keys(SHOP.paid)){
+    if(!LIC.courses.includes(id)){lsSet("gh-course-"+id,null);if(COURSES[id]&&COURSES[id].holes&&COURSES[id].holes.length){COURSES[id].holes=[];if(COURSE_ID===id)setCourse("odawara",true)}continue}
+    if(!isLocked(id))continue;
+    let data=null;const c=lsGet("gh-course-"+id);if(c){try{data=JSON.parse(c)}catch(e){}}
+    if(!data||!data.holes){data=await shopApi(`/course?id=${encodeURIComponent(id)}&code=${encodeURIComponent(LIC.code)}`);lsSet("gh-course-"+id,JSON.stringify(data))}
+    installCourse(id,data)}
+  buildCourseUI()}
+async function shopInit(){if(!SHOP)return;$("tShop").hidden=false;
+  const L=$("tLegal");L.hidden=false;L.innerHTML=(SHOP.legal||[]).map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join("");
+  if(/Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent)){const t=$("tInApp");t.hidden=false;t.innerHTML='アプリ内ブラウザで表示中。右上「…」→「外部ブラウザで開く」でホーム画面に追加できます<button type="button" aria-label="閉じる">✕</button>';$("title").classList.add("inapp");t.querySelector("button").onclick=e=>{e.stopPropagation();t.hidden=true;$("title").classList.remove("inapp")}}
+  // 端末に保存した購入情報と、キャッシュしたコースデータを先に反映（オフラインでも遊べる）
+  try{const v=JSON.parse(lsGet("gh-license")||"null");if(v&&v.code){LIC.code=v.code;LIC.courses=v.courses||[];for(const id of LIC.courses){const c=lsGet("gh-course-"+id);if(c&&isLocked(id)){try{installCourse(id,JSON.parse(c))}catch(e){}}}buildCourseUI()}}catch(e){}
+  const q=new URLSearchParams(location.search),paid=q.get("paid");
+  if(paid||q.has("canceled")){history.replaceState(null,"",location.pathname+location.hash)}
+  if(paid){shopShow("wait","決済を確認しています…");
+    for(let i=0;i<6;i++){try{const r=await shopApi("/claim",{session_id:paid});await licApply(r.code,r.courses);shopShow("done",r.course);return}catch(e){if(i===5){shopShow("error",e.message+"。時間をおいて「購入・復元」から復元コードで復元してください。");return}await new Promise(r=>setTimeout(r,1500))}}}
+  if(LIC.code){try{const r=await shopApi(`/license?code=${encodeURIComponent(LIC.code)}`);await licApply(LIC.code,r.courses)}catch(e){/* オフラインなどは端末の情報で続行 */}}}
+function shopClose(){$("mShop").hidden=true}
+function shopShow(mode,arg){const B=$("shBox"),M=$("mShop");M.hidden=false;const c=COURSES[arg]||{};
+  const legal=`<div class="sh-legal">${(SHOP.legal||[]).map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join("")}</div>`;
+  const codeBox=LIC.code?`<p style="margin:10px 0 4px">あなたの復元コード</p><div class="sh-code" id="shCode">${esc(LIC.code)}</div><div class="sh-act"><button class="btn" id="shCopy">コードをコピー</button></div>`:"";
+  if(mode==="buy"){B.innerHTML=`<h2 id="shH">コースを購入</h2><div class="sh-course"><b>${esc(c.name||arg)}</b><span class="sh-note">${esc(c.desc||"")}</span><span class="sh-price">${priceTxt(arg)}<small>買い切り・何度でもプレイ可</small></span></div>
+    <dl class="sh-terms"><dt>支払方法</dt><dd>クレジットカード等（Stripeの決済画面で入力）</dd><dt>支払時期</dt><dd>購入手続きの完了時</dd><dt>引渡時期</dt><dd>決済完了後すぐに遊べます</dd><dt>キャンセル</dt><dd>デジタルコンテンツのため購入後の返品・キャンセルはできません</dd></dl>
+    <p class="sh-note">カード情報はこのゲームには保存されません。購入後に表示される<b>復元コード</b>を控えておくと、別のブラウザや機種でも購入したコースを使えます。</p>
+    <div class="sh-act"><button class="btn pri" id="shBuy">${priceTxt(arg)}で購入する</button><button class="btn" id="shRest">復元コードをお持ちの方</button><button class="btn" id="shX">閉じる</button></div><p class="sh-err" id="shErr" hidden></p>${legal}`;
+    $("shBuy").onclick=async()=>{const b=$("shBuy");b.disabled=true;b.textContent="決済ページへ移動しています…";
+      try{const r=await shopApi("/checkout",{course:arg,code:LIC.code||""});if(r.owned){await licApply(r.code,r.courses);shopShow("done",arg);return}location.href=r.url}
+      catch(e){b.disabled=false;b.textContent=`${priceTxt(arg)}で購入する`;const E=$("shErr");E.hidden=false;E.textContent=e.message}};
+    $("shRest").onclick=()=>shopShow("restore",arg);$("shX").onclick=shopClose}
+  else if(mode==="done"){B.innerHTML=`<h2 id="shH">購入ありがとうございます</h2><p>「${esc(c.name||"コース")}」が遊べるようになりました。何度でもプレイできます。</p>${codeBox}
+    <p class="sh-note">このコードは決済時のメールアドレスに届く領収書にも記載されます。ブラウザのデータを消した場合や機種変更のときは「購入・復元」でこのコードを入力してください。</p>
+    <div class="sh-act"><button class="btn pri" id="shPlay">このコースで遊ぶ</button></div>`;
+    $("shPlay").onclick=()=>{shopClose();if(COURSES[arg]&&!isLocked(arg)){cfg.course=arg;saveCfg();if(!$("title").hidden){auInit();const w=MT.on;mtStop();titleStart(0,null,true)}else setCourse(arg,true)}}}
+  else if(mode==="restore"||mode==="menu"){B.innerHTML=`<h2 id="shH">購入・復元</h2>${codeBox||'<p class="sh-note">この端末にはまだ購入情報がありません。</p>'}
+    <p style="margin:14px 0 6px">復元コードを入力</p><input id="shIn" placeholder="GH-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20">
+    <div class="sh-act"><button class="btn pri" id="shGo">復元する</button><button class="btn" id="shX">閉じる</button></div><p class="sh-err" id="shErr" hidden></p>
+    <p class="sh-note">購入済みのコース：${LIC.courses.length?LIC.courses.map(id=>esc((COURSES[id]||{}).name||id)).join("、"):"なし"}</p>${legal}`;
+    $("shGo").onclick=async()=>{const v=$("shIn").value.toUpperCase().replace(/[^0-9A-Z]/g,""),E=$("shErr");const code=v.length===14&&v.startsWith("GH")?`GH-${v.slice(2,6)}-${v.slice(6,10)}-${v.slice(10,14)}`:null;
+      if(!code){E.hidden=false;E.textContent="コードの形式が違います（例：GH-ABCD-EFGH-JKLM）";return}
+      $("shGo").disabled=true;try{const r=await shopApi(`/license?code=${encodeURIComponent(code)}`);if(!r.courses.length)throw new Error("このコードで購入されたコースが見つかりません");await licApply(code,r.courses);shopShow("menu");toast("復元しました",r.courses.map(id=>(COURSES[id]||{}).name||id).join("・"),2600)}
+      catch(e){$("shGo").disabled=false;E.hidden=false;E.textContent=e.message}};
+    $("shX").onclick=shopClose}
+  else if(mode==="wait"){B.innerHTML=`<h2 id="shH">お待ちください</h2><p>${esc(arg)}</p>`}
+  else if(mode==="error"){B.innerHTML=`<h2 id="shH">確認できませんでした</h2><p class="sh-err">${esc(arg)}</p><div class="sh-act"><button class="btn" id="shX">閉じる</button></div>`;$("shX").onclick=shopClose}
+  const cp=$("shCopy");if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(LIC.code);cp.textContent="コピーしました"}catch(e){const r=document.createRange();r.selectNodeContents($("shCode"));const sl=getSelection();sl.removeAllRanges();sl.addRange(r);cp.textContent="選択しました。長押しでコピーしてください"}};
+  const f=B.querySelector("input,.btn.pri,.btn");if(f)setTimeout(()=>f.focus({preventScroll:true}),40)}
 let THEME=THEMES.odawara;
 // 木の種類：t=テクスチャ番号, h=高さ範囲, w=幅/高さ, tint=色味
 const TREE_SPEC={cedar:{t:0,h:[16,30],w:[.36,.48]},broad:{t:1,h:[10,18],w:[.95,1.25]},autumn:{t:2,h:[10,17],w:[.95,1.25]},
@@ -1938,7 +2029,6 @@ const st={sp:{on:false,stock:5},shake:0,hole:0,strokes:0,scores:Array(18).fill(n
 const CPU_LV=[{nm:"やさしい",sk:2,pe:.07,ye:.03},{nm:"ふつう",sk:1,pe:.035,ye:.014},{nm:"つよい",sk:0,pe:.015,ye:.006}];
 const MT_COL=["#ffd23f","#4fc3ff","#ff6b8a","#7be08a"],CPU_NAMES=[["ハヤト",0],["ミサキ",1],["ケンジ",0]];
 const MT={on:false,mode:"pvp",players:[],cur:0,order:[],cpu:null,auto:false,marks:[],tm:null};
-const esc=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function curChar(){return MT.on&&MT.players[MT.cur]?MT.players[MT.cur].char:cfg.char|0}
 function curSkill(){const P=MT.on&&MT.players[MT.cur];return P&&P.cpu?CPU_LV[P.lvl].sk:cfg.skill}
 function mtLock(){return MT.on&&!MT.auto&&!!MT.players[MT.cur]&&MT.players[MT.cur].cpu}
@@ -2325,10 +2415,12 @@ $("bGive").onclick=()=>{if(st.phase!=="aim"||mtLock())return;mtGiveUp()};
 $("bNext").onclick=()=>{if(MT.on&&MT.players.some(P=>!P.done))return;if(st.hole<17)loadHole(st.hole+1);else openCard()};
 const sel=$("holeSel");
 function fillHoleSel(){sel.innerHTML="";HOLES.forEach((h,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${h.n}番 PAR${h.p} ${h.y}Y`+(h.name?` ${h.name}`:"");sel.appendChild(o)})}
-function setCourse(id,load){if(!COURSES[id])id="odawara";cfg.course=id;saveCfg();COURSE_ID=id;HOLES=COURSES[id].holes;st.scores=Array(18).fill(null);if(MT.on)MT.players.forEach(P=>{P.scores=Array(18).fill(null)});fillHoleSel();$("courseSel").value=id;
+function setCourse(id,load){if(!COURSES[id]||isLocked(id)){if(SHOP&&COURSES[id]&&load!==false){shopShow("buy",id);buildCourseUI();return}id="odawara"}cfg.course=id;saveCfg();COURSE_ID=id;HOLES=COURSES[id].holes;st.scores=Array(18).fill(null);if(MT.on)MT.players.forEach(P=>{P.scores=Array(18).fill(null)});fillHoleSel();$("courseSel").value=id;
   document.querySelectorAll("[data-cs]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.cs===id));if(load)loadHole(0)}
-{const cs=$("courseSel"),L=$("csList");cs.innerHTML="";for(const c of Object.values(COURSES)){const o=document.createElement("option");o.value=c.id;o.textContent=c.name;cs.appendChild(o);
-  const b=document.createElement("button");b.className="btn";b.dataset.cs=c.id;b.textContent=c.name;b.onclick=()=>setCourse(c.id,c.id!==COURSE_ID);L.appendChild(b)}}
+function buildCourseUI(){const cs=$("courseSel"),L=$("csList");cs.innerHTML="";L.innerHTML="";for(const c of Object.values(COURSES)){const lk=isLocked(c.id),o=document.createElement("option");o.value=c.id;o.textContent=(lk?"🔒 ":"")+c.name+(lk?`（${priceTxt(c.id)}）`:"");cs.appendChild(o);
+  const b=document.createElement("button");b.className="btn";b.dataset.cs=c.id;b.textContent=(lk?"🔒 ":"")+c.name;b.setAttribute("aria-pressed",c.id===COURSE_ID);b.onclick=()=>setCourse(c.id,c.id!==COURSE_ID);L.appendChild(b)}
+  cs.value=COURSE_ID;const tc=$("tCourseCards");if(tc)tc.innerHTML=Object.values(COURSES).map(c=>`<button class="t-card" data-course="${c.id}" aria-pressed="${c.id===(cfg.course||"odawara")}"><i class="t-ico" style="background:${c.card||"#3a5a3a"}"></i><b>${c.name}</b><small>${c.desc||""}</small>${isPaid(c.id)?(isLocked(c.id)?`<em class="t-lock">🔒 ${priceTxt(c.id)}</em>`:`<em class="t-lock own">購入済み</em>`):""}</button>`).join("")}
+buildCourseUI();
 setCourse(cfg.course||"odawara",false);
 $("courseSel").onchange=()=>{setCourse($("courseSel").value,true);$("courseSel").blur()};
 sel.onchange=()=>{loadHole(+sel.value);sel.blur()};
@@ -2519,30 +2611,32 @@ const courseName=id=>(COURSES[id]||COURSES.odawara).name;
 function titleRefresh(){const c=cfg.course||"odawara";$("tNewSub").textContent=`${courseName(c)} · 1番ホールから`;$("tCourseSub").textContent=courseName(c);$("tGolferSub").textContent=(cfg.char|0)?"女性ゴルファー":"男性ゴルファー";
   const sv=loadSave(),cb=$("tCont");cb.disabled=!sv;if(sv){const done=sv.scores.filter(x=>x!=null).length;const next=Math.min(17,sv.hole+(sv.scores[sv.hole]!=null?1:0));$("tContSub").textContent=`${courseName(sv.course)} · ${next+1}番ホールから（${done}ホール済み）`}else $("tContSub").textContent="保存されたラウンドはありません";
   document.querySelectorAll("[data-course]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.course===c));document.querySelectorAll("[data-char]").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.char===(cfg.char|0)))}
-function titleShow(which){TT.state=which;$("title").classList.toggle("st-match",which==="match");$("tPress").hidden=which!=="press";$("tMenu").hidden=which!=="menu";$("tPickCourse").hidden=which!=="course";$("tPickMatch").hidden=which!=="match";if(which==="match")mtSetupRender();$("tPickGolfer").hidden=which!=="golfer";titleRefresh();
+function titleShow(which){TT.state=which;$("title").classList.toggle("st-match",which==="match");$("title").classList.toggle("st-sub",which!=="press"&&which!=="menu");$("tPress").hidden=which!=="press";$("tMenu").hidden=which!=="menu";$("tPickCourse").hidden=which!=="course";$("tPickMatch").hidden=which!=="match";if(which==="match")mtSetupRender();$("tPickGolfer").hidden=which!=="golfer";titleRefresh();
   const first=$("title").querySelector(which==="menu"?".t-menu .t-btn:not([disabled])":which==="press"?"#tPress":`#tPick${which==="course"?"Course":which==="match"?"Match":"Golfer"} .t-card[aria-pressed="true"]`);if(first)setTimeout(()=>first.focus({preventScroll:true}),30)}
 function titleStart(hole,scores,force){uiSnd("start");const T=$("title");const fl=document.createElement("div");fl.id="tFlash";T.appendChild(fl);requestAnimationFrame(()=>{fl.style.opacity=".85";setTimeout(()=>fl.style.opacity="0",160)});
-  const id=cfg.course||"odawara",need=force||id!==COURSE_ID||hole!==st.hole||st.strokes>0||st.scores.some(x=>x!=null);
+  if(isLocked(cfg.course||"odawara"))cfg.course="odawara";const id=cfg.course||"odawara",need=force||id!==COURSE_ID||hole!==st.hole||st.strokes>0||st.scores.some(x=>x!=null);
   setTimeout(()=>{if(id!==COURSE_ID)setCourse(id,false);st.scores=scores||Array(18).fill(null);if(need)loadHole(hole);else{updateHoleUI();caddieSay(HD.h.name?`${HD.h.n}番「${HD.h.name}」です。よろしくお願いします！`:`${HD.h.n}番ホールです。よろしくお願いします！`,4500)}
     T.classList.add("out");setTimeout(()=>{T.hidden=true;TT.run=false},750)},420)}
-function titleInit(){$("tCourseCards").innerHTML=Object.values(COURSES).map(c=>`<button class="t-card" data-course="${c.id}"><i class="t-ico" style="background:${c.card||"#3a5a3a"}"></i><b>${c.name}</b><small>${c.desc||""}</small></button>`).join("");titleBgInit();titleShow("press");
+function titleInit(){buildCourseUI();titleBgInit();titleShow("press");
   const press=()=>{if(TT.state!=="press")return;auInit();setTimeout(()=>uiSnd("press"),30);titleShow("menu")};
   $("tPress").onclick=press;$("title").addEventListener("pointerdown",e=>{if(TT.state==="press"&&!e.target.closest(".t-btn"))press()});
   $("title").addEventListener("mouseover",e=>{const b=e.target.closest(".t-btn:not([disabled]),.t-card");if(b&&b!==TT.hover){TT.hover=b;uiSnd("move")}});
   $("title").addEventListener("focusin",e=>{const b=e.target.closest(".t-btn,.t-card");if(b&&b!==TT.hover){TT.hover=b;uiSnd("move")}});
   $("title").addEventListener("click",e=>{const b=e.target.closest(".t-btn,.t-card");if(!b||b.disabled)return;b.classList.add("hit");setTimeout(()=>b.classList.remove("hit"),150);const a=b.dataset.act;
+    if(b.dataset.course&&isLocked(b.dataset.course)){uiSnd("ok");shopShow("buy",b.dataset.course);return}
     if(b.dataset.course){cfg.course=b.dataset.course;saveCfg();uiSnd("ok");titleRefresh();setTimeout(()=>titleShow("menu"),260);return}
     if(b.dataset.char!=null){setChar(+b.dataset.char);uiSnd("ok");titleRefresh();setTimeout(()=>titleShow("menu"),260);return}
     if(b.dataset.mode){MS.mode=b.dataset.mode;uiSnd("ok");mtSetupRender();return}
     if(a==="new"){const w=MT.on;mtStop();titleStart(0,null,w)}
     else if(a==="match"){uiSnd("ok");titleShow("match")}
     else if(a==="mtgo"){const L=MS[MS.mode].slice(0,MS.mode==="pvp"?MS.n:MS.n);mtStart(L,MS.mode);titleStart(0,null,true)}
-    else if(a==="cont"){const sv=loadSave();if(!sv)return;const w=MT.on;mtStop();if(w)st.strokes=1;cfg.course=sv.course;setChar(sv.char|0);const next=Math.min(17,sv.hole+(sv.scores[sv.hole]!=null?1:0));titleStart(next,sv.scores)}
+    else if(a==="shop"){uiSnd("ok");shopShow("menu")}
+    else if(a==="cont"){const sv=loadSave();if(!sv)return;if(isLocked(sv.course)){shopShow("buy",sv.course);return}const w=MT.on;mtStop();if(w)st.strokes=1;cfg.course=sv.course;setChar(sv.char|0);const next=Math.min(17,sv.hole+(sv.scores[sv.hole]!=null?1:0));titleStart(next,sv.scores)}
     else if(a==="course"){uiSnd("ok");titleShow("course")}else if(a==="golfer"){uiSnd("ok");titleShow("golfer")}
     else if(a==="back"){uiSnd("back");titleShow("menu")}
     else if(a==="set"){uiSnd("ok");$("mSet").hidden=false}else if(a==="help"){uiSnd("ok");$("mHelp").hidden=false}});
   // キーボード操作（上下で選択、Enterで決定、Escで戻る）
-  addEventListener("keydown",e=>{if($("title").hidden||!$("mSet").hidden||!$("mHelp").hidden||e.target.tagName==="INPUT")return;
+  addEventListener("keydown",e=>{if($("title").hidden||!$("mSet").hidden||!$("mHelp").hidden||!$("mShop").hidden||e.target.tagName==="INPUT")return;
     if(TT.state==="press"&&(e.key==="Enter"||e.key===" ")){e.preventDefault();press();return}
     const L=[...$("title").querySelectorAll(".t-btn:not([disabled]),.t-card")].filter(b=>b.offsetParent);const i=L.indexOf(document.activeElement);
     if(["ArrowDown","ArrowRight"].includes(e.key)){e.preventDefault();(L[(i+1)%L.length]||L[0]).focus()}
@@ -2566,7 +2660,7 @@ $("mtSetup").addEventListener("click",e=>{const b=e.target.closest("button");if(
 function backToTitle(){saveProgress();const T=$("title");T.hidden=false;T.classList.remove("out");if(!TT.run){TT.run=true;requestAnimationFrame(TT.draw)}titleShow("menu");uiSnd("back")}
 
 titleInit();
-loadHole(0);requestAnimationFrame(loop);
+loadHole(0);requestAnimationFrame(loop);shopInit();
 window.__puttEq=()=>{const dp=distPin(),dh=H(HD.cup.x,HD.cup.z)-st.ball.y;return Math.max(.3,dp+dh/SURF[S_GR].mu)};window.__carry=i=>clubCarry(CLUBS[i])*SURF[st.lie].k;window.__shot=(c,t,s)=>{st.shot={curve:c,traj:t,spin:s};updateShotUI();guideDirty=true};window.__mt={MT,mtStart,mtStop,cpuPutt,MS};window.__sim={setCourse:(id)=>setCourse(id,false),GOLFERS,CADDIE,toggleSP,SND,AU,AN,setChar:i=>setChar(i),st,HD:()=>HD,H:(x,z)=>H(x,z),shoot,loadHole,run:()=>{let i=0;while(st.fly&&i++<200000)stepBall();return i},skip:()=>{if(st.walk)st.walk.t=1},step:()=>{const f=st.fly;stepBall();return f?{x:f.p.x,y:f.p.y,z:f.p.z,m:f.mode}:null},pen:(x,z)=>penalty(x,z),surf:(x,z)=>surf(x,z),near:(x,z)=>({...near(HD,x,z)})};
 })();
 </script>
